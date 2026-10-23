@@ -1,0 +1,70 @@
+// Kortyn Brain wire protocol.
+//
+// The Brain is stateless per request: every InferRequest carries the full observation history the
+// policy needs (n_obs_steps frames, oldest first). This keeps the server free of per-robot state, which
+// is what later phases (several robots on one Brain) rely on.
+//
+// Regenerate the Python modules after editing (from the repository root):
+//   uv run python -m grpc_tools.protoc -I . --python_out=. --pyi_out=. --grpc_python_out=. \
+//       kortyn/proto/kortyn_brain.proto
+syntax = "proto3";
+
+package kortyn.v1;
+
+service KortynBrain {
+  // Static description of the loaded policy: input features, history length, chunking, sampler, device.
+  rpc GetInfo(GetInfoRequest) returns (BrainInfo);
+  // Predict one action chunk for one observation history.
+  rpc Infer(InferRequest) returns (InferResponse);
+}
+
+// Dense, C-contiguous, little-endian array.
+message Tensor {
+  string dtype = 1;          // numpy dtype name, e.g. "uint8" or "float32"
+  repeated int64 shape = 2;
+  bytes data = 3;
+}
+
+message GetInfoRequest {}
+
+message FeatureSpec {
+  string key = 1;            // LeRobot feature key, e.g. "observation.image"
+  string kind = 2;           // LeRobot FeatureType name: "VISUAL", "STATE", "ENV"
+  repeated int64 shape = 3;  // policy-side shape; images are (C, H, W)
+}
+
+message BrainInfo {
+  string policy_type = 1;
+  string checkpoint = 2;
+  string device = 3;
+  int32 n_obs_steps = 4;
+  int32 max_actions = 5;            // longest chunk the Brain returns
+  int32 action_dim = 6;
+  repeated FeatureSpec input_features = 7;
+  string sampler = 8;               // e.g. "DDIM-5"
+  string lerobot_version = 9;
+  string torch_version = 10;
+  double warmup_inference_ms = 11;  // median of the start-up warm-up inferences
+  int32 torch_threads = 12;
+}
+
+message InferRequest {
+  string client_id = 1;
+  uint64 episode_id = 2;
+  uint64 request_id = 3;
+  int64 obs_timestep = 4;           // control step of the newest observation in the history
+  uint64 seed = 5;                  // sampling seed (initial diffusion noise)
+  uint32 max_actions = 6;           // 0 = server maximum
+  // Observation history, oldest first, keyed by LeRobot feature key.
+  // Images: uint8 (T, H, W, C). States: float32 (T, D).
+  map<string, Tensor> observation = 7;
+}
+
+message InferResponse {
+  uint64 request_id = 1;
+  int64 start_timestep = 2;         // control step of actions[0]; equals obs_timestep
+  Tensor actions = 3;               // float32 (N, action_dim)
+  double server_queue_ms = 4;       // waiting for the single inference worker
+  double server_inference_ms = 5;   // preprocessing + model + postprocessing
+  double server_total_ms = 6;       // handler entry until the response is ready
+}
