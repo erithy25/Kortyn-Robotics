@@ -37,6 +37,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--episodes", type=int, default=None)
     parser.add_argument("--batch-size", type=int, default=None, help="parallel envs (default: all episodes)")
     parser.add_argument("--device", default="cpu")
+    parser.add_argument(
+        "--from-eval-info",
+        default=None,
+        help="summarize an eval_info.json from an earlier run of the identical command instead of re-running",
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -78,18 +83,32 @@ def main(argv: list[str] | None = None) -> int:
         f"--seed={config.experiment.seed_start}",
         f"--output_dir={work_dir}",
     ]
-    LOG.info("running: %s", " ".join(command))
     out_dir.mkdir(parents=True, exist_ok=True)
-    with (out_dir / "lerobot_eval.log").open("w", encoding="utf-8") as log:
-        result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=False)
-    if result.returncode != 0:
-        LOG.error("lerobot-eval failed with code %d, see %s", result.returncode, out_dir / "lerobot_eval.log")
-        return 1
-    info = json.loads((work_dir / "eval_info.json").read_text(encoding="utf-8"))
+    if args.from_eval_info:
+        source = Path(args.from_eval_info)
+        LOG.info("summarizing %s (produced by: %s)", source, " ".join(command))
+        info = json.loads(source.read_text(encoding="utf-8"))
+        provenance = (
+            f"imported from an earlier lerobot-eval run with the same parameters ({source}); "
+            "verify the checkpoint weights match before relying on it"
+        )
+    else:
+        LOG.info("running: %s", " ".join(command))
+        with (out_dir / "lerobot_eval.log").open("w", encoding="utf-8") as log:
+            result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=False)
+        if result.returncode != 0:
+            LOG.error(
+                "lerobot-eval failed with code %d, see %s", result.returncode, out_dir / "lerobot_eval.log"
+            )
+            return 1
+        info = json.loads((work_dir / "eval_info.json").read_text(encoding="utf-8"))
+        provenance = "run by kortyn.lerobot_reference"
     successes = [bool(s) for s in info["per_task"][0]["metrics"]["successes"]]
     seeds = range(config.experiment.seed_start, config.experiment.seed_start + len(successes))
     summary = {
         "tool": "lerobot-eval (LeRobot's official evaluation, synchronous)",
+        "command": " ".join(command[1:]),
+        "provenance": provenance,
         "checkpoint": f"{config.brain.checkpoint.repo_id}@{config.brain.checkpoint.revision} (migrated)",
         "sampler": f"{scheduler}-{steps}",
         "device": args.device,
