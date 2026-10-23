@@ -113,3 +113,22 @@ def test_full_pipeline_writes_results_and_resumes(tmp_path, tiny_pusht_checkpoin
     }
     assert run_experiment.main(["--config", str(config), "--log-level", "WARNING"]) == 0
     assert sizes == {run: (root / run / "episodes.jsonl").stat().st_size for run in sizes}
+
+
+@pytest.mark.skipif(not hasattr(__import__("os"), "sched_setaffinity"), reason="Linux CPU affinity only")
+def test_cpu_layout_ignores_the_runners_own_pinning():
+    import os
+
+    original = os.sched_getaffinity(0)
+    if len(original) < 2:
+        pytest.skip("needs at least two CPUs")
+    brain_cores, agent_cores = run_experiment.cpu_layout(True)
+    try:
+        os.sched_setaffinity(0, set(agent_cores))  # what SuiteRunner does to itself during a suite
+        assert run_experiment.cpu_layout(True) == (brain_cores, agent_cores)
+        run_experiment.restore_affinity()
+        assert os.sched_getaffinity(0) == original
+    finally:
+        os.sched_setaffinity(0, original)
+    assert sorted(brain_cores + agent_cores) == sorted(original)
+    assert run_experiment.cpu_layout(False) == ([], [])

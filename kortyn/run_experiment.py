@@ -107,14 +107,29 @@ def spawn(name: str, args: list[str], log_path: Path) -> ManagedProcess:
     return ManagedProcess(name, process, log_path, handle)
 
 
-def cpu_layout(pin: bool) -> tuple[list[int], list[int]]:
+# Cores this process may use at start-up. The runner pins *itself* to the agent core during a suite, so the
+# layout must never be derived from the current (narrowed) affinity - later suites would otherwise start
+# their Brain unpinned, inherit the single agent core and run several times slower.
+_INITIAL_AFFINITY: frozenset[int] | None = (
+    frozenset(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
+)
+
+
+def cpu_layout(
+    pin: bool, available: frozenset[int] | None = _INITIAL_AFFINITY
+) -> tuple[list[int], list[int]]:
     """(Brain cores, agent+proxy cores) on Linux; empty lists where pinning is off or unsupported."""
-    if not pin or not hasattr(os, "sched_getaffinity"):
+    if not pin or available is None:
         return [], []
-    cores = sorted(os.sched_getaffinity(0))
+    cores = sorted(available)
     if len(cores) < 2:
         return [], []
     return cores[:-1], cores[-1:]
+
+
+def restore_affinity() -> None:
+    if _INITIAL_AFFINITY is not None and hasattr(os, "sched_setaffinity"):
+        os.sched_setaffinity(0, _INITIAL_AFFINITY)
 
 
 def start_brain(
@@ -364,6 +379,7 @@ class SuiteRunner:
             if proxy is not None:
                 proxy.stop()
             brain.stop()
+            restore_affinity()
 
     def _loop(
         self,
