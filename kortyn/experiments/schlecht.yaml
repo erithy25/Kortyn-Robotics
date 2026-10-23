@@ -1,0 +1,10 @@
+# Congested Wi-Fi: 80 ± 40 ms round trip and a 300 ms link freeze every 10 s.
+name: schlecht
+description: "Schlechtes Netz: RTT 80 ± 40 ms, Stall 300 ms alle 10 s"
+mode: realtime
+network:
+  rtt_ms: 80
+  rtt_jitter_ms: 40
+  stall:
+    interval_s: 10
+    duration_ms: 300

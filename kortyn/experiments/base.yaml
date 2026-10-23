@@ -1,0 +1,86 @@
+# Kortyn phase 1 – base configuration.
+# Every port, path and parameter lives here or in a scenario file; CLI flags override single values.
+
+brain:
+  host: 127.0.0.1
+  port: 50051
+  device: auto            # auto = mps -> cuda -> cpu
+  torch_threads: 0        # CPU intra-op threads; 0 = (number of CPUs - 1)
+  cpu_affinity: []        # Linux only, e.g. [0, 1, 2]; usually set via experiment.pin_cpus
+  warmup_inferences: 3
+  grpc_max_workers: 8
+  checkpoint:
+    repo_id: lerobot/diffusion_pusht
+    revision: 84a7c23178445c6bbf7e1a884ff497017910f653
+    local_dir: checkpoints/diffusion_pusht_migrated
+
+proxy:
+  host: 127.0.0.1
+  port: 50052
+  control_port: 50053
+  read_chunk_bytes: 65536
+  max_buffer_bytes: 16777216
+  cpu_affinity: []
+
+agent:
+  client_id: kortyn-agent-0
+  actions_per_chunk: 15         # = horizon 16 - n_obs_steps 2 + 1 (maximum of the checkpoint)
+  refill_threshold: 6           # request when <= 6 actions remain -> one request every 8 ticks
+  request_timeout_s: 5.0        # failure detector only; late chunks are still merged
+  start_mode: warm              # warm: first chunk before the clock starts; cold: clock starts at reset
+  warmup_timeout_s: 60.0
+  sync_actions_per_chunk: 8     # reference mode = LeRobot eval (n_action_steps of the checkpoint)
+  cpu_affinity: []
+  max_tick_lateness_ms: 50.0    # validity gate (measurement hygiene)
+  max_proxy_lateness_ms: 20.0
+  max_cpu_steal_fraction: 0.2
+
+env:                            # mirrors LeRobot's PushtEnv (checked by tests/test_sim_env.py)
+  gym_id: gym_pusht/PushT-v0
+  package: gym_pusht
+  fps: 10.0
+  max_episode_steps: 300
+  gym_kwargs:
+    obs_type: pixels_agent_pos
+    render_mode: rgb_array
+  features_map:
+    pixels: observation.image
+    agent_pos: observation.state
+  hold_action_key: observation.state
+
+profiles:
+  # Main set: fewest-compromise DDIM step count that keeps "gut" starvation-free on the measurement
+  # machine (python -m kortyn.calibrate). Keep it identical across machines for comparability.
+  kalibriert:
+    noise_scheduler_type: DDIM
+    num_inference_steps: 5
+  # Additional set closer to the checkpoint (DDIM-10, as used for real-time in the Diffusion Policy paper).
+  ddim10:
+    noise_scheduler_type: DDIM
+    num_inference_steps: 10
+
+experiment:
+  results_dir: results
+  reports_dir: reports
+  seed_start: 1000              # = the seeds of the checkpoint's published evaluation
+  episodes: 50
+  max_attempts_per_episode: 3   # invalid attempts (validity gate) are repeated
+  brain_startup_timeout_s: 1800 # includes the first checkpoint download (~1 GB) and migration
+  proxy_startup_timeout_s: 30
+  pin_cpus: true                # Linux: Brain on cores 0..n-2, agent + proxy on core n-1
+  suites:
+    - profile: kalibriert
+      runs:
+        - {scenario: referenz_sync}
+        - {scenario: gut}
+        - {scenario: gut, label: gut_wiederholung}
+        - {scenario: buero_wlan}
+        - {scenario: schlecht}
+        - {scenario: sehr_schlecht}
+    - profile: ddim10
+      runs:
+        - {scenario: referenz_sync}
+        - {scenario: gut}
+        - {scenario: buero_wlan}
+        - {scenario: schlecht}
+        - {scenario: sehr_schlecht}

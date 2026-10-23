@@ -204,8 +204,10 @@ def test_slow_brain_starves_but_the_simulation_never_waits(make_agent):
     assert episode.steps == 60
     assert episode.starved_ticks > 0
     assert episode.starvation_events >= 1
-    # every starved tick in this setup is caused by server time alone
-    assert episode.starved_ticks_compute == episode.starved_ticks
+    # starvation here is caused by server time; only the boundary tick of a starvation run can flip to
+    # "network" because of the ~1 ms transport overhead on top of the server time
+    assert episode.starved_ticks_compute >= episode.starved_ticks - episode.starvation_events
+    assert episode.starved_ticks_none_pending == 0
     # the control clock kept running at 20 Hz regardless of the Brain
     assert_on_time(episode)
     times = np.array([t for t, _ in env.executed])

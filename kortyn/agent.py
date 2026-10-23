@@ -552,6 +552,9 @@ class Agent:
                     self._sleep(remaining_wait)
                 tick_start = self._clock()
                 tick_starts.append(tick_start)
+                # The request in flight at the start of the tick is the one a starved tick waits for (even if
+                # it arrives in this very tick with only stale actions).
+                pending_id = -1 if in_flight is None else in_flight.record.request_id
 
                 # 1. merge arrived chunks
                 while True:
@@ -583,7 +586,6 @@ class Agent:
                 # 2. execute the action for step k, or starve
                 queue_len = actions.available(k)
                 entry = actions.pop(k)
-                pending_id = -1 if in_flight is None else in_flight.record.request_id
                 if entry is not None:
                     action, source_request, chunk_step = entry
                     source = records[source_request]
@@ -596,8 +598,8 @@ class Agent:
                     age = k - chunk_step
                 else:
                     starved = 1
-                    if in_flight is not None:
-                        in_flight.record.starved_ticks_while_pending += 1
+                    if pending_id in records:
+                        records[pending_id].starved_ticks_while_pending += 1
                     if last_action is None:
                         action = env.hold_action(observation)
                         age = -1

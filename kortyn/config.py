@@ -288,6 +288,8 @@ class ExperimentConfig:
     max_attempts_per_episode: int = 3
     brain_startup_timeout_s: float = 1800.0
     proxy_startup_timeout_s: float = 30.0
+    # Linux: pin the Brain to cores 0..n-2 and agent + proxy to core n-1 (ignored where unsupported).
+    pin_cpus: bool = True
     suites: list[SuiteConfig] = field(default_factory=list)
 
     def __post_init__(self) -> None:

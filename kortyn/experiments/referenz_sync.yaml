@@ -1,0 +1,8 @@
+# Reference without real time: the simulation waits for every chunk and executes 8 actions per chunk,
+# exactly like LeRobot's evaluation. Measures model quality independent of latency.
+name: referenz_sync
+description: "Referenz: synchron, Simulation wartet auf das Modell (LeRobot-Eval-Semantik)"
+mode: sync
+network:
+  rtt_ms: 0
+  rtt_jitter_ms: 0
