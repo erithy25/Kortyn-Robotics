@@ -77,6 +77,9 @@ experiment:
         - {scenario: buero_wlan}
         - {scenario: schlecht}
         - {scenario: sehr_schlecht}
+        # Ablation: the same latency/jitter without stalls (separates latency from link freezes).
+        - {scenario: schlecht_ohne_stall}
+        - {scenario: sehr_schlecht_ohne_stall}
     - profile: ddim10
       runs:
         - {scenario: referenz_sync}

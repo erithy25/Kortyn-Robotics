@@ -1,0 +1,8 @@
+# Ablation of `sehr_schlecht`: the same 150 ± 80 ms round trip, but without link freezes. Together with
+# `sehr_schlecht` it separates the effect of latency/jitter from the effect of the stalls.
+name: sehr_schlecht_ohne_stall
+description: "Ablation: RTT 150 ± 80 ms wie „sehr_schlecht“, aber ohne Stall"
+mode: realtime
+network:
+  rtt_ms: 150
+  rtt_jitter_ms: 80
