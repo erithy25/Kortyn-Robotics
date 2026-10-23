@@ -1,0 +1,21 @@
+# Python / tooling
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Large / regenerable artefacts
+checkpoints/
+outputs/
+logs/
+results/**/logs/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

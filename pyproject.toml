@@ -1,0 +1,117 @@
+[project]
+name = "kortyn"
+version = "0.1.0"
+description = "Kortyn Phase 1: robot policy offloaded to a network 'Brain', real-time simulated robot 'Agent', network impairment proxy and measurement."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # LeRobot: policy classes, processor pipelines, PushT env extra, diffusion policy extra.
+    "lerobot[pusht,diffusion]==0.6.1",
+    "torch==2.11.0",
+    "torchvision==0.26.0",
+    "diffusers==0.39.0",
+    "huggingface-hub==1.33.0",
+    "safetensors==0.8.0",
+    "draccus==0.11.6",
+    # Simulation (PushT)
+    "gymnasium==1.4.0",
+    "gym-pusht==0.1.8",
+    "pymunk==6.11.1",
+    "pygame==2.6.1",
+    # Single OpenCV build (headless, as LeRobot requires). gym-pusht's `opencv-python` requirement is
+    # overridden below: both distributions write the same `cv2` package and must not be mixed.
+    "opencv-python-headless==4.13.0.92",
+    # Transport, config, analysis
+    "grpcio==1.84.1",
+    "protobuf==7.36.2",
+    "numpy==2.2.6",
+    "pyyaml==6.0.3",
+    "matplotlib==3.11.2",
+]
+
+[project.scripts]
+kortyn-brain = "kortyn.brain:main"
+kortyn-proxy = "kortyn.netem_proxy:main"
+kortyn-run = "kortyn.run_experiment:main"
+kortyn-report = "kortyn.report:main"
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "pytest-timeout==2.4.0",
+    "grpcio-tools==1.84.1",
+    "ruff==0.17.2",
+    "mypy==2.4.0",
+    "types-PyYAML==6.0.12.20260906",
+]
+
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kortyn"]
+
+[tool.uv]
+# Lock only for the platforms this project targets: Apple Silicon (user machine) and Linux x86_64 (CI/cloud).
+environments = [
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+# gym-pusht depends on the GUI build `opencv-python`; it only uses cv2.resize/drawMarker, which the
+# headless build provides. The never-true marker removes the requirement from the resolution.
+override-dependencies = ["opencv-python ; sys_platform == 'never'"]
+
+[tool.uv.sources]
+# Linux: CPU-only PyTorch wheels (avoids ~3 GB of CUDA libraries). macOS: PyPI wheels with MPS support.
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+torchvision = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+timeout = 180
+addopts = "-ra"
+filterwarnings = [
+    "ignore:pkg_resources is deprecated:UserWarning",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["kortyn/proto/kortyn_brain_pb2.py", "kortyn/proto/kortyn_brain_pb2_grpc.py", "kortyn/proto/kortyn_brain_pb2.pyi"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "ANN", "PT"]
+ignore = ["ANN401", "RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ANN"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+exclude = ["kortyn/proto/kortyn_brain_pb2.py", "kortyn/proto/kortyn_brain_pb2_grpc.py"]
+
+[[tool.mypy.overrides]]
+module = [
+    "grpc.*",
+    "gym_pusht.*",
+    "gymnasium.*",
+    "pymunk.*",
+    "lerobot.*",
+    "draccus.*",
+    "safetensors.*",
+    "huggingface_hub.*",
+    "matplotlib.*",
+    "cv2.*",
+    "torchvision.*",
+    "kortyn.proto.kortyn_brain_pb2_grpc",
+]
+ignore_missing_imports = true
+follow_untyped_imports = false
