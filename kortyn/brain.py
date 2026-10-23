@@ -236,6 +236,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--checkpoint-dir", default=None, help="use this processor-format checkpoint directly"
     )
+    parser.add_argument("--scheduler", choices=["DDPM", "DDIM"], default=None, help="override the profile")
+    parser.add_argument("--num-inference-steps", type=int, default=None, help="override the profile")
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -247,6 +249,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         config = load_config(args.config)
         profile = config.profile(args.profile)
+        if args.scheduler is not None or args.num_inference_steps is not None:
+            profile = BrainProfile(
+                noise_scheduler_type=args.scheduler or profile.noise_scheduler_type,
+                num_inference_steps=args.num_inference_steps or profile.num_inference_steps,
+                n_action_steps=profile.n_action_steps,
+            )
     except ConfigError as exc:
         LOG.error("%s", exc)
         return 2
