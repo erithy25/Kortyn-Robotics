@@ -46,6 +46,7 @@ from kortyn.config import (
     load_config,
     load_scenario,
 )
+from kortyn.process_utils import set_cpu_affinity
 
 LOG = logging.getLogger("kortyn.proxy")
 
@@ -460,24 +461,6 @@ def _set_nodelay(writer: asyncio.StreamWriter) -> None:
     if sock is not None:
         with contextlib.suppress(OSError):
             sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-
-def set_cpu_affinity(cores: list[int], logger: logging.Logger) -> None:
-    """Pin the current process to ``cores`` (Linux only; silently skipped elsewhere)."""
-    if not cores:
-        return
-    if not hasattr(os, "sched_setaffinity"):
-        logger.info("CPU affinity not supported on this platform; ignoring %s", cores)
-        return
-    available = os.sched_getaffinity(0)
-    usable = [c for c in cores if c in available]
-    if not usable:
-        logger.warning(
-            "none of the requested cores %s are available (%s); not pinning", cores, sorted(available)
-        )
-        return
-    os.sched_setaffinity(0, usable)
-    logger.info("pinned to CPU cores %s", usable)
 
 
 def parse_hostport(value: str) -> tuple[str, int]:
