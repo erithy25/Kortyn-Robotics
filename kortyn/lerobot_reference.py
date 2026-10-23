@@ -15,6 +15,7 @@ checkpoint's published numbers and Kortyn's ``referenz_sync`` run this separates
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import shutil
@@ -64,6 +65,10 @@ def main(argv: list[str] | None = None) -> int:
     from kortyn.checkpoint import ensure_checkpoint
 
     checkpoint = ensure_checkpoint(config.brain.checkpoint).resolve()
+    digest = hashlib.sha256()
+    with (checkpoint / "model.safetensors").open("rb") as weights:
+        for block in iter(lambda: weights.read(1 << 20), b""):
+            digest.update(block)
     out_dir = Path(config.experiment.results_dir) / "lerobot_eval" / name
     work_dir = out_dir / "lerobot_output"
     if work_dir.exists():
@@ -89,8 +94,8 @@ def main(argv: list[str] | None = None) -> int:
         LOG.info("summarizing %s (produced by: %s)", source, " ".join(command))
         info = json.loads(source.read_text(encoding="utf-8"))
         provenance = (
-            f"imported from an earlier lerobot-eval run with the same parameters ({source}); "
-            "verify the checkpoint weights match before relying on it"
+            f"imported from an earlier lerobot-eval run with the same parameters ({source.name}); "
+            "that run used a checkpoint copy whose weights must match checkpoint_sha256"
         )
     else:
         LOG.info("running: %s", " ".join(command))
@@ -110,6 +115,7 @@ def main(argv: list[str] | None = None) -> int:
         "command": " ".join(command[1:]),
         "provenance": provenance,
         "checkpoint": f"{config.brain.checkpoint.repo_id}@{config.brain.checkpoint.revision} (migrated)",
+        "checkpoint_sha256": digest.hexdigest(),
         "sampler": f"{scheduler}-{steps}",
         "device": args.device,
         "episodes": len(successes),

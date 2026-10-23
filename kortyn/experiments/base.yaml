@@ -53,7 +53,7 @@ profiles:
   # machine (python -m kortyn.calibrate). Keep it identical across machines for comparability.
   kalibriert:
     noise_scheduler_type: DDIM
-    num_inference_steps: 5
+    num_inference_steps: 4      # python -m kortyn.calibrate on the 4-vCPU measurement machine
   # Additional set closer to the checkpoint (DDIM-10, as used for real-time in the Diffusion Policy paper).
   ddim10:
     noise_scheduler_type: DDIM
