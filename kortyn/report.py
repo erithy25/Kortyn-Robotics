@@ -17,7 +17,7 @@ import logging
 import math
 import sys
 import textwrap
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -32,14 +32,18 @@ import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
 from matplotlib.patches import FancyBboxPatch, Patch, Rectangle
+from matplotlib.ticker import PercentFormatter
 
 from kortyn.config import DEFAULT_BASE_CONFIG, ConfigError, KortynConfig, load_config
 from kortyn.metrics import (
     EpisodeRecord,
     RequestRecord,
     RunSummary,
+    bootstrap_ci,
     final_episodes,
     mcnemar_exact,
+    mean,
+    paired_mean_difference,
     paired_outcomes,
     read_jsonl,
     summarize_run,
@@ -64,6 +68,7 @@ CATEGORICAL = ["#2a78d6", "#eb6834", "#1baf7a"]
 
 SCENARIO_ORDER = ["referenz_sync", "gut", "gut_wiederholung", "buero_wlan", "schlecht", "sehr_schlecht"]
 NETWORK_RUNS = ["gut", "buero_wlan", "schlecht", "sehr_schlecht"]
+ABLATION_SUFFIX = "_ohne_stall"  # <scenario>_ohne_stall = <scenario> with the same latency but no stalls
 LABELS = {
     "referenz_sync": "Referenz\n(synchron)",
     "gut": "gut",
@@ -254,7 +259,22 @@ def load_profile(directory: Path) -> ProfileData | None:
 
 def ordered(runs: dict[str, RunData]) -> list[str]:
     known = [label for label in SCENARIO_ORDER if label in runs]
-    return known + sorted(label for label in runs if label not in SCENARIO_ORDER)
+    others = [label for label in runs if label not in SCENARIO_ORDER]
+    return known + sorted(others, key=lambda label: (label.endswith(ABLATION_SUFFIX), label))
+
+
+def figure_runs(profile: ProfileData) -> list[str]:
+    """Runs shown in the overview figures; ablation runs get their own figure."""
+    return [label for label in ordered(profile.runs) if not label.endswith(ABLATION_SUFFIX)]
+
+
+def ablation_pairs(profile: ProfileData) -> list[tuple[str, str]]:
+    """(run without stalls, run with stalls) for every ablation run whose counterpart was measured."""
+    pairs: list[tuple[str, str]] = []
+    for label in ordered(profile.runs):
+        if label.endswith(ABLATION_SUFFIX) and label[: -len(ABLATION_SUFFIX)] in profile.runs:
+            pairs.append((label, label[: -len(ABLATION_SUFFIX)]))
+    return pairs
 
 
 def read_json(path: Path) -> dict[str, Any] | None:
@@ -322,7 +342,7 @@ def figure_success(profiles: list[ProfileData], published: dict[str, Any] | None
         bbox_to_anchor=(layout.left_in / layout.width_in - 0.01, 1 - 0.95 / layout.height_in),
     )
     for ax, profile in zip(axes[0], profiles, strict=True):
-        labels = ordered(profile.runs)
+        labels = figure_runs(profile)
         xs = np.arange(len(labels), dtype=float)
         ax.set_xlim(-0.6, len(labels) - 0.4)
         ax.set_ylim(0, 1.0)
@@ -553,7 +573,7 @@ def figure_starvation(profiles: list[ProfileData], path: Path) -> None:
     header(fig, layout, "Starvation und ihre Ursache", "Verhungerte Zeit pro Minute Laufzeit")
     header_legend(fig, layout, [Patch(facecolor=c, label=n) for n, c in causes], ncol=2)
     for ax, profile in zip(axes[0], profiles, strict=True):
-        labels = [label for label in ordered(profile.runs) if label != "referenz_sync"]
+        labels = [label for label in figure_runs(profile) if label != "referenz_sync"]
         xs = np.arange(len(labels), dtype=float)
         for x, label in zip(xs, labels, strict=True):
             summary = profile.runs[label].summary
@@ -591,17 +611,127 @@ def figure_starvation(profiles: list[ProfileData], path: Path) -> None:
     plt.close(fig)
 
 
+def figure_ablation(profile: ProfileData, baseline: str, path: Path) -> None:
+    """Latency alone vs. latency + stalls: the stall-free ablation runs next to the specified scenarios."""
+    pairs = ablation_pairs(profile)
+    no_stall_of = {stalled: ablation for ablation, stalled in pairs}
+    levels = [label for label in (baseline, "buero_wlan") if label in profile.runs]
+    levels += [stalled for _, stalled in pairs]
+    # (legend, colour, [(x level, run label)], x offset, label side)
+    series = [
+        (
+            "ohne Stall (nur Latenz + Jitter)",
+            CATEGORICAL[0],
+            [(lv, no_stall_of.get(lv, lv)) for lv in levels],
+            -1,
+        ),
+        (
+            "mit Stall (Szenario wie spezifiziert)",
+            CATEGORICAL[1],
+            [(lv, lv) for lv in levels if lv in no_stall_of],
+            1,
+        ),
+    ]
+
+    def reward_ci(summary: RunSummary) -> tuple[float, float] | None:
+        return bootstrap_ci([[value] for value in summary.max_reward_by_seed.values()], mean)
+
+    panels: list[tuple[str, Callable[[RunSummary], float | None], Callable[[RunSummary], Any], str]] = [
+        ("Erfolgsquote", lambda s: s.success_rate, lambda s: s.success_ci, "pct0"),
+        ("Ø Max-Reward", lambda s: s.max_reward_mean, reward_ci, "f3"),
+        ("Zeit verhungert", lambda s: s.starved_time_fraction, lambda s: None, "pct1"),
+    ]
+    fig, axes, layout = make_figure(1, len(panels), 3.1, 2.7, header_in=1.35, footer_in=0.85, wspace_in=0.7)
+    header(
+        fig,
+        layout,
+        "Ablation: Latenz oder Stall?",
+        f"Brain-Profil {profile.name} · gleiche Seeds · Whisker = 95 %-KI (Erfolg: Wilson, Reward: Bootstrap "
+        "über Seeds)",
+    )
+    header_legend(
+        fig,
+        layout,
+        [Line2D([], [], color=c, marker="o", markersize=6, linewidth=2.0, label=n) for n, c, _, _ in series],
+        ncol=2,
+    )
+    x_of = {level: float(index) for index, level in enumerate(levels)}
+    for ax, (title, value_of, ci_of, style) in zip(axes[0], panels, strict=True):
+        lows: list[float] = []
+        highs: list[float] = []
+        for _, color, points, side in series:
+            xs = [x_of[level] + 0.08 * side for level, _ in points]
+            ys = [float(value_of(profile.runs[label].summary) or 0.0) for _, label in points]
+            ax.plot(
+                xs,
+                ys,
+                color=color,
+                linewidth=2.0,
+                marker="o",
+                markersize=6,
+                markeredgecolor=SURFACE,
+                markeredgewidth=1.5,
+                zorder=3,
+            )
+            for x, y, (_, label) in zip(xs, ys, points, strict=True):
+                bounds = ci_of(profile.runs[label].summary)
+                low, high = bounds if bounds is not None else (y, y)
+                ax.plot([x, x], [low, high], color=color, linewidth=1.0, zorder=2)
+                lows.append(low)
+                highs.append(high)
+            value = ys[-1]
+            label_text = {"pct0": f"{value:.0%}", "pct1": f"{value:.1%}", "f3": f"{value:.3f}"}[style]
+            ax.annotate(
+                label_text.replace("%", " %"),
+                (xs[-1], value),
+                xytext=(7 * side, 0),
+                textcoords="offset points",
+                ha="left" if side > 0 else "right",
+                va="center",
+                fontsize=8,
+                color=INK,
+            )
+        if style == "f3":
+            ax.set_ylim(min(0.8, math.floor((min(lows) - 0.01) * 20) / 20), 1.0)
+        elif style == "pct0":
+            ax.set_ylim(0.0, 1.0)
+        else:
+            ax.set_ylim(0.0, max(0.02, 1.15 * max(highs)))
+        if style.startswith("pct"):
+            ax.yaxis.set_major_formatter(PercentFormatter(1.0, decimals=0 if style == "pct0" else 1))
+        ax.set_xlim(-0.5, len(levels) - 0.5)
+        ax.set_xticks(
+            list(x_of.values()),
+            [network_label(profile.meta, no_stall_of.get(lv, lv)).replace(" ± ", "±") for lv in levels],
+        )
+        ax.tick_params(axis="x", labelsize=7.5)
+        ax.grid(axis="x", visible=False)
+        ax.set_title(title, loc="left", pad=8)
+    axes[0][len(panels) // 2].set_xlabel("Netz-RTT (Round-Trip ± Jitter)")
+    fig.savefig(path, dpi=DPI)
+    plt.close(fig)
+
+
 # --------------------------------------------------------------------------------------------- markdown
 def budget_ms(config: KortynConfig) -> float:
     """Latency after which the refill comes too late: the queue holds refill_threshold + 1 ticks of actions."""
     return 1000.0 * (config.agent.refill_threshold + 1) / config.env.fps
 
 
+def reward_delta(base: RunSummary, run: RunSummary) -> str:
+    result = paired_mean_difference(base.max_reward_by_seed, run.max_reward_by_seed)
+    if result is None:
+        return "–"
+    delta, bounds = result
+    return f"{delta:+.3f}" + ("" if bounds is None else f" [{bounds[0]:+.3f}; {bounds[1]:+.3f}]")
+
+
 def table_main(profile: ProfileData, baseline: str) -> list[str]:
     rows = [
-        "| Szenario | Netz (RTT) | n | Erfolg | 95 %-KI | vs. gut (McNemar p) | E2E p50 / p95 / p99 (ms) "
-        "| Reaktion p50 (ms) | Netz-RTT p50 (ms) | Jitter (ms) | Starvation/min | verhungert | Payload ↑/↓ (B) |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Szenario | Netz (RTT) | n | Erfolg [95 %-KI] | Δ Erfolg vs. gut (McNemar p) | Ø Max-Reward "
+        "| Δ Reward vs. gut [95 %-KI] | E2E p50 / p95 / p99 (ms) | Reaktion p50 (ms) | Netz-RTT p50 (ms) "
+        "| Jitter (ms) | Starvation/min | verhungert | Payload ↑/↓ (B) |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     base = profile.runs.get(baseline)
     for label in ordered(profile.runs):
@@ -610,8 +740,9 @@ def table_main(profile: ProfileData, baseline: str) -> list[str]:
             _, only_base, only_run = paired_outcomes(base.summary.success_by_seed, s.success_by_seed)
             delta = s.success_rate - base.summary.success_rate
             vs = f"{100 * delta:+.0f} pp (p={mcnemar_exact(only_base, only_run):.2f})"
+            vs_reward = reward_delta(base.summary, s)
         else:
-            vs = "–"
+            vs = vs_reward = "–"
         realtime = s.mode == "realtime"
         rows.append(
             "| "
@@ -620,9 +751,10 @@ def table_main(profile: ProfileData, baseline: str) -> list[str]:
                     f"**{label}**",
                     network_label(profile.meta, label),
                     str(s.episodes),
-                    pct(s.success_rate),
-                    ci(s.success_ci),
+                    f"{pct(s.success_rate)} {ci(s.success_ci)}",
                     vs,
+                    fmt(s.max_reward_mean, 3),
+                    vs_reward,
                     f"{fmt(s.e2e_p50_ms)} / {fmt(s.e2e_p95_ms)} / {fmt(s.e2e_p99_ms)}",
                     fmt(s.reaction_p50_ms) if realtime else "–",
                     fmt(s.network_p50_ms, 1),
@@ -639,29 +771,55 @@ def table_main(profile: ProfileData, baseline: str) -> list[str]:
     return rows
 
 
+def stall_starvation_share(episodes: Sequence[EpisodeRecord], recovery_s: float) -> float | None:
+    """Share of starved ticks that fall into a stall window or the ``recovery_s`` after it."""
+    starved_total = 0
+    near_stall = 0
+    for episode in episodes:
+        windows = (episode.proxy or {}).get("stall_windows_s", [])
+        for index, starved in enumerate(episode.ticks.starved):
+            if not starved:
+                continue
+            starved_total += 1
+            t = index / episode.fps
+            if any(start <= t <= end + recovery_s for start, end in windows):
+                near_stall += 1
+    return near_stall / starved_total if starved_total else None
+
+
+def median_success_duration(episodes: Sequence[EpisodeRecord]) -> float | None:
+    durations = [e.duration_s for e in episodes if e.success]
+    return float(np.median(durations)) if durations else None
+
+
 def table_diagnostics(profile: ProfileData, budget: float) -> list[str]:
     rows = [
-        "| Szenario | Anfragen/min | über Budget | Aktionsalter Ø (Ticks) | Starvation Compute/Netz (Ticks) "
-        "| Inferenz p50 (ms) | Server p95 (ms) | Wire ↑/↓ pro Anfrage (B) | ungültige Versuche | max. Takt-Verspätung |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Szenario | Dauer bis Erfolg (Median) | Anfragen/min | über Budget | Aktionsalter Ø (Ticks) "
+        "| Starvation Compute/Netz (Ticks) | davon in Stall-Nähe | Inferenz p50 (ms) | Server p95 (ms) "
+        "| Wire ↑/↓ pro Anfrage (B) | ungültige Versuche | max. Takt-Verspätung |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for label in ordered(profile.runs):
         run = profile.runs[label]
         s = run.summary
         realtime = s.mode == "realtime"
+        chosen, _ = final_episodes(run.episodes)
         measured = [r.e2e_ms for r in run.requests if r.phase == "realtime" and r.e2e_ms is not None]
         over = (sum(1 for v in measured if v > budget) / len(measured)) if measured else None
+        stall_share = stall_starvation_share(chosen, recovery_s=budget / 1000.0) if realtime else None
         rows.append(
             "| "
             + " | ".join(
                 [
                     f"**{label}**",
+                    fmt(median_success_duration(chosen), 1, " s"),
                     fmt(s.requests_per_min, 1),
                     pct(over, 1) if realtime else "–",
                     fmt(s.mean_action_age_ticks, 1),
                     f"{s.starved_ticks_compute} / {s.starved_ticks_network + s.starved_ticks_none_pending}"
                     if realtime
                     else "–",
+                    pct(stall_share) if stall_share is not None else "–",
                     fmt(s.server_inference_p50_ms),
                     fmt(s.server_total_p95_ms),
                     f"{fmt(s.wire_bytes_up_per_request)} / {fmt(s.wire_bytes_down_per_request)}"
@@ -676,22 +834,85 @@ def table_diagnostics(profile: ProfileData, budget: float) -> list[str]:
     return rows
 
 
+def table_overview(profiles: list[ProfileData]) -> list[str]:
+    """One row per scenario, one column per Brain profile: success and starved time at a glance."""
+    header_cells = ["Szenario", "Netz (RTT)"]
+    for profile in profiles:
+        sampler = profile.meta.get("brain", {}).get("sampler", profile.name)
+        header_cells.append(f"{profile.name} ({sampler}): Erfolg · verhungert")
+    rows = ["| " + " | ".join(header_cells) + " |", "|---|---|" + "---:|" * len(profiles)]
+    labels: list[str] = []
+    for profile in profiles:
+        labels += [label for label in ordered(profile.runs) if label not in labels]
+    for label in labels:
+        meta = next(p.meta for p in profiles if label in p.runs)
+        cells = [f"**{label}**", network_label(meta, label)]
+        for profile in profiles:
+            run = profile.runs.get(label)
+            if run is None:
+                cells.append("–")
+                continue
+            s = run.summary
+            starved = pct(s.starved_time_fraction, 1) if s.mode == "realtime" else "–"
+            cells.append(f"{pct(s.success_rate)} · {starved}")
+        rows.append("| " + " | ".join(cells) + " |")
+    return rows
+
+
+def table_ablation(profile: ProfileData, baseline: str) -> list[str]:
+    rows = [
+        "| Netz (RTT) | Erfolg ohne → mit Stall | Ø Max-Reward ohne → mit Stall "
+        "| Δ Reward durch Latenz (ohne Stall − gut) | Δ Reward durch Stall (mit − ohne) "
+        "| verhungert ohne → mit Stall | Aktionsalter Ø ohne → mit (Ticks) | E2E p99 ohne → mit (ms) |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    base = profile.runs[baseline].summary if baseline in profile.runs else None
+    for ablation, stalled in ablation_pairs(profile):
+        a = profile.runs[ablation].summary
+        s = profile.runs[stalled].summary
+        rows.append(
+            "| "
+            + " | ".join(
+                [
+                    network_label(profile.meta, ablation),
+                    f"{pct(a.success_rate)} → {pct(s.success_rate)}",
+                    f"{fmt(a.max_reward_mean, 3)} → {fmt(s.max_reward_mean, 3)}",
+                    reward_delta(base, a) if base is not None else "–",
+                    reward_delta(a, s),
+                    f"{pct(a.starved_time_fraction, 1)} → {pct(s.starved_time_fraction, 1)}",
+                    f"{fmt(a.mean_action_age_ticks, 1)} → {fmt(s.mean_action_age_ticks, 1)}",
+                    f"{fmt(a.e2e_p99_ms)} → {fmt(s.e2e_p99_ms)}",
+                ]
+            )
+            + " |"
+        )
+    return rows
+
+
 def validation_rows(
     published: dict[str, Any] | None, lerobot: dict[str, dict[str, Any]], profiles: list[ProfileData]
 ) -> list[str]:
     rows = [
-        "| Stufe | Was isoliert wird | Erfolg | n |",
-        "|---|---|---:|---:|",
+        "| Stufe | Was isoliert wird | Erfolg | Ø Max-Reward | n |",
+        "|---|---|---:|---:|---:|",
     ]
     if published:
+        if published.get("all_success_rate") is not None:
+            rows.append(
+                f"| A₀ · publiziert, alle Episoden (DDPM-100, GPU) | Populationswert des Checkpoints | "
+                f"{published['all_success_rate']:.1%} | {fmt(published.get('all_avg_max_reward'), 3)} | "
+                f"{published['all_episodes']} |"
+            )
         rows.append(
-            f"| A · publiziert (`eval_info.json`, DDPM-100, GPU) | Referenz | "
-            f"{published['successes'] / published['seeds']:.0%} | {published['seeds']} |"
+            f"| A · publiziert, Seeds wie hier (`eval_info.json`, DDPM-100, GPU) | Referenz | "
+            f"{published['successes'] / published['seeds']:.0%} | {fmt(published.get('avg_max_reward'), 3)} | "
+            f"{published['seeds']} |"
         )
     for _, summary in sorted(lerobot.items()):
         rows.append(
             f"| B · `lerobot-eval`, migrierter Checkpoint, {summary['sampler']} ({summary['device']}) | "
-            f"Migration + Sampler | {summary['success_rate']:.0%} | {summary['episodes']} |"
+            f"Migration + Sampler | {summary['success_rate']:.0%} | {fmt(summary.get('avg_max_reward'), 3)} | "
+            f"{summary['episodes']} |"
         )
     for profile in profiles:
         for label, stage, isolates in (
@@ -704,7 +925,7 @@ def validation_rows(
                 sampler = profile.meta.get("brain", {}).get("sampler", profile.name)
                 rows.append(
                     f"| {stage} · Kortyn `{label}`, {sampler} | {isolates} | {s.success_rate:.0%} | "
-                    f"{s.episodes} |"
+                    f"{fmt(s.max_reward_mean, 3)} | {s.episodes} |"
                 )
     return rows
 
@@ -735,6 +956,12 @@ def write_report(
     figure_latency(profiles, budget, reports_dir / figures["latency"])
     figure_breakdown(profiles, reports_dir / figures["breakdown"])
     figure_starvation(profiles, reports_dir / figures["starvation"])
+    ablation_figures: dict[str, str] = {}
+    for profile in profiles:
+        if ablation_pairs(profile) and "gut" in profile.runs:
+            name = f"phase1_ablation_{profile.name}.png"
+            figure_ablation(profile, "gut", reports_dir / name)
+            ablation_figures[profile.name] = name
     seed = config.experiment.seed_start
     queue_figures: list[str] = []
     for profile in profiles:
@@ -770,6 +997,14 @@ def write_report(
         "gleichverteilt; Stall = Link friert in beide Richtungen ein.",
         "",
     ]
+    lines += ["## Auf einen Blick", ""]
+    lines += table_overview(profiles)
+    lines += [
+        "",
+        f"Erfolg = Anteil gelöster Episoden (n = {config.experiment.episodes} je Zeile); verhungert = Anteil der "
+        "Takte ohne frische Aktion. Details, Konfidenzintervalle und Tests in den Tabellen unten.",
+        "",
+    ]
     for profile in profiles:
         sampler = profile.meta.get("brain", {}).get("sampler", profile.name)
         lines += [f"## Ergebnisse · Brain-Profil `{profile.name}` ({sampler})", ""]
@@ -777,6 +1012,17 @@ def write_report(
         lines += ["", "<details><summary>Diagnose (Budget, Starvation-Ursache, Messhygiene)</summary>", ""]
         lines += table_diagnostics(profile, budget)
         lines += ["", "</details>", ""]
+        if profile.name in ablation_figures:
+            lines += [
+                f"### Ablation: Latenz oder Stall? (`{profile.name}`)",
+                "",
+                "Gleiche Latenz und gleicher Jitter wie im Szenario, aber ohne Stalls. „Δ durch Latenz“ ist der "
+                "Effekt von Delay + Jitter allein gegenüber „gut“, „Δ durch Stall“ der zusätzliche Effekt der "
+                "Aussetzer (gepaarte Differenzen über dieselben Seeds, Bootstrap-95 %-KI).",
+                "",
+            ]
+            lines += table_ablation(profile, "gut")
+            lines += ["", f"![Ablation Latenz vs. Stall]({ablation_figures[profile.name]})", ""]
 
     lines += [
         "## Abbildungen",
@@ -824,9 +1070,17 @@ def write_report(
         "aufeinanderfolgender Anfragen (RFC 5481).",
         "- **Starvation:** Takt ohne frische Aktion – der Roboter wiederholt die letzte Aktion (PushT: hält das "
         "letzte Positionsziel). Ereignis = zusammenhängende Folge solcher Takte. **Compute** = wäre auch ohne "
-        "Netz zu spät gewesen, sonst **Netz/Stall**.",
+        "Netz zu spät gewesen, sonst **Netz/Stall**. Lesehilfe: In Netz-Szenarien entsteht der Compute-Anteil "
+        "meist als Nachlauf eines Stalls – ist die Queue einmal leer, braucht die nächste Anfrage mindestens eine "
+        "Inferenzzeit, bevor wieder Aktionen da sind.",
         "- **über Budget:** Anteil der Anfragen mit E2E-Latenz über dem Budget (dann verhungert der Roboter, "
-        "sofern keine Reserve in der Queue ist).",
+        "sofern keine Reserve in der Queue ist). **in Stall-Nähe:** Anteil der verhungerten Takte, die in ein "
+        "Stall-Fenster oder die Budget-Dauer danach fallen.",
+        "- **Reaktionszeit** existiert nur für Chunks, die tatsächlich ausgeführt wurden; komplett veraltete Chunks "
+        "gehen in die E2E-Latenz und die Starvation ein, nicht in die Reaktionszeit.",
+        "- **Ø Max-Reward:** LeRobots `max_reward` pro Episode (PushT: beste Abdeckung / 95 %, gedeckelt auf 1; "
+        "1 = Erfolg), gemittelt. Kontinuierlich und daher statistisch trennschärfer als die Erfolgsquote; "
+        "Δ-Werte sind gepaarte Differenzen über dieselben Seeds mit Bootstrap-95 %-KI.",
         "- **Payload:** serialisierte Protobuf-Größe; **Wire** = Bytes durch den Proxy inkl. HTTP/2-Overhead.",
         "- **Gültigkeit:** Episoden mit Takt-Verspätung > "
         f"{config.agent.max_tick_lateness_ms:g} ms, Proxy-Verspätung > {config.agent.max_proxy_lateness_ms:g} ms, "

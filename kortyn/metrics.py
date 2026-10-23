@@ -13,6 +13,8 @@ Definitions (used consistently by agent, report and README):
 * **Starvation cause** ``compute`` if the pending request would have been late even with zero network time
                       (send time + server time beyond the tick), otherwise ``network``; ``none_pending`` if no
                       request was in flight (only after failed requests).
+* **Max reward**      LeRobot's per-episode ``max_reward``; for PushT ``min(max coverage / 0.95, 1)``. A
+                      continuous quality measure (1.0 = success) with more statistical power than success.
 """
 
 from __future__ import annotations
@@ -198,6 +200,14 @@ def std(values: Sequence[float]) -> float | None:
     return None if len(values) < 2 else float(np.std(np.asarray(values, dtype=np.float64), ddof=1))
 
 
+PUSHT_SUCCESS_COVERAGE = 0.95  # gym-pusht: reward = clip(coverage / 0.95, 0, 1), success = coverage > 0.95
+
+
+def max_reward(max_coverage: float, success_coverage: float = PUSHT_SUCCESS_COVERAGE) -> float:
+    """LeRobot's per-episode ``max_reward`` for PushT, derived from the best coverage of the episode."""
+    return min(max(max_coverage, 0.0) / success_coverage, 1.0)
+
+
 def ipdv(values: Sequence[float]) -> list[float]:
     """Absolute differences of consecutive values (instantaneous packet delay variation)."""
     return [abs(b - a) for a, b in itertools.pairwise(values)]
@@ -281,6 +291,16 @@ def bootstrap_ci(
     return (low, high)
 
 
+def paired_mean_difference(
+    a: dict[int, float], b: dict[int, float], n_boot: int = 2000, seed: int = 0
+) -> tuple[float, tuple[float, float] | None] | None:
+    """Mean of ``b[seed] - a[seed]`` over the common seeds, with a bootstrap CI that resamples seeds."""
+    diffs = [b[key] - a[key] for key in sorted(set(a) & set(b))]
+    if not diffs:
+        return None
+    return float(np.mean(diffs)), bootstrap_ci([[d] for d in diffs], mean, n_boot=n_boot, seed=seed)
+
+
 # --------------------------------------------------------------------------------------------- summary
 
 
@@ -328,6 +348,8 @@ class RunSummary:
     max_tick_lateness_ms: float
     episode_seconds: float
     success_by_seed: dict[int, bool] = field(default_factory=dict)
+    max_reward_mean: float | None = None
+    max_reward_by_seed: dict[int, float] = field(default_factory=dict)
 
 
 def final_episodes(episodes: Iterable[EpisodeRecord]) -> tuple[list[EpisodeRecord], int]:
@@ -430,4 +452,6 @@ def summarize_run(episodes: Sequence[EpisodeRecord], requests: Sequence[RequestR
         max_tick_lateness_ms=max(e.max_tick_lateness_ms for e in chosen),
         episode_seconds=episode_seconds,
         success_by_seed={e.seed: e.success for e in chosen},
+        max_reward_mean=mean([max_reward(e.max_coverage) for e in chosen]),
+        max_reward_by_seed={e.seed: max_reward(e.max_coverage) for e in chosen},
     )
