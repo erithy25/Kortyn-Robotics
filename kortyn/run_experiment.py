@@ -27,7 +27,7 @@ import shutil
 import subprocess
 import sys
 import time
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -61,7 +61,23 @@ LOG = logging.getLogger("kortyn.run")
 
 EPISODES_FILE = "episodes.jsonl"
 REQUESTS_FILE = "requests.jsonl"
+META_FILE = "run_meta.json"
 PUBLISHED_REFERENCE_FILE = "published_reference.json"
+
+# Settings that must be identical for every episode stored under one results/<profile>/ directory:
+# the runs of a profile are compared with each other, so a resumed or extended suite must not mix them.
+META_MATCHING_KEYS = ("profile", "profile_settings", "agent", "env")
+BRAIN_IDENTITY_KEYS = (
+    "policy_type",
+    "checkpoint",
+    "device",
+    "sampler",
+    "n_obs_steps",
+    "max_actions",
+    "lerobot_version",
+    "torch_version",
+    "torch_threads",
+)
 
 
 class RunnerError(RuntimeError):
@@ -252,6 +268,84 @@ def host_info() -> dict[str, Any]:
     }
 
 
+def read_run_meta(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RunnerError(f"{path}: unreadable run metadata ({exc}); repair or delete it") from exc
+    if not isinstance(data, dict):
+        raise RunnerError(f"{path}: run metadata must be a JSON object")
+    return data
+
+
+def _session_of(meta: dict[str, Any], runs: Sequence[str]) -> dict[str, Any]:
+    return {
+        "started_utc": meta.get("started_utc"),
+        "git_commit": meta.get("git_commit"),
+        "runs": list(runs),
+        "cpu_pinning": meta.get("cpu_pinning"),
+        "host": meta.get("host"),
+        "brain_warmup_inference_ms": meta.get("brain", {}).get("warmup_inference_ms"),
+    }
+
+
+def merge_run_meta(
+    previous: dict[str, Any] | None,
+    current: dict[str, Any],
+    session_runs: Sequence[str],
+    labels_with_data: Collection[str],
+) -> dict[str, Any]:
+    """Combine this session's metadata with the one of earlier sessions in the same results directory.
+
+    ``current`` describes this session (all runs of the suite), ``session_runs`` the runs that get new
+    episodes now, ``labels_with_data`` the runs that already have stored episodes. Run entries and sessions
+    of earlier invocations are kept (resumed or extended suites), the first start time stays. Raises
+    :class:`RunnerError` if a setting that must be identical for all stored episodes has changed.
+    """
+    with_data = set(labels_with_data)
+    previous_runs: dict[str, Any] = previous.get("runs", {}) if previous is not None else {}
+    if previous is None or not with_data & set(previous_runs):
+        return {**current, "sessions": [_session_of(current, session_runs)]}
+
+    problems = [
+        f"{key}: {previous.get(key)!r} -> {current.get(key)!r}"
+        for key in META_MATCHING_KEYS
+        if previous.get(key) != current.get(key)
+    ]
+    old_brain, new_brain = previous.get("brain", {}), current.get("brain", {})
+    problems += [
+        f"brain.{key}: {old_brain.get(key)!r} -> {new_brain.get(key)!r}"
+        for key in BRAIN_IDENTITY_KEYS
+        if old_brain.get(key) != new_brain.get(key)
+    ]
+    problems += [
+        f"runs.{label}: {previous_runs[label]!r} -> {entry!r}"
+        for label, entry in current["runs"].items()
+        if label in with_data and label in previous_runs and previous_runs[label] != entry
+    ]
+    if problems:
+        raise RunnerError(
+            "the stored results were produced with different settings ("
+            + "; ".join(problems)
+            + "); restore the settings, or use --fresh / another --results-dir"
+        )
+
+    sessions = list(previous.get("sessions") or [_session_of(previous, list(previous_runs))])
+    sessions.append(_session_of(current, session_runs))
+    runs = {label: entry for label, entry in previous_runs.items() if label in with_data}
+    runs.update(current["runs"])
+    old_seeds = previous.get("seeds") or current["seeds"]
+    return {
+        **current,
+        "runs": runs,
+        "seeds": [min(old_seeds[0], current["seeds"][0]), max(old_seeds[1], current["seeds"][1])],
+        "started_utc": previous.get("started_utc", current["started_utc"]),
+        "sessions": sessions,
+    }
+
+
 def write_published_reference(config: KortynConfig, seeds: Sequence[int], results_dir: Path) -> None:
     """Store the checkpoint's published per-seed evaluation results for the seeds used here."""
     target = results_dir / PUBLISHED_REFERENCE_FILE
@@ -265,15 +359,20 @@ def write_published_reference(config: KortynConfig, seeds: Sequence[int], result
     except Exception as exc:
         LOG.warning("published reference not available (%s); continuing without it", exc)
         return
-    per_seed = {int(e["seed"]): bool(e["success"]) for e in data.get("per_episode", []) if "seed" in e}
+    episodes = [e for e in data.get("per_episode", []) if "seed" in e]
+    per_seed = {int(e["seed"]): bool(e["success"]) for e in episodes}
+    rewards = {int(e["seed"]): float(e["max_reward"]) for e in episodes if "max_reward" in e}
     selected = {seed: per_seed[seed] for seed in seeds if seed in per_seed}
+    selected_rewards = [rewards[seed] for seed in seeds if seed in rewards]
     payload = {
         "source": f"{config.brain.checkpoint.repo_id}@{config.brain.checkpoint.revision}/eval_info.json",
         "sampler": "DDPM-100 (checkpoint default, GPU, LeRobot eval)",
         "seeds": len(selected),
         "successes": sum(selected.values()),
+        "avg_max_reward": sum(selected_rewards) / len(selected_rewards) if selected_rewards else None,
         "all_episodes": len(per_seed),
         "all_success_rate": (sum(per_seed.values()) / len(per_seed)) if per_seed else None,
+        "all_avg_max_reward": data.get("aggregated", {}).get("avg_max_reward"),
         "success_by_seed": {str(k): v for k, v in sorted(selected.items())},
     }
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -367,7 +466,7 @@ class SuiteRunner:
             client = BrainClient(self.config.proxy.address)
             spec = BrainSpec.from_proto(client.get_info(timeout_s=30.0))
             agent = Agent(self.config.agent, env, client, spec, control)
-            self._write_meta(spec, brain_cores, agent_cores)
+            self._write_meta(spec, brain_cores, agent_cores, list(pending))
             self._loop(agent, control, pending, brain, proxy)
         finally:
             if env is not None:
@@ -440,8 +539,11 @@ class SuiteRunner:
             "" if episode.valid else f" INVALID ({'; '.join(episode.invalid_reasons)})",
         )
 
-    def _write_meta(self, spec: BrainSpec, brain_cores: list[int], agent_cores: list[int]) -> None:
-        meta = {
+    def _write_meta(
+        self, spec: BrainSpec, brain_cores: list[int], agent_cores: list[int], session_runs: list[str]
+    ) -> None:
+        """Write ``run_meta.json``, merged with earlier sessions (see :func:`merge_run_meta`)."""
+        current: dict[str, Any] = {
             "profile": self.profile_name,
             "profile_settings": {
                 "noise_scheduler_type": self.profile.noise_scheduler_type,
@@ -475,8 +577,13 @@ class SuiteRunner:
             "git_commit": git_commit(),
             "started_utc": datetime.now(UTC).isoformat(timespec="seconds"),
         }
+        path = self.root / META_FILE
+        previous = read_run_meta(path)
+        labels = set(current["runs"]) | set(previous.get("runs", {}) if previous is not None else {})
+        with_data = {label for label in labels if (self.root / label / EPISODES_FILE).is_file()}
+        meta = merge_run_meta(previous, current, session_runs, with_data)
         self.root.mkdir(parents=True, exist_ok=True)
-        (self.root / "run_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+        path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
 
 def select_plans(config: KortynConfig, profile: str, runs: list[str] | None) -> list[RunPlan]:

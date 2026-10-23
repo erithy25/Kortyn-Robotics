@@ -114,6 +114,82 @@ def test_full_pipeline_writes_results_and_resumes(tmp_path, tiny_pusht_checkpoin
     assert run_experiment.main(["--config", str(config), "--log-level", "WARNING"]) == 0
     assert sizes == {run: (root / run / "episodes.jsonl").stat().st_size for run in sizes}
 
+    # extending the suite later (ad-hoc run) keeps the metadata of the earlier runs
+    extend = ["--config", str(config), "--run", "buero_wlan", "--log-level", "WARNING"]
+    assert run_experiment.main(extend) == 0
+    meta = json.loads((root / "run_meta.json").read_text())
+    assert set(meta["runs"]) == {"referenz_sync", "gut", "schlecht", "buero_wlan"}
+    assert meta["runs"]["schlecht"]["network"]["rtt_ms"] == 80
+    assert [s["runs"] for s in meta["sessions"]] == [["referenz_sync", "gut", "schlecht"], ["buero_wlan"]]
+    assert [e["seed"] for e in read_jsonl(root / "buero_wlan" / "episodes.jsonl")] == [1000, 1001]
+    assert sizes == {run: (root / run / "episodes.jsonl").stat().st_size for run in sizes}
+
+
+def stored_meta(**overrides):
+    meta = {
+        "profile": "p",
+        "profile_settings": {"noise_scheduler_type": "DDIM", "num_inference_steps": 4},
+        "brain": {"sampler": "DDIM-4", "device": "cpu", "torch_threads": 3, "warmup_inference_ms": 350.0},
+        "runs": {"gut": {"scenario": "gut", "mode": "realtime", "network": {"rtt_ms": 0.0}}},
+        "agent": {"refill_threshold": 6},
+        "env": {"fps": 10.0},
+        "seeds": [1000, 1049],
+        "cpu_pinning": {"brain": [0, 1, 2], "agent_and_proxy": [3]},
+        "host": {"cpu_count": 4},
+        "git_commit": "aaa",
+        "started_utc": "2026-01-01T00:00:00+00:00",
+    }
+    meta.update(overrides)
+    return meta
+
+
+def test_meta_of_an_extended_suite_keeps_earlier_runs_and_sessions():
+    previous = stored_meta()  # written before sessions were recorded
+    ablation = {"scenario": "x", "mode": "realtime", "network": {"rtt_ms": 80.0}}
+    current = stored_meta(
+        runs={**previous["runs"], "x": ablation},
+        brain={**previous["brain"], "warmup_inference_ms": 360.0},
+        seeds=[1000, 1099],
+        git_commit="bbb",
+        started_utc="2026-01-02T00:00:00+00:00",
+    )
+    merged = run_experiment.merge_run_meta(previous, current, ["x"], {"gut"})
+    assert merged["runs"] == {"gut": previous["runs"]["gut"], "x": ablation}
+    assert merged["started_utc"] == "2026-01-01T00:00:00+00:00"
+    assert merged["seeds"] == [1000, 1099]
+    assert [s["git_commit"] for s in merged["sessions"]] == ["aaa", "bbb"]
+    assert [s["runs"] for s in merged["sessions"]] == [["gut"], ["x"]]
+    assert [s["brain_warmup_inference_ms"] for s in merged["sessions"]] == [350.0, 360.0]
+    assert len(run_experiment.merge_run_meta(merged, current, [], {"gut", "x"})["sessions"]) == 3
+
+
+def test_meta_merge_refuses_to_mix_different_settings():
+    previous = stored_meta()
+    with pytest.raises(run_experiment.RunnerError, match="agent"):
+        run_experiment.merge_run_meta(previous, stored_meta(agent={"refill_threshold": 4}), ["gut"], {"gut"})
+    threads = stored_meta(brain={**previous["brain"], "torch_threads": 1})
+    with pytest.raises(run_experiment.RunnerError, match=r"brain\.torch_threads"):
+        run_experiment.merge_run_meta(previous, threads, ["gut"], {"gut"})
+    changed = stored_meta(runs={"gut": {"scenario": "gut", "mode": "realtime", "network": {"rtt_ms": 5.0}}})
+    with pytest.raises(run_experiment.RunnerError, match=r"runs\.gut"):
+        run_experiment.merge_run_meta(previous, changed, ["gut"], {"gut"})
+    # a measured value (warm-up time) may differ between sessions
+    warmer = stored_meta(brain={**previous["brain"], "warmup_inference_ms": 900.0})
+    merged = run_experiment.merge_run_meta(previous, warmer, ["gut"], {"gut"})
+    assert merged["brain"]["warmup_inference_ms"] == 900.0
+    # without stored episodes nothing would be mixed: the new settings replace the old file
+    fresh = run_experiment.merge_run_meta(previous, changed, ["gut"], set())
+    assert fresh["runs"] == changed["runs"]
+    assert len(fresh["sessions"]) == 1
+
+
+def test_unreadable_meta_is_reported_not_overwritten(tmp_path):
+    path = tmp_path / "run_meta.json"
+    path.write_text("{broken", encoding="utf-8")
+    with pytest.raises(run_experiment.RunnerError, match="unreadable"):
+        run_experiment.read_run_meta(path)
+    assert run_experiment.read_run_meta(tmp_path / "missing.json") is None
+
 
 @pytest.mark.skipif(not hasattr(__import__("os"), "sched_setaffinity"), reason="Linux CPU affinity only")
 def test_cpu_layout_ignores_the_runners_own_pinning():
