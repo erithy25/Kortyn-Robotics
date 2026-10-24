@@ -357,6 +357,9 @@ def test_phase_two_report_from_all_stages(tmp_path, results):
     assert "- **Validitäts-Gate:** 5 von 425 Versuchen" in text  # one invalid attempt per schwelle10 run
     assert "- **Latenzschätzer:** Das Planungs-Quantil" in text
     assert "### Gegenprobe ohne Latenz: Aktionen je Plan im Sync-Modus" in text
+    assert "**Über alle 3 Szenarien gepoolt** (gepaart je Szenario und Seed" in text
+    assert "| Adaptiv 0.7 s · Inpainting | 150 |" in text  # 3 scenarios x 50 seeds
+    assert "- **Über alle 3 Szenarien gepoolt:** Adaptiv 0.7 s · Inpainting" in text
     assert "| **8** (Phase 1) | 1.25 |" in text
     assert "| 4 | 2.50 |" in text
     assert (

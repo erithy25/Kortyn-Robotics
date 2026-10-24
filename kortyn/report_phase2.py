@@ -279,25 +279,87 @@ class Comparison:
         return self.rate - self.base_rate
 
 
-def compare(base: RunSummary, other: RunSummary) -> Comparison | None:
-    common = sorted(set(base.success_by_seed) & set(other.success_by_seed))
+def compare_outcomes(
+    base_success: dict[int, bool],
+    success: dict[int, bool],
+    base_reward: dict[int, float],
+    reward: dict[int, float],
+) -> Comparison | None:
+    """Paired comparison on the common keys (seeds, or scenario-seed pairs when pooled)."""
+    common = sorted(set(base_success) & set(success))
     if not common:
         return None
-    _, only_base, only_other = paired_outcomes(base.success_by_seed, other.success_by_seed)
-    reward_seeds = sorted(set(base.max_reward_by_seed) & set(other.max_reward_by_seed))
-    diffs = [other.max_reward_by_seed[s] - base.max_reward_by_seed[s] for s in reward_seeds]
-    reward = paired_mean_difference(base.max_reward_by_seed, other.max_reward_by_seed)
+    _, only_base, only_other = paired_outcomes(base_success, success)
+    reward_keys = sorted(set(base_reward) & set(reward))
+    diffs = [reward[k] - base_reward[k] for k in reward_keys]
+    difference = paired_mean_difference(base_reward, reward)
     return Comparison(
         pairs=len(common),
-        base_rate=sum(base.success_by_seed[s] for s in common) / len(common),
-        rate=sum(other.success_by_seed[s] for s in common) / len(common),
+        base_rate=sum(base_success[k] for k in common) / len(common),
+        rate=sum(success[k] for k in common) / len(common),
         only_base=only_base,
         only_strategy=only_other,
         mcnemar_p=mcnemar_exact(only_base, only_other),
-        reward_delta=None if reward is None else reward[0],
-        reward_ci=None if reward is None else reward[1],
+        reward_delta=None if difference is None else difference[0],
+        reward_ci=None if difference is None else difference[1],
         reward_p=paired_permutation_p(diffs) if diffs else None,
     )
+
+
+def compare(base: RunSummary, other: RunSummary) -> Comparison | None:
+    return compare_outcomes(
+        base.success_by_seed, other.success_by_seed, base.max_reward_by_seed, other.max_reward_by_seed
+    )
+
+
+def pooled_comparisons(stage: Stage) -> dict[str, Comparison]:
+    """Every strategy against the baseline over all scenarios of the stage at once (scenario-seed pairs),
+    Holm-adjusted over the strategies. More power for an effect that is the same in every network."""
+    raw: dict[str, Comparison] = {}
+    for strategy in stage.candidates:
+        base_success: dict[int, bool] = {}
+        success: dict[int, bool] = {}
+        base_reward: dict[int, float] = {}
+        reward: dict[int, float] = {}
+        for index, scenario in enumerate(stage.scenarios):
+            cell = stage.cells.get((strategy, scenario))
+            base = stage.baselines.get(scenario)
+            if cell is None or base is None:
+                continue
+            offset = 1_000_000 * (index + 1)  # unique key per scenario and seed
+            b, s = base.run.summary, cell.run.summary
+            base_success.update({offset + k: v for k, v in b.success_by_seed.items()})
+            success.update({offset + k: v for k, v in s.success_by_seed.items()})
+            base_reward.update({offset + k: v for k, v in b.max_reward_by_seed.items()})
+            reward.update({offset + k: v for k, v in s.max_reward_by_seed.items()})
+        comparison = compare_outcomes(base_success, success, base_reward, reward)
+        if comparison is not None:
+            raw[strategy] = comparison
+    keys = list(raw)
+    success_holm = dict(zip(keys, holm_adjust([raw[k].mcnemar_p for k in keys]), strict=True))
+    known = [(k, p) for k in keys if (p := raw[k].reward_p) is not None]
+    reward_holm = dict(zip([k for k, _ in known], holm_adjust([p for _, p in known]), strict=True))
+    return {k: replace(raw[k], mcnemar_holm=success_holm[k], reward_holm=reward_holm.get(k)) for k in keys}
+
+
+def pooled_table(stage: Stage, pooled: dict[str, Comparison]) -> list[str]:
+    if not pooled:
+        return []
+    rows = [
+        f"**Über alle {len(stage.scenarios)} Szenarien gepoolt** (gepaart je Szenario und Seed; Holm über die Strategien):",
+        "",
+        "| Strategie | Paare | Erfolg Baseline → Strategie | Δ Erfolg | McNemar p (Holm) | Δ Reward [95 %-KI] | "
+        "Permutation p (Holm) |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for strategy, c in pooled.items():
+        rows.append(
+            f"| {display_name(strategy, stage.settings_of(strategy))} | {c.pairs} | {pct(c.base_rate)} → {pct(c.rate)} | "
+            f"{bold_if(f'{100 * c.success_delta:+.0f} pp', significant(c.mcnemar_holm))} | "
+            f"{p_text(c.mcnemar_p)} ({p_text(c.mcnemar_holm)}) | "
+            f"{bold_if(reward_text(c), significant(c.reward_holm))} | {p_text(c.reward_p)} ({p_text(c.reward_holm)}) |"
+        )
+    return [*rows, ""]
 
 
 def compare_stage(stage: Stage) -> dict[tuple[str, str], Comparison]:
@@ -1100,6 +1162,17 @@ def horizon_section(points: Sequence[HorizonPoint]) -> list[str]:
             "Ohne Latenz kostet häufigeres Neuplanen nichts Messbares: Der Echtzeit-Verlust entsteht erst im "
             "Zusammenspiel von Planwechseln und Verzögerung."
         )
+    rewards = {p.actions: p.run.summary.max_reward_mean for p in points}
+    if (
+        all(value is not None for value in rewards.values())
+        and max(rewards, key=lambda k: rewards[k] or 0.0) == reference.actions
+        and any(p.actions > reference.actions for p in others)
+    ):
+        lines.append(
+            f"Der höchste Reward liegt bei den {reference.actions} Aktionen je Plan, mit denen die Policy evaluiert "
+            "wurde; auch längere Pläne schneiden schlechter ab (Zielkonflikt zwischen zeitlicher Konsistenz und "
+            "Reaktionsfähigkeit, vgl. Chi et al. 2023)."
+        )
     return [*lines, ""]
 
 
@@ -1147,6 +1220,15 @@ def key_findings(
             f"{p_text(c.reward_p)}, Holm {p_text(c.reward_holm)}: {reward_verdict}); Planalter Ø "
             f"{fmt(base.run.summary.plan_age_mean_s, 2)} → {fmt(cell.run.summary.plan_age_mean_s, 2)} s."
         )
+    pooled = pooled_comparisons(final)
+    if len(final.scenarios) > 1 and pooled:
+        parts = [
+            f"{display_name(strategy, final.settings_of(strategy))} {100 * c.success_delta:+.0f} pp Erfolg "
+            f"(p = {p_text(c.mcnemar_p)}), Δ Reward {reward_text(c)} (p = {p_text(c.reward_p)}, Holm "
+            f"{p_text(c.reward_holm)})"
+            for strategy, c in pooled.items()
+        ]
+        lines.append(f"- **Über alle {len(final.scenarios)} Szenarien gepoolt:** " + "; ".join(parts) + ".")
     base_load = mean_load(final, BASELINE)
     best_load = mean_load(final, best)
     if (
@@ -1869,6 +1951,7 @@ def write_phase2_report(config: KortynConfig, results_dir: Path, reports_dir: Pa
             "",
             *stage_tables(screening, comparisons["1"], highlight=rule),
         ]
+        lines += pooled_table(screening, pooled_comparisons(screening))
         lines += ["### Auswahl für Stufe 2", "", *ranking_table(screening, ranks, rule), ""]
         if final.key == "2" and sorted(final.candidates) != sorted(rule):
             lines += [
@@ -1886,6 +1969,7 @@ def write_phase2_report(config: KortynConfig, results_dir: Path, reports_dir: Pa
     if final.key == "2":
         lines += [f"## Stufe 2 · Bestätigung ({len(final.seeds)} Seeds)", ""]
         lines += stage_tables(final, comparisons["2"], highlight=[best] if best else [])
+        lines += pooled_table(final, pooled_comparisons(final))
         lines += [f"![Planalter und Qualität, Stufe 2]({figures['age2']})", ""]
     lines += [
         "## Diagnose",
