@@ -11,6 +11,10 @@ semantics exactly (verified by ``tests/test_policy_runner.py::test_matches_lerob
 * the initial diffusion noise comes from a CPU ``torch.Generator`` seeded per request, so results do not
   depend on the device and identical observations with identical seeds give identical chunks;
 * post-processing (un-normalization) runs per action, treating the chunk steps as the batch dimension.
+
+Phase 2 adds an optional **guide** (inpainting of the transition between plans, see ``kortyn/inpainting.py``):
+the guided path rebuilds the batch exactly like ``predict_action_chunk``'s offline mode and replaces only
+the sampling loop; with all guide weights 0 it reproduces the unguided chunk bit for bit.
 """
 
 from __future__ import annotations
@@ -31,8 +35,11 @@ import torch
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.configs.types import FeatureType
 from lerobot.policies import get_policy_class, make_pre_post_processors
+from lerobot.processor import NormalizerProcessorStep, TransitionKey, create_transition
+from lerobot.utils.constants import OBS_IMAGES
 
 from kortyn.config import BrainProfile, ConfigError
+from kortyn.inpainting import GuidanceError, guided_conditional_sample
 from kortyn.typing_utils import Array, FloatArray
 
 LOG = logging.getLogger("kortyn.policy")
@@ -65,6 +72,17 @@ class PolicyInfo:
     torch_version: str
     torch_threads: int
     warmup_inference_ms: float
+    supports_guidance: bool = False
+
+
+@dataclass(frozen=True)
+class GuideSpec:
+    """Inpainting guide relative to the request: ``offset`` = control step of ``actions[0]`` minus the
+    observation step (``-1`` = the action executed at the previous tick)."""
+
+    offset: int
+    actions: FloatArray  # (G, action_dim), env units
+    weights: FloatArray  # (G,), in [0, 1]
 
 
 @dataclass(frozen=True)
@@ -160,6 +178,9 @@ class PolicyRunner:
         self._noise_shape: tuple[int, int, int] | None = (
             (1, int(horizon), self.action_dim) if accepts_noise and horizon is not None else None
         )
+        self._action_normalizer = next(
+            (step for step in self.preprocessor.steps if isinstance(step, NormalizerProcessorStep)), None
+        )
         sampler = (
             profile.sampler_label if config.type == "diffusion" else str(getattr(config, "type", "policy"))
         )
@@ -176,6 +197,7 @@ class PolicyRunner:
             torch_version=str(torch.__version__),
             torch_threads=int(torch.get_num_threads()),
             warmup_inference_ms=0.0,
+            supports_guidance=self.supports_guidance,
         )
         LOG.info(
             "loaded %s from %s on %s (n_obs_steps=%d, chunk=%d, sampler=%s)",
@@ -191,6 +213,11 @@ class PolicyRunner:
     @property
     def info(self) -> PolicyInfo:
         return self._info
+
+    @property
+    def supports_guidance(self) -> bool:
+        """Inpainting needs the diffusion sampler and an explicit initial noise."""
+        return str(self.config.type) == "diffusion" and self._noise_shape is not None
 
     def dummy_observation(self) -> dict[str, Array]:
         """A valid observation history of zeros (used for warm-up and tests)."""
@@ -255,9 +282,75 @@ class PolicyRunner:
             batch[feature.key] = tensor.unsqueeze(0)  # (1, T, ...) or (1, ...) for single-frame policies
         return batch
 
-    def infer(self, observation: Mapping[str, Array], seed: int, max_actions: int) -> InferenceResult:
+    def check_guide(self, guide: GuideSpec) -> None:
+        """Raise ``ObservationError`` unless the guide can be applied to this policy's chunk."""
+        if not self.supports_guidance:
+            raise ObservationError(f"inpainting guides are not supported for {self.config.type} policies")
+        actions = np.asarray(guide.actions)
+        weights = np.asarray(guide.weights)
+        if actions.ndim != 2 or actions.shape[1] != self.action_dim:
+            raise ObservationError(f"guide actions must be (G, {self.action_dim}), got {actions.shape}")
+        if weights.shape != (actions.shape[0],) or actions.shape[0] == 0:
+            raise ObservationError(
+                f"guide needs one weight per action, got {weights.shape} for {actions.shape[0]} actions"
+            )
+        if not (np.all(np.isfinite(actions)) and np.all(np.isfinite(weights))):
+            raise ObservationError("guide contains non-finite values")
+        if weights.min() < 0.0 or weights.max() > 1.0:
+            raise ObservationError("guide weights must be in [0, 1]")
+        first = guide.offset + self.n_obs_steps - 1
+        if first < 0 or first >= int(self.config.horizon):
+            raise ObservationError(
+                f"guide starts at step offset {guide.offset}, outside the chunk "
+                f"[{1 - self.n_obs_steps}, {int(self.config.horizon) - self.n_obs_steps}]"
+            )
+
+    def _guide_tensors(self, guide: GuideSpec) -> tuple[torch.Tensor, torch.Tensor]:
+        """(known, weights) on the horizon grid: normalized guide actions and ``(1, horizon, 1)`` weights."""
+        horizon = int(self.config.horizon)
+        first = guide.offset + self.n_obs_steps - 1
+        count = min(len(guide.weights), horizon - first)  # entries beyond the horizon have no counterpart
+        actions = torch.as_tensor(np.asarray(guide.actions[:count], dtype=np.float32), device=self.device)
+        if self._action_normalizer is not None:
+            actions = self._action_normalizer(create_transition(action=actions))[TransitionKey.ACTION]
+        known = torch.zeros((1, horizon, self.action_dim), dtype=torch.float32, device=self.device)
+        weights = torch.zeros((1, horizon, 1), dtype=torch.float32, device=self.device)
+        known[0, first : first + count] = actions.to(device=self.device, dtype=torch.float32)
+        weights[0, first : first + count, 0] = torch.as_tensor(
+            np.asarray(guide.weights[:count], dtype=np.float32), device=self.device
+        )
+        return known, weights
+
+    def _guided_chunk(self, batch: dict[str, Any], noise: torch.Tensor, guide: GuideSpec) -> torch.Tensor:
+        """``predict_action_chunk`` (offline mode) with the inpainting sampler."""
+        config: Any = self.config
+        batch = dict(batch)
+        if config.image_features:
+            for key in config.image_features:
+                if batch[key].ndim == 4:
+                    batch[key] = batch[key].unsqueeze(1)
+            batch[OBS_IMAGES] = torch.stack([batch[key] for key in config.image_features], dim=-4)
+        model: Any = self.policy.diffusion
+        global_cond = model._prepare_global_conditioning(batch)
+        known, weights = self._guide_tensors(guide)
+        try:
+            actions = guided_conditional_sample(model, global_cond, noise, known, weights)
+        except GuidanceError as exc:
+            raise ObservationError(str(exc)) from exc
+        start = self.n_obs_steps - 1
+        return actions[:, start : start + int(config.n_action_steps)]
+
+    def infer(
+        self,
+        observation: Mapping[str, Array],
+        seed: int,
+        max_actions: int,
+        guide: GuideSpec | None = None,
+    ) -> InferenceResult:
         if not 1 <= max_actions <= self.max_actions:
             raise ObservationError(f"max_actions must be in [1, {self.max_actions}], got {max_actions}")
+        if guide is not None:
+            self.check_guide(guide)
         start = time.perf_counter()
         self.policy.reset()
         batch = self.preprocessor(self._to_batch(observation))
@@ -268,7 +361,10 @@ class PolicyRunner:
             noise = torch.randn(self._noise_shape, generator=generator, dtype=torch.float32)
             kwargs["noise"] = noise.to(self.device)
         with torch.inference_mode():
-            chunk = self.policy.predict_action_chunk(batch, **kwargs)
+            if guide is None:
+                chunk = self.policy.predict_action_chunk(batch, **kwargs)
+            else:
+                chunk = self._guided_chunk(batch, kwargs["noise"], guide)
             if chunk.ndim == 2:
                 chunk = chunk.unsqueeze(0)
             chunk = chunk[:, :max_actions]

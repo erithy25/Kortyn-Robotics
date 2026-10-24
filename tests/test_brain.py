@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from kortyn.brain import build_server
-from kortyn.codec import decode_tensor, encode_observation
+from kortyn.codec import decode_tensor, encode_array, encode_observation
 from kortyn.config import BrainConfig, BrainProfile
 from kortyn.proto import kortyn_brain_pb2 as pb
 from kortyn.proto import kortyn_brain_pb2_grpc as pb_grpc
@@ -68,6 +68,7 @@ def test_get_info(brain):
         "observation.state": (2,),
     }
     assert info.max_actions == reply.max_actions
+    assert reply.supports_guidance
 
 
 def test_infer_round_trip_with_timings(brain):
@@ -134,3 +135,40 @@ def test_occupied_port_fails_loudly(tiny_checkpoint, brain):
     clash = BrainConfig(host="127.0.0.1", port=running.port, torch_threads=1, warmup_inferences=0)
     with pytest.raises(OSError, match="cannot bind"):
         build_server(clash, PROFILE, checkpoint_dir=tiny_checkpoint)
+
+
+def test_guided_inference_reproduces_the_frozen_actions(brain):
+    stub, _, _ = brain
+    frozen = np.array([[100.0, 120.0], [110.0, 130.0], [120.0, 140.0], [130.0, 150.0]], dtype=np.float32)
+    request = make_request(valid_observation(4), seed=3, timestep=40)
+    request.guide_start_timestep = 39  # the previous tick's action, then steps 40, 41, 42
+    request.guide_actions.CopyFrom(encode_array(frozen))
+    request.guide_weights.extend([1.0, 1.0, 1.0, 1.0])
+    actions = decode_tensor(stub.Infer(request, timeout=10).actions)
+    np.testing.assert_allclose(actions[:3], frozen[1:], atol=1e-2)
+
+
+def test_malformed_guides_are_rejected_with_invalid_argument(brain):
+    stub, _, _ = brain
+    request = make_request(valid_observation(), timestep=40)
+    request.guide_start_timestep = 39
+    request.guide_actions.CopyFrom(encode_array(np.zeros((2, 2), np.float32)))
+    request.guide_weights.extend([1.0])
+    with pytest.raises(grpc.RpcError) as error:
+        stub.Infer(request, timeout=10)
+    assert error.value.code() == grpc.StatusCode.INVALID_ARGUMENT
+    assert "one weight per action" in error.value.details()
+
+
+def test_stats_count_requests_and_inference_time(brain):
+    stub, _, _ = brain
+    before = stub.GetStats(pb.GetStatsRequest(), timeout=5)
+    for seed in range(3):
+        stub.Infer(make_request(valid_observation(), seed=seed), timeout=10)
+    after = stub.GetStats(pb.GetStatsRequest(), timeout=5)
+    assert after.requests - before.requests == 3
+    assert after.inferences - before.inferences == 3
+    assert after.busy_ms > before.busy_ms
+    assert after.queue_wait_ms >= before.queue_wait_ms
+    assert after.uptime_ms > before.uptime_ms
+    assert after.abandoned == before.abandoned

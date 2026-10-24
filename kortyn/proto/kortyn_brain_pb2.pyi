@@ -31,7 +31,7 @@ class FeatureSpec(_message.Message):
     def __init__(self, key: _Optional[str] = ..., kind: _Optional[str] = ..., shape: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class BrainInfo(_message.Message):
-    __slots__ = ("policy_type", "checkpoint", "device", "n_obs_steps", "max_actions", "action_dim", "input_features", "sampler", "lerobot_version", "torch_version", "warmup_inference_ms", "torch_threads")
+    __slots__ = ("policy_type", "checkpoint", "device", "n_obs_steps", "max_actions", "action_dim", "input_features", "sampler", "lerobot_version", "torch_version", "warmup_inference_ms", "torch_threads", "supports_guidance")
     POLICY_TYPE_FIELD_NUMBER: _ClassVar[int]
     CHECKPOINT_FIELD_NUMBER: _ClassVar[int]
     DEVICE_FIELD_NUMBER: _ClassVar[int]
@@ -44,6 +44,7 @@ class BrainInfo(_message.Message):
     TORCH_VERSION_FIELD_NUMBER: _ClassVar[int]
     WARMUP_INFERENCE_MS_FIELD_NUMBER: _ClassVar[int]
     TORCH_THREADS_FIELD_NUMBER: _ClassVar[int]
+    SUPPORTS_GUIDANCE_FIELD_NUMBER: _ClassVar[int]
     policy_type: str
     checkpoint: str
     device: str
@@ -56,10 +57,11 @@ class BrainInfo(_message.Message):
     torch_version: str
     warmup_inference_ms: float
     torch_threads: int
-    def __init__(self, policy_type: _Optional[str] = ..., checkpoint: _Optional[str] = ..., device: _Optional[str] = ..., n_obs_steps: _Optional[int] = ..., max_actions: _Optional[int] = ..., action_dim: _Optional[int] = ..., input_features: _Optional[_Iterable[_Union[FeatureSpec, _Mapping]]] = ..., sampler: _Optional[str] = ..., lerobot_version: _Optional[str] = ..., torch_version: _Optional[str] = ..., warmup_inference_ms: _Optional[float] = ..., torch_threads: _Optional[int] = ...) -> None: ...
+    supports_guidance: bool
+    def __init__(self, policy_type: _Optional[str] = ..., checkpoint: _Optional[str] = ..., device: _Optional[str] = ..., n_obs_steps: _Optional[int] = ..., max_actions: _Optional[int] = ..., action_dim: _Optional[int] = ..., input_features: _Optional[_Iterable[_Union[FeatureSpec, _Mapping]]] = ..., sampler: _Optional[str] = ..., lerobot_version: _Optional[str] = ..., torch_version: _Optional[str] = ..., warmup_inference_ms: _Optional[float] = ..., torch_threads: _Optional[int] = ..., supports_guidance: _Optional[bool] = ...) -> None: ...
 
 class InferRequest(_message.Message):
-    __slots__ = ("client_id", "episode_id", "request_id", "obs_timestep", "seed", "max_actions", "observation")
+    __slots__ = ("client_id", "episode_id", "request_id", "obs_timestep", "seed", "max_actions", "observation", "guide_start_timestep", "guide_actions", "guide_weights")
     class ObservationEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -74,6 +76,9 @@ class InferRequest(_message.Message):
     SEED_FIELD_NUMBER: _ClassVar[int]
     MAX_ACTIONS_FIELD_NUMBER: _ClassVar[int]
     OBSERVATION_FIELD_NUMBER: _ClassVar[int]
+    GUIDE_START_TIMESTEP_FIELD_NUMBER: _ClassVar[int]
+    GUIDE_ACTIONS_FIELD_NUMBER: _ClassVar[int]
+    GUIDE_WEIGHTS_FIELD_NUMBER: _ClassVar[int]
     client_id: str
     episode_id: int
     request_id: int
@@ -81,7 +86,10 @@ class InferRequest(_message.Message):
     seed: int
     max_actions: int
     observation: _containers.MessageMap[str, Tensor]
-    def __init__(self, client_id: _Optional[str] = ..., episode_id: _Optional[int] = ..., request_id: _Optional[int] = ..., obs_timestep: _Optional[int] = ..., seed: _Optional[int] = ..., max_actions: _Optional[int] = ..., observation: _Optional[_Mapping[str, Tensor]] = ...) -> None: ...
+    guide_start_timestep: int
+    guide_actions: Tensor
+    guide_weights: _containers.RepeatedScalarFieldContainer[float]
+    def __init__(self, client_id: _Optional[str] = ..., episode_id: _Optional[int] = ..., request_id: _Optional[int] = ..., obs_timestep: _Optional[int] = ..., seed: _Optional[int] = ..., max_actions: _Optional[int] = ..., observation: _Optional[_Mapping[str, Tensor]] = ..., guide_start_timestep: _Optional[int] = ..., guide_actions: _Optional[_Union[Tensor, _Mapping]] = ..., guide_weights: _Optional[_Iterable[float]] = ...) -> None: ...
 
 class InferResponse(_message.Message):
     __slots__ = ("request_id", "start_timestep", "actions", "server_queue_ms", "server_inference_ms", "server_total_ms")
@@ -98,3 +106,23 @@ class InferResponse(_message.Message):
     server_inference_ms: float
     server_total_ms: float
     def __init__(self, request_id: _Optional[int] = ..., start_timestep: _Optional[int] = ..., actions: _Optional[_Union[Tensor, _Mapping]] = ..., server_queue_ms: _Optional[float] = ..., server_inference_ms: _Optional[float] = ..., server_total_ms: _Optional[float] = ...) -> None: ...
+
+class GetStatsRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class BrainStats(_message.Message):
+    __slots__ = ("requests", "inferences", "abandoned", "busy_ms", "queue_wait_ms", "uptime_ms")
+    REQUESTS_FIELD_NUMBER: _ClassVar[int]
+    INFERENCES_FIELD_NUMBER: _ClassVar[int]
+    ABANDONED_FIELD_NUMBER: _ClassVar[int]
+    BUSY_MS_FIELD_NUMBER: _ClassVar[int]
+    QUEUE_WAIT_MS_FIELD_NUMBER: _ClassVar[int]
+    UPTIME_MS_FIELD_NUMBER: _ClassVar[int]
+    requests: int
+    inferences: int
+    abandoned: int
+    busy_ms: float
+    queue_wait_ms: float
+    uptime_ms: float
+    def __init__(self, requests: _Optional[int] = ..., inferences: _Optional[int] = ..., abandoned: _Optional[int] = ..., busy_ms: _Optional[float] = ..., queue_wait_ms: _Optional[float] = ..., uptime_ms: _Optional[float] = ...) -> None: ...
