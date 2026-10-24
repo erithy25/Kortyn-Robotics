@@ -1,4 +1,4 @@
-"""Phase-3a report: ``reports/phase3a.md`` and its figures.
+"""Phase-3a report data: ``reports/phase3a_data.md`` and the figures ``reports/phase3a_*.png``.
 
     python -m kortyn.report_phase3a
 
@@ -653,6 +653,37 @@ def replay_table(cases: Sequence[ValidationCase]) -> tuple[list[str], ReplayMatc
     return lines, total
 
 
+def determinism_rows(results: Path) -> list[tuple[str, str, int, int, int, int]]:
+    """Second execution of model runs (one worker instead of four, other order of the seeds) against the
+    validation runs: (profile, run, identical episodes, episodes, identical requests, requests)."""
+    root = results / "phase3a" / "determinism"
+    rows: list[tuple[str, str, int, int, int, int]] = []
+    if not root.is_dir():
+        return rows
+    for profile_dir in sorted(p for p in root.iterdir() if p.is_dir()):
+        for run_dir in sorted(p for p in profile_dir.iterdir() if p.is_dir()):
+            first = load_run(results / "phase3a" / "validation_model" / profile_dir.name / run_dir.name)
+            second = load_run(run_dir)
+            if first is None or second is None:
+                continue
+            equal, total = determinism_check(first, second)
+            seeds = set(first.episodes) & set(second.episodes)
+
+            def views(run: Run, seeds: set[int] = seeds) -> dict[tuple[int, int, int], str]:
+                return {
+                    (r.seed, r.attempt, r.request_id): json.dumps(r.to_json(), sort_keys=True)
+                    for r in run.requests
+                    if r.seed in seeds
+                }
+
+            a, b = views(first), views(second)
+            same_requests = sum(1 for key, value in a.items() if b.get(key) == value)
+            rows.append(
+                (profile_dir.name, run_dir.name, equal, total, same_requests, len(a.keys() | b.keys()))
+            )
+    return rows
+
+
 def service_drift(results: Path, profile: str, block: int = 10) -> list[str]:
     """Server time of the real-time machine per phase-1 run and per block of seeds: the hardware drifted
     between sessions and within a session, which a pooled service-time profile cannot follow."""
@@ -1296,7 +1327,7 @@ def expert_delay_table(results: Path) -> list[str]:
 
 def write_report(results: Path, reports: Path) -> Path:
     apply_style()
-    figures = reports / "figures"
+    figures = reports  # next to the markdown, like the phase-1 and phase-2 figures
     figures.mkdir(parents=True, exist_ok=True)
     cases = load_validation(results)
     verdicts = {source: verdict(cases, source) for source, _ in SOURCES}
@@ -1339,7 +1370,7 @@ def write_report(results: Path, reports: Path) -> Path:
         "",
         *replay_lines,
         "",
-        "![Validierung](figures/phase3a_validation.png)",
+        "![Validierung](phase3a_validation.png)",
         "",
     ]
     for profile in PROFILES:
@@ -1362,7 +1393,23 @@ def write_report(results: Path, reports: Path) -> Path:
                 *drift,
                 "",
             ]
-    lines += ["### Latenzen", "", *latency_table(cases), "", "![Latenz](figures/phase3a_latency.png)", ""]
+    lines += ["### Latenzen", "", *latency_table(cases), "", "![Latenz](phase3a_latency.png)", ""]
+    determinism = determinism_rows(results)
+    if determinism:
+        lines += [
+            "### Determinismus",
+            "",
+            "Zweite Ausführung derselben Läufe mit einem statt vier Worker-Prozessen (andere Reihenfolge der "
+            "Seeds, frische Prozesse): Inhalt der Records ohne Maschinen-Diagnosen (Rechenzeit, Cache-Treffer).",
+            "",
+            "| Profil | Lauf | identische Episoden | identische Anfragen |",
+            "|---|---|---:|---:|",
+            *[
+                f"| {profile} | {run} | {equal} / {total} | {same} / {requests} |"
+                for profile, run, equal, total, same, requests in determinism
+            ],
+            "",
+        ]
     lines += [
         "## Restrauschen und Power",
         "",
@@ -1370,7 +1417,7 @@ def write_report(results: Path, reports: Path) -> Path:
         "",
         *power_table(models),
         "",
-        "![Power](figures/phase3a_power.png)",
+        "![Power](phase3a_power.png)",
         "",
     ]
     delay = expert_delay_table(results)
@@ -1380,7 +1427,7 @@ def write_report(results: Path, reports: Path) -> Path:
         lines += ["## SmolVLA", "", *published_comparison(tasks), ""]
         for data in tasks:
             lines += [f"### {data.task}", "", *smolvla_table(data), ""]
-        lines += ["![SmolVLA](figures/phase3a_smolvla.png)", ""]
+        lines += ["![SmolVLA](phase3a_smolvla.png)", ""]
         lines += ["### Erfolgsverlust gegen die Sync-Referenz je Aufgabe", "", *task_comparison(tasks), ""]
         transport = transport_table(tasks)
         if transport:
@@ -1389,7 +1436,7 @@ def write_report(results: Path, reports: Path) -> Path:
         lines += [
             "## Latenzwirkung: SmolVLA gegen PushT",
             "",
-            "![Latenzwirkung](figures/phase3a_latency_effect.png)",
+            "![Latenzwirkung](phase3a_latency_effect.png)",
             "",
         ]
         for family in dict.fromkeys(p.family for p in points):

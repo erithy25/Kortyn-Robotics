@@ -196,3 +196,40 @@ def test_validation_cases_collect_every_source_and_the_verdict_flags_shifted_run
     assert episode_verdict.holm_significant >= 1
     replay = verdict(list(cases.values()), "replay")
     assert (replay.comparisons, replay.inside) == (4, 4)
+
+
+def test_determinism_rows_compare_episodes_and_requests_of_two_executions(tmp_path):
+    import dataclasses
+    import json
+
+    from kortyn.metrics import RequestRecord
+    from kortyn.report_phase3a import determinism_rows
+
+    def request(seed, request_id, server_ms=300.0):
+        return RequestRecord(
+            run="modell__gut", profile="kalibriert", seed=seed, attempt=0, request_id=request_id,
+            phase="realtime", status="ok", obs_timestep=8 * request_id, t_obs_s=0.8 * request_id,
+            t_send_s=0.8 * request_id, request_bytes=100, queue_at_send=6, t_resp_s=0.8 * request_id + 0.3,
+            server_total_ms=server_ms,
+        )  # fmt: skip
+
+    def write(directory, episodes, requests):
+        directory.mkdir(parents=True)
+        (directory / "episodes.jsonl").write_text("".join(json.dumps(e.to_json()) + "\n" for e in episodes))
+        (directory / "requests.jsonl").write_text("".join(json.dumps(r.to_json()) + "\n" for r in requests))
+
+    virtual = {"events": 10, "compute_s": 1.0, "cache_hits": 0, "inference_ms": 3.0}
+    first = [episode(s, virtual=virtual) for s in (1000, 1001, 1002)]
+    requests = [request(s, i) for s in (1000, 1001, 1002) for i in (1, 2)]
+    write(tmp_path / "phase3a" / "validation_model" / "kalibriert" / "modell__gut", first, requests)
+    # second execution: two seeds only, other machine diagnostics, one request differs
+    second = [episode(s, virtual={**virtual, "compute_s": 5.0, "cache_hits": 2}) for s in (1000, 1001)]
+    changed = [
+        request(1000, 1),
+        request(1000, 2),
+        request(1001, 1),
+        dataclasses.replace(request(1001, 2), server_total_ms=301.0),
+    ]
+    write(tmp_path / "phase3a" / "determinism" / "kalibriert" / "modell__gut", second, changed)
+    assert determinism_rows(tmp_path) == [("kalibriert", "modell__gut", 2, 2, 3, 4)]
+    assert determinism_rows(tmp_path / "missing") == []
