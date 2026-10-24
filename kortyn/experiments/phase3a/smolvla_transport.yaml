@@ -1,0 +1,14 @@
+# SmolVLA image transport ablation (push-v3): does compressing or downscaling the camera image change the
+# policy's success? Synchronous reference (25 actions per plan, latency irrelevant) on the first 50 seeds,
+# paired with referenz_sync25 of smolvla_push.yaml (raw frames at 480x480, LeRobot's evaluation input).
+# Run:  python -m kortyn.run_virtual --config kortyn/experiments/phase3a/smolvla_transport.yaml
+extends: smolvla_push.yaml
+experiment:
+  episodes: 50
+  suites:
+    - profile: smolvla
+      runs:
+        - {scenario: referenz_sync, timing: mittel, label: transport_jpeg90,
+           image_transport: {codec: jpeg, quality: 90}}
+        - {scenario: referenz_sync, timing: mittel, label: transport_jpeg75_240px,
+           image_transport: {codec: jpeg, quality: 75, height: 240, width: 240}}

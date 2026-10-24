@@ -137,3 +137,19 @@ def test_determinism_check_ignores_machine_dependent_diagnostics():
     assert determinism_check(first, second) == (1, 1)
     third = run([episode(1, virtual={"events": 11, "compute_s": 1.0, "cache_hits": 0, "inference_ms": 3.0})])
     assert determinism_check(first, third) == (0, 1)
+
+
+def test_difference_of_success_drops_between_tasks():
+    from kortyn.report_phase3a import delta_difference, plan_period_ms
+
+    ref_a = run([episode(s, success=True) for s in range(30)])
+    cond_a = run([episode(s, success=s % 10 != 0) for s in range(30)])  # static task: -10 pp
+    ref_b = run([episode(s, success=True) for s in range(30)])
+    cond_b = run([episode(s, success=s % 2 == 0) for s in range(30)])  # dynamic task: -50 pp
+    interval = delta_difference(ref_a, cond_a, ref_b, cond_b)
+    assert interval is not None
+    assert interval.value == pytest.approx(-0.4)
+    assert interval.high < 0
+    assert delta_difference(ref_a, cond_a, ref_b, run([episode(99)])) is None
+    assert plan_period_ms({"agent": {"actions_per_chunk": 15, "refill_threshold": 6}}, 10.0) == 800.0
+    assert plan_period_ms({"agent": {"actions_per_chunk": 50, "refill_threshold": 24}}, 80.0) == 312.5

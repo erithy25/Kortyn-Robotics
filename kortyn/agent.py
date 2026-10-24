@@ -25,6 +25,12 @@ are aligned, whether the Brain inpaints the transition, and what happens without
 the last action, or hold and log an emergency). ``StrategyConfig()`` is exactly the behaviour above. Every
 tick logs the plan age of the executed action; the Brain's load counters (``GetStats``) are read before
 and after each episode.
+
+Phase 3a: everything that does not depend on how time passes (requests, records, compatibility check,
+episode summary) lives in :class:`AgentCore`; the virtual-time agent (``kortyn/virtual_agent.py``) reuses it
+with the same loop on a simulation clock. Requests may carry a language instruction (from the env's
+``task_description``) and compressed camera images (``AgentConfig.image_transport``); the defaults keep the
+phase-1 wire format.
 """
 
 from __future__ import annotations

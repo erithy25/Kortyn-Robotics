@@ -105,3 +105,66 @@ def test_task_description_and_instruction_override():
         custom.close()
     with pytest.raises(EnvError, match="unknown Meta-World task"):
         make_env(config("no-such-task-v3"))
+
+
+def test_virtual_agent_renders_only_the_frames_it_sends(env):
+    from kortyn.agent import BrainSpec, EpisodeContext
+    from kortyn.codec import decode_observation
+    from kortyn.config import AgentConfig, DistributionConfig, ImageTransportConfig, TimingConfig
+    from kortyn.proto import kortyn_brain_pb2 as pb
+    from kortyn.virtual_agent import VirtualTimeAgent
+    from kortyn.virtual_time import ComputeResult, DurationSampler, ModelTiming, TimingSamplers
+
+    sent: list[pb.InferRequest] = []
+
+    class Compute:
+        cache_hits = 0
+
+        def __call__(self, request: pb.InferRequest) -> ComputeResult:
+            sent.append(request)
+            return ComputeResult(np.zeros((int(request.max_actions), 4), dtype=np.float32))
+
+    def constant(ms: float) -> DurationSampler:
+        return DurationSampler(DistributionConfig(kind="constant", value_ms=ms))
+
+    spec = BrainSpec(
+        n_obs_steps=1,
+        max_actions=50,
+        action_dim=4,
+        features={
+            "observation.images.camera1": ("VISUAL", (3, 480, 480)),
+            "observation.state": ("STATE", (4,)),
+        },
+        sampler="fake",
+        device="cpu",
+        policy_type="fake",
+        warmup_inference_ms=0.0,
+    )
+    agent = VirtualTimeAgent(
+        AgentConfig(
+            actions_per_chunk=50,
+            refill_threshold=24,
+            sync_actions_per_chunk=25,
+            image_transport=ImageTransportConfig(codec="jpeg", quality=90),
+        ),
+        env,
+        spec,
+        Compute(),
+        TimingConfig(latency="model", hardware="h"),
+        TimingSamplers(
+            model=ModelTiming(constant(100.0), constant(1.0), constant(5.0), constant(0.0)),
+            tick=DurationSampler(DistributionConfig()),
+        ),
+    )
+    renders = env.renders
+    outcome = agent.run_episode(EpisodeContext(run="t", profile="p", scenario="s", mode="realtime", seed=5))
+    episode = outcome.episode
+    assert episode.steps == 500  # zero actions never solve push
+    assert episode.starved_ticks == 0  # 106 ms = 9 ticks < 25 ticks of plan left
+    assert len(sent) == 1 + 500 // 25 - 1  # warm-up plus one request every 25 ticks (none at the last tick)
+    assert env.renders - renders == len(sent) - 1  # the warm-up frame comes with the reset
+    assert {r.task for r in sent} == {env.task_description}
+    frame = decode_observation(sent[3].observation)["observation.images.camera1"]
+    assert frame.shape == (1, 480, 480, 3)
+    assert sent[3].observation["observation.images.camera1"].encoding == "jpeg"
+    assert episode.max_step_reward is not None

@@ -467,6 +467,23 @@ class ValidationCase:
     replay: Run | None
     model_deltas: dict[str, Delta]
     replay_deltas: dict[str, Delta]
+    session: Run | None = None  # latency model with the service time of the run's own phase-1 session
+    session_deltas: dict[str, Delta] | None = None
+
+    def deltas(self, source: str) -> dict[str, Delta]:
+        if source == "model":
+            return self.model_deltas
+        if source == "session":
+            return self.session_deltas or {}
+        return self.replay_deltas
+
+
+SOURCES = (
+    ("model", "Simulationszeit: Modell (gepoolt)"),
+    ("session", "Simulationszeit: Modell (sitzungsgenau)"),
+    ("replay", "Simulationszeit: Replay"),
+)
+SOURCE_SHORT = {"model": "Modell", "session": "Modell sitzungsgenau", "replay": "Replay"}
 
 
 def load_validation(results: Path) -> list[ValidationCase]:
@@ -477,18 +494,32 @@ def load_validation(results: Path) -> list[ValidationCase]:
             if real is None:
                 continue
             model_label = "gut" if scenario == "gut_wiederholung" else scenario
-            model = load_run(results / "phase3a" / "validation_model" / profile / f"modell__{model_label}")
+            model_root = results / "phase3a" / "validation_model" / profile
+            model = load_run(model_root / f"modell__{model_label}")
+            session = load_run(model_root / f"sitzung__{model_label}")
             replay = load_run(results / "phase3a" / "validation_replay" / profile / f"replay__{scenario}")
-            if model is None and replay is None:
+            if model is None and replay is None and session is None:
                 continue
-            model_deltas = {
-                m: d for m in METRICS if model and (d := paired_delta(real, model, m)) is not None
-            }
-            replay_deltas = {
-                m: d for m in METRICS if replay and (d := paired_delta(real, replay, m)) is not None
-            }
-            cases.append(ValidationCase(profile, scenario, real, model, replay, model_deltas, replay_deltas))
+            cases.append(
+                ValidationCase(
+                    profile,
+                    scenario,
+                    real,
+                    model,
+                    replay,
+                    all_deltas(real, model),
+                    all_deltas(real, replay),
+                    session,
+                    all_deltas(real, session),
+                )
+            )
     return cases
+
+
+def all_deltas(real: Run, other: Run | None) -> dict[str, Delta]:
+    if other is None:
+        return {}
+    return {m: d for m in METRICS if (d := paired_delta(real, other, m)) is not None}
 
 
 @dataclass(frozen=True)
@@ -503,7 +534,7 @@ def verdict(cases: Sequence[ValidationCase], source: str) -> Verdict:
     labels: list[str] = []
     deltas: list[Delta] = []
     for case in cases:
-        table = case.model_deltas if source == "model" else case.replay_deltas
+        table = case.deltas(source)
         for metric, delta in table.items():
             labels.append(f"{case.profile}/{SCENARIO_LABELS[case.scenario]}: {METRIC_LABELS[metric]}")
             deltas.append(delta)
@@ -520,7 +551,8 @@ def validation_table(cases: Sequence[ValidationCase], profile: str) -> list[str]
     for case in (c for c in cases if c.profile == profile):
         sources: list[tuple[str, Run | None]] = [
             ("Echtzeit (Phase 1)", case.real),
-            ("Simulationszeit: Modell", case.model),
+            ("Simulationszeit: Modell (gepoolt)", case.model),
+            ("Simulationszeit: Modell (sitzungsgenau)", case.session),
             ("Simulationszeit: Replay", case.replay),
         ]
         first = True
@@ -541,7 +573,9 @@ def delta_table(cases: Sequence[ValidationCase], profile: str) -> list[str]:
         "|---|---|---:|---:|---:|---:|",
     ]
     for case in (c for c in cases if c.profile == profile):
-        for name, table in (("Modell", case.model_deltas), ("Replay", case.replay_deltas)):
+        for source, _ in SOURCES:
+            table = case.deltas(source)
+            name = SOURCE_SHORT[source]
             if not table:
                 continue
             cells = [
@@ -786,11 +820,14 @@ def smolvla_table(data: TaskData) -> list[str]:
             SYNC_MATCHED: "Sync, 25 Aktionen/Plan (Referenz)",
         }.get(label, f"{GPU_LABELS.get(timing, timing)}, {SCENARIO_LABELS.get(scenario, scenario)}")
         _, _, mbps = run_bandwidth(run)
-        starvation = pooled("starvation", episodes) if timing != "sync" else math.nan
+        realtime = (
+            timing != "sync"
+        )  # the synchronous references wait for every plan: no latency, no starvation
+        starvation = pooled("starvation", episodes) if realtime else math.nan
+        latency = f"{ms(percentile(e2e, 50))} / {ms(percentile(e2e, 95))}" if realtime else "–"
         lines.append(
             f"| {name} | {fmt_interval(success, 'pct')} | {delta_text} | {pooled('reward', episodes):.2f} | "
-            f"{ms(percentile(e2e, 50))} / {ms(percentile(e2e, 95))} | {pooled('plan_age', episodes):.2f} s | "
-            f"{fmt_pct(starvation, 1)} | {mbps:.1f} Mbit/s |"
+            f"{latency} | {pooled('plan_age', episodes):.2f} s | {fmt_pct(starvation, 1)} | {mbps:.1f} Mbit/s |"
         )
     return lines
 
@@ -832,6 +869,27 @@ class EffectPoint:
     latency_ms: float  # median end-to-end latency
     relative_success: float  # success / success of the matched sync reference
     success: float
+    period_ms: float  # time between two plans when the latency fits (refill period of the agent)
+
+    @property
+    def latency_periods(self) -> float:
+        """Latency in units of the planning period: how stale a plan is compared with how long it lasts."""
+        return self.latency_ms / self.period_ms
+
+
+def plan_period_ms(meta: dict[str, Any], fps: float) -> float:
+    """Ticks between two requests at zero latency (chunk - threshold - 1), in ms."""
+    agent = meta.get("agent", {})
+    ticks = int(agent.get("actions_per_chunk", 15)) - int(agent.get("refill_threshold", 6)) - 1
+    return 1000.0 * ticks / fps
+
+
+def read_meta(directory: Path) -> dict[str, Any]:
+    path = directory / "run_meta.json"
+    if not path.is_file():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return data if isinstance(data, dict) else {}
 
 
 def latency_effects(results: Path, tasks: Sequence[TaskData]) -> list[EffectPoint]:
@@ -842,6 +900,7 @@ def latency_effects(results: Path, tasks: Sequence[TaskData]) -> list[EffectPoin
         if sync is None:
             continue
         base = pooled("success", sync.ordered())
+        period = plan_period_ms(read_meta(model / profile), sync.ordered()[0].fps)
         for scenario in NETWORK_SCENARIOS:
             run = load_run(model / profile / f"modell__{scenario}")
             if run is None or base <= 0:
@@ -849,23 +908,116 @@ def latency_effects(results: Path, tasks: Sequence[TaskData]) -> list[EffectPoin
             e2e = [float(r.e2e_ms) for r in run.requests_of(("realtime",)) if r.e2e_ms is not None]
             success = pooled("success", run.ordered())
             points.append(
-                EffectPoint(f"PushT {profile}", scenario, float(np.median(e2e)), success / base, success)
+                EffectPoint(
+                    f"PushT {profile}", scenario, float(np.median(e2e)), success / base, success, period
+                )
             )
     for data in tasks:
         sync = data.runs.get(SYNC_MATCHED)
         if sync is None:
             continue
         base = pooled("success", sync.ordered())
+        period = plan_period_ms(data.meta, sync.ordered()[0].fps)
         for label, run in data.runs.items():
-            timing, scenario = label_parts(label)
-            if timing == "sync" or base <= 0:
+            timing, _scenario = label_parts(label)
+            if timing not in (*GPU_TIMINGS, "grenzfall") or base <= 0:
                 continue
             e2e = [float(r.e2e_ms) for r in run.requests_of(("realtime",)) if r.e2e_ms is not None]
             if not e2e:
                 continue
             success = pooled("success", run.ordered())
-            points.append(EffectPoint(data.task, label, float(np.median(e2e)), success / base, success))
+            points.append(
+                EffectPoint(data.task, label, float(np.median(e2e)), success / base, success, period)
+            )
     return points
+
+
+def delta_difference(
+    ref_a: Run, cond_a: Run, ref_b: Run, cond_b: Run, n_boot: int = N_BOOT, seed: int = 0
+) -> Interval | None:
+    """(success drop of b) - (success drop of a): paired within each task, independent between tasks."""
+    seeds_a = sorted(set(ref_a.episodes) & set(cond_a.episodes))
+    seeds_b = sorted(set(ref_b.episodes) & set(cond_b.episodes))
+    if not seeds_a or not seeds_b:
+        return None
+    da = [float(cond_a.episodes[s].success) - float(ref_a.episodes[s].success) for s in seeds_a]
+    db = [float(cond_b.episodes[s].success) - float(ref_b.episodes[s].success) for s in seeds_b]
+    point = float(np.mean(db) - np.mean(da))
+    rng = np.random.default_rng(seed)
+    samples = [
+        float(np.mean(rng.choice(db, len(db))) - np.mean(rng.choice(da, len(da)))) for _ in range(n_boot)
+    ]
+    return Interval(point, float(np.percentile(samples, 2.5)), float(np.percentile(samples, 97.5)))
+
+
+def task_comparison(tasks: Sequence[TaskData]) -> list[str]:
+    """Success drop against the matched sync reference per task and condition, and dynamic minus static."""
+    by_task = {data.task: data for data in tasks}
+    if not by_task:
+        return []
+    names = [t for t in SMOLVLA_TASKS if t in by_task]
+    head = " | ".join(f"Δ {t}" for t in names)
+    lines = [
+        f"| Bedingung | {head} | coffee-push − push [KI] |",
+        "|---|" + "---:|" * len(names) + "---:|",
+    ]
+    labels = [f"{t}__{s}" for t in GPU_TIMINGS for s in NETWORK_SCENARIOS] + ["grenzfall__gut"]
+    for label in labels:
+        cells: list[str] = []
+        for task in names:
+            data = by_task[task]
+            ref, run = data.runs.get(SYNC_MATCHED), data.runs.get(label)
+            delta = paired_delta(ref, run, "success") if ref is not None and run is not None else None
+            cells.append("–" if delta is None else fmt_interval(delta.interval, "pp"))
+        diff = "–"
+        if "push-v3" in by_task and "coffee-push-v3" in by_task:
+            static, dynamic = by_task["push-v3"], by_task["coffee-push-v3"]
+            parts = (
+                static.runs.get(SYNC_MATCHED),
+                static.runs.get(label),
+                dynamic.runs.get(SYNC_MATCHED),
+                dynamic.runs.get(label),
+            )
+            if all(part is not None for part in parts):
+                ref_a, cond_a, ref_b, cond_b = (p for p in parts if p is not None)
+                interval = delta_difference(ref_a, cond_a, ref_b, cond_b)
+                if interval is not None:
+                    diff = f"{mark_interval(interval)} {fmt_interval(interval, 'pp')}"
+        timing, scenario = label_parts(label)
+        lines.append(
+            f"| {GPU_LABELS[timing]}, {SCENARIO_LABELS[scenario]} | " + " | ".join(cells) + f" | {diff} |"
+        )
+    return lines
+
+
+def transport_table(tasks: Sequence[TaskData]) -> list[str]:
+    """Image transport ablation: payload, bandwidth and success against raw frames (same seeds)."""
+    lines: list[str] = []
+    for data in tasks:
+        variants = sorted(label for label in data.runs if label.startswith("transport_"))
+        reference = data.runs.get(SYNC_MATCHED)
+        if not variants or reference is None:
+            continue
+        lines += [
+            f"**{data.task}** (synchrone Referenz, 25 Aktionen pro Plan):",
+            "",
+            "| Bildübertragung | KB pro Anfrage | Bandbreite/Roboter bei 3,2 Anfragen/s | Erfolg [KI] | Δ vs. roh [KI] (p) |",
+            "|---|---:|---:|---:|---:|",
+        ]
+        for label in [SYNC_MATCHED, *variants]:
+            run = data.runs[label]
+            kb, _, _ = run_bandwidth(run)
+            seeds = sorted(set(run.episodes) & set(reference.episodes))
+            success = estimate("success", run.ordered(seeds))
+            delta = paired_delta(reference, run, "success") if label != SYNC_MATCHED else None
+            name = {SYNC_MATCHED: "roh, 480×480 (LeRobot-Eval)"}.get(label, label.removeprefix("transport_"))
+            per_robot = 8.0 * kb * 1000.0 * (80.0 / 25.0) / 1e6
+            delta_text = "–" if delta is None else f"{fmt_interval(delta.interval, 'pp')} ({p_text(delta.p)})"
+            lines.append(
+                f"| {name} | {kb:.1f} | {per_robot:.1f} Mbit/s | {fmt_interval(success, 'pct')} | {delta_text} |"
+            )
+        lines.append("")
+    return lines
 
 
 def latency_slope(points: Sequence[EffectPoint], family: str, max_latency_ms: float) -> float | None:
@@ -882,7 +1034,7 @@ def latency_slope(points: Sequence[EffectPoint], family: str, max_latency_ms: fl
 
 # --------------------------------------------------------------------------------------------- figures
 def figure_validation(cases: Sequence[ValidationCase], path: Path) -> None:
-    rows = [c for c in cases if c.model_deltas or c.replay_deltas]
+    rows = [c for c in cases if any(c.deltas(source) for source, _ in SOURCES)]
     if not rows:
         return
     fig, axes, layout = make_figure(1, 2, 3.6, 0.32 * len(rows) + 0.6, left_in=2.6, header_in=1.25)
@@ -894,14 +1046,15 @@ def figure_validation(cases: Sequence[ValidationCase], path: Path) -> None:
         "über der Null, stimmen beide Messungen innerhalb der Unsicherheit überein.",
     )
     sources = (
-        ("Modell", "model_deltas", CATEGORICAL[0], "o"),
-        ("Replay", "replay_deltas", CATEGORICAL[1], "s"),
+        ("Modell (gepoolt)", "model", CATEGORICAL[0], "o"),
+        ("Modell (sitzungsgenau)", "session", CATEGORICAL[2], "D"),
+        ("Replay", "replay", CATEGORICAL[1], "s"),
     )
     labels = [f"{c.profile}: {SCENARIO_LABELS[c.scenario]}" for c in rows]
     for ax, metric, scale, unit in zip(axes[0], ("success", "reward"), (100.0, 1.0), ("pp", ""), strict=True):
-        for offset, (_name, attribute, color, marker) in zip((-0.15, 0.15), sources, strict=True):
+        for offset, (_name, source, color, marker) in zip((-0.22, 0.0, 0.22), sources, strict=True):
             for y, case in enumerate(rows):
-                delta = getattr(case, attribute).get(metric)
+                delta = case.deltas(source).get(metric)
                 if delta is None:
                     continue
                 iv = delta.interval
@@ -918,7 +1071,7 @@ def figure_validation(cases: Sequence[ValidationCase], path: Path) -> None:
         Line2D([], [], color=color, marker=marker, linewidth=2, label=f"Simulationszeit: {name}")
         for name, _, color, marker in sources
     ]
-    header_legend(fig, layout, handles, ncol=2, top_in=top + 0.05)
+    header_legend(fig, layout, handles, ncol=3, top_in=top + 0.05)
     fig.savefig(path, dpi=DPI)
     plt.close(fig)
 
@@ -1038,14 +1191,14 @@ def figure_latency_effect(points: Sequence[EffectPoint], path: Path) -> None:
     if not points:
         return
     families = list(dict.fromkeys(p.family for p in points))
-    fig, axes, layout = make_figure(1, 1, 6.2, 3.2, header_in=1.35)
-    ax = axes[0][0]
+    fig, axes, layout = make_figure(1, 2, 3.6, 3.0, header_in=1.45, sharey=True)
     top = header(
         fig,
         layout,
         "Schadet Latenz SmolVLA mehr als PushT?",
-        "Erfolgsquote relativ zur passenden synchronen Referenz gegen die mediane Ende-zu-Ende-Latenz; "
-        "jeder Punkt ist eine Bedingung (Netz-Szenario × Brain-Rechenzeit).",
+        "Erfolgsquote relativ zur passenden synchronen Referenz gegen die mediane Ende-zu-Ende-Latenz, links in "
+        "ms, rechts in Planperioden (PushT: 8 Ticks bei 10 Hz = 800 ms, SmolVLA: 25 Ticks bei 80 Hz = 313 ms). "
+        "Jeder Punkt ist eine Bedingung (Netz-Szenario × Brain-Rechenzeit).",
     )
     palette = {
         "PushT kalibriert": REFERENCE_GRAY,
@@ -1055,23 +1208,29 @@ def figure_latency_effect(points: Sequence[EffectPoint], path: Path) -> None:
         "coffee-push-v3": CATEGORICAL[1],
     }
     markers = {"PushT kalibriert": "s", "PushT ddim10": "D"}
-    for family in families:
-        chosen = sorted((p for p in points if p.family == family), key=lambda p: p.latency_ms)
-        ax.plot(
-            [p.latency_ms for p in chosen],
-            [p.relative_success for p in chosen],
-            linestyle="none",
-            marker=markers.get(family, "o"),
-            color=palette.get(family, INK_2),
-            markersize=6,
-            markeredgecolor="white",
-            label=family,
-        )
-    ax.axhline(1.0, color=MUTED, linewidth=1.0, linestyle=":")
-    ax.set_xscale("log")
-    ax.set_xlabel("Mediane Ende-zu-Ende-Latenz (ms)")
-    ax.set_ylabel("Erfolg relativ zur Sync-Referenz")
-    percent_axis(ax)
+    for ax, attribute, xlabel in zip(
+        axes[0],
+        ("latency_ms", "latency_periods"),
+        ("Mediane Ende-zu-Ende-Latenz (ms)", "Latenz in Planperioden"),
+        strict=True,
+    ):
+        for family in families:
+            chosen = sorted((p for p in points if p.family == family), key=lambda p: p.latency_ms)
+            ax.plot(
+                [getattr(p, attribute) for p in chosen],
+                [p.relative_success for p in chosen],
+                linestyle="none",
+                marker=markers.get(family, "o"),
+                color=palette.get(family, INK_2),
+                markersize=6,
+                markeredgecolor="white",
+                label=family,
+            )
+        ax.axhline(1.0, color=MUTED, linewidth=1.0, linestyle=":")
+        ax.set_xscale("log")
+        ax.set_xlabel(xlabel)
+        percent_axis(ax)
+    axes[0][0].set_ylabel("Erfolg relativ zur Sync-Referenz")
     handles = [
         Line2D([], [], linestyle="none", marker=markers.get(f, "o"), color=palette.get(f, INK_2), label=f)
         for f in families
@@ -1104,8 +1263,7 @@ def write_report(results: Path, reports: Path) -> Path:
     figures = reports / "figures"
     figures.mkdir(parents=True, exist_ok=True)
     cases = load_validation(results)
-    model_verdict = verdict(cases, "model")
-    replay_verdict = verdict(cases, "replay")
+    verdicts = {source: verdict(cases, source) for source, _ in SOURCES}
     noise, models = noise_rows(results)
     tasks = load_smolvla(results)
     points = latency_effects(results, tasks)
@@ -1123,17 +1281,21 @@ def write_report(results: Path, reports: Path) -> Path:
         "",
         "## Validierung: Simulationszeit gegen Echtzeit",
         "",
-        f"Latenzmodell: {model_verdict.inside} von {model_verdict.comparisons} gepaarten Vergleichen "
-        f"(Erfolg, Ø Max-Reward, Planalter, Starvation je Profil und Szenario) haben ein 95-%-Intervall, das die "
-        f"Null enthält; nach Holm-Korrektur sind {model_verdict.holm_significant} signifikant. "
-        f"Replay: {replay_verdict.inside} von {replay_verdict.comparisons}, Holm-signifikant "
-        f"{replay_verdict.holm_significant}.",
+        "Gepaarte Vergleiche je Profil, Szenario und Metrik (Erfolg, Ø Max-Reward, Planalter, Starvation): Zahl "
+        "der 95-%-Intervalle der Differenz, die die Null enthalten, und der nach Holm signifikanten Differenzen.",
+        "",
+        "| Quelle | Vergleiche | Intervall enthält 0 | Holm-signifikant |",
+        "|---|---:|---:|---:|",
+        *[
+            f"| {name} | {verdicts[source].comparisons} | {verdicts[source].inside} | "
+            f"{verdicts[source].holm_significant} |"
+            for source, name in SOURCES
+        ],
         "",
     ]
-    if model_verdict.outside:
-        lines += ["Intervalle ohne die Null (Latenzmodell): " + "; ".join(model_verdict.outside) + ".", ""]
-    if replay_verdict.outside:
-        lines += ["Intervalle ohne die Null (Replay): " + "; ".join(replay_verdict.outside) + ".", ""]
+    for source, name in SOURCES:
+        if verdicts[source].outside:
+            lines += [f"Intervalle ohne die Null ({name}): " + "; ".join(verdicts[source].outside) + ".", ""]
     lines += [
         f"Replay-Treue: von {replay_total.episodes} Phase-1-Episoden sind {replay_total.identical} bitgleich "
         f"reproduziert, {replay_total.same_outcome} gleich bis auf die letzten Float-Bits der Abdeckung, "
@@ -1182,6 +1344,10 @@ def write_report(results: Path, reports: Path) -> Path:
         for data in tasks:
             lines += [f"### {data.task}", "", *smolvla_table(data), ""]
         lines += ["![SmolVLA](figures/phase3a_smolvla.png)", ""]
+        lines += ["### Erfolgsverlust gegen die Sync-Referenz je Aufgabe", "", *task_comparison(tasks), ""]
+        transport = transport_table(tasks)
+        if transport:
+            lines += ["### Bildübertragung", "", *transport]
     if points:
         lines += [
             "## Latenzwirkung: SmolVLA gegen PushT",

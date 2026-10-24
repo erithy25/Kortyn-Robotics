@@ -6,6 +6,9 @@ Everything that can be tuned lives in YAML files under ``kortyn/experiments/``:
 * ``<scenario>.yaml`` – one network scenario (delay, jitter, bandwidth, stalls) and the agent mode.
 * ``phase2/*.yaml``   – phase-2 experiments (freshness strategies); they ``extends: ../base.yaml`` so the
   environment, checkpoint, Brain profiles and seeds are inherited unchanged.
+* ``phase3a/*.yaml``  – simulation-time experiments (``python -m kortyn.run_virtual``): hardware profiles
+  (service-time distributions per Brain profile) and timing models (latency model or replay) per run;
+  ``smolvla_*.yaml`` switch to SmolVLA on Meta-World (``env.kind: metaworld``).
 
 YAML is decoded with ``draccus.decode`` (the config library LeRobot uses), which rejects unknown keys and
 wrongly typed values. Semantic checks (ranges, consistency) live in ``__post_init__`` of each dataclass.
