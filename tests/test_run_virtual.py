@@ -235,3 +235,27 @@ def test_phase3a_experiment_configs_load_and_inherit_phase1():
         for suite in config.experiment.suites:
             for plan in select_virtual_plans(config, suite.profile, None):
                 assert plan.timing_name in config.timings
+
+
+def test_smolvla_experiment_configs_stand_still_when_starved():
+    from kortyn.config import EXPERIMENTS_DIR
+
+    paths = sorted((EXPERIMENTS_DIR / "phase3a").glob("smolvla_*.yaml"))
+    assert len(paths) == 5  # base, three tasks, transport ablation
+    tasks = set()
+    for path in paths:
+        config = load_config(path)
+        assert config.env.kind == "metaworld"
+        assert config.env.metaworld is not None
+        tasks.add(config.env.metaworld.task)
+        assert config.strategy("halten").guard.mode == "hold"
+        for suite in config.experiment.suites:
+            for plan in select_virtual_plans(config, suite.profile, None):
+                assert plan.timing_name in config.timings
+                if plan.scenario.mode == "sync":
+                    assert plan.label.startswith(("referenz_", "transport_"))
+                    continue
+                # real time: starvation must not keep the arm moving (actions are displacements)
+                assert plan.strategy_name == "halten"
+                assert plan.label == f"{plan.timing_name}__{plan.scenario.name}"
+    assert tasks == {"push-v3", "drawer-close-v3", "coffee-push-v3"}

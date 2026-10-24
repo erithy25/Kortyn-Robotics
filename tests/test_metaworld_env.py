@@ -81,7 +81,7 @@ def test_rendering_does_not_change_the_trajectory(env):
     np.testing.assert_array_equal(np.asarray(eager), np.asarray(lazy))
 
 
-def test_old_observations_cannot_be_rendered_and_hold_is_zero(env):
+def test_old_observations_cannot_be_rendered(env):
     first = env.reset(seed=1)
     assert "observation.images.camera1" in first
     second = env.step(np.zeros(4, dtype=np.float32)).observation
@@ -89,9 +89,28 @@ def test_old_observations_cannot_be_rendered_and_hold_is_zero(env):
     env.step(np.zeros(4, dtype=np.float32))
     with pytest.raises(EnvError, match="newest"):
         _ = second["observation.images.camera1"]
-    np.testing.assert_array_equal(env.hold_action(first), np.zeros(4, dtype=np.float32))
     assert env.fps == 80.0
     assert env.action_dim == 4
+
+
+def test_hold_stands_still_and_keeps_the_gripper_command(env):
+    first = env.reset(seed=1)
+    # after a reset the fingers are commanded open
+    np.testing.assert_array_equal(env.hold_action(first), np.array([0.0, 0.0, 0.0, -1.0], dtype=np.float32))
+    observation = first
+    for _ in range(20):  # move and close the gripper half-way
+        observation = env.step(np.array([0.5, 0.0, 0.3, 0.6], dtype=np.float32)).observation
+    hold = env.hold_action(observation)
+    np.testing.assert_allclose(hold, [0.0, 0.0, 0.0, 0.6], atol=1e-6)
+    states = []
+    for _ in range(80):
+        observation = env.step(hold).observation
+        np.testing.assert_allclose(env.hold_action(observation), hold, atol=1e-6)
+        states.append(np.asarray(observation["observation.state"]).copy())
+    # the hand lags behind its target: it finishes the last commanded motion, then stands still (no drift)
+    settled, end = states[39], states[-1]
+    assert np.max(np.abs(end[:3] - settled[:3])) < 1e-3
+    assert abs(float(end[3] - settled[3])) < 1e-3  # the gripper opening stays
 
 
 def test_task_description_and_instruction_override():

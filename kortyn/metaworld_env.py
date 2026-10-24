@@ -132,8 +132,22 @@ class MetaWorldEnv:
         )
 
     def hold_action(self, observation: dict[str, Array]) -> FloatArray:
-        """Zero displacement: the arm stays where it is (gripper command 0)."""
-        return np.zeros(self.action_dim, dtype=np.float32)
+        """Stand still: zero end-effector displacement, the gripper keeps its current command.
+
+        The xyz part of an action moves the mocap target by an offset, so 0 keeps the arm where it is. The
+        gripper part is the position target of the two finger actuators (``ctrl = [a, -a]``); a 0 there would
+        move the fingers to half-closed and could drop an object, so the hold action repeats the target the
+        fingers have (open after a reset). What a robot does when its driver receives no new command.
+        """
+        ctrl = np.asarray(self._sim.data.ctrl, dtype=np.float64)
+        if self.action_dim != 4 or ctrl.shape != (2,):
+            raise EnvError(
+                f"hold needs Meta-World's 4-D action and two finger actuators, got action_dim "
+                f"{self.action_dim} and {ctrl.shape[0]} actuators"
+            )
+        action = np.zeros(self.action_dim, dtype=np.float32)
+        action[3] = np.float32(np.clip(ctrl[0], -1.0, 1.0))
+        return action
 
     def close(self) -> None:
         self._lerobot.close()

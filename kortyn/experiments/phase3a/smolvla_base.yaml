@@ -5,6 +5,9 @@
 # with published consumer-GPU inference times (10 flow-matching steps; spread 5 % assumed) plus the phase-1
 # network scenarios: schnell = RTX 4090, mittel = RTX 3090, langsam = Apple M4; grenzfall = Apple M1, whose
 # latency exceeds a whole chunk. Real CPU inference times are documented in the report.
+# Starvation (no plan left): the arm stands still (strategy "halten"). In phase 1 the agent repeated the last
+# action, which for PushT's absolute position targets means standing still; Meta-World's actions are
+# end-effector displacements, so repeating one would keep the arm moving instead.
 # Run:  python -m kortyn.run_virtual --config kortyn/experiments/phase3a/smolvla_push.yaml
 brain:
   device: cpu
@@ -33,6 +36,11 @@ env:                            # mirrors LeRobot's MetaworldEnv (checked by tes
     agent_pos: observation.state
   hold_action_key: null         # actions are end-effector displacements: hold = zero action
   metaworld: {task: push-v3, camera_name: corner2}
+
+strategies:
+  halten:
+    description: "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer hält)"
+    guard: {mode: hold}
 
 profiles:
   smolvla:
@@ -96,17 +104,17 @@ experiment:
         - {scenario: referenz_sync, timing: mittel, sync_actions_per_chunk: 50, label: referenz_sync50}
         - {scenario: referenz_sync, timing: mittel, label: referenz_sync25}
         # real time: four network scenarios x three GPU profiles
-        - {scenario: gut, timing: schnell}
-        - {scenario: buero_wlan, timing: schnell}
-        - {scenario: schlecht, timing: schnell}
-        - {scenario: sehr_schlecht, timing: schnell}
-        - {scenario: gut, timing: mittel}
-        - {scenario: buero_wlan, timing: mittel}
-        - {scenario: schlecht, timing: mittel}
-        - {scenario: sehr_schlecht, timing: mittel}
-        - {scenario: gut, timing: langsam}
-        - {scenario: buero_wlan, timing: langsam}
-        - {scenario: schlecht, timing: langsam}
-        - {scenario: sehr_schlecht, timing: langsam}
+        - {scenario: gut, timing: schnell, strategy: halten, label: schnell__gut}
+        - {scenario: buero_wlan, timing: schnell, strategy: halten, label: schnell__buero_wlan}
+        - {scenario: schlecht, timing: schnell, strategy: halten, label: schnell__schlecht}
+        - {scenario: sehr_schlecht, timing: schnell, strategy: halten, label: schnell__sehr_schlecht}
+        - {scenario: gut, timing: mittel, strategy: halten, label: mittel__gut}
+        - {scenario: buero_wlan, timing: mittel, strategy: halten, label: mittel__buero_wlan}
+        - {scenario: schlecht, timing: mittel, strategy: halten, label: mittel__schlecht}
+        - {scenario: sehr_schlecht, timing: mittel, strategy: halten, label: mittel__sehr_schlecht}
+        - {scenario: gut, timing: langsam, strategy: halten, label: langsam__gut}
+        - {scenario: buero_wlan, timing: langsam, strategy: halten, label: langsam__buero_wlan}
+        - {scenario: schlecht, timing: langsam, strategy: halten, label: langsam__schlecht}
+        - {scenario: sehr_schlecht, timing: langsam, strategy: halten, label: langsam__sehr_schlecht}
         # boundary case: every plan arrives after its whole chunk has passed (network only makes it worse)
-        - {scenario: gut, timing: grenzfall}
+        - {scenario: gut, timing: grenzfall, strategy: halten, label: grenzfall__gut}
