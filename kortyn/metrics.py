@@ -325,6 +325,46 @@ def paired_mean_difference(
     return float(np.mean(diffs)), bootstrap_ci([[d] for d in diffs], mean, n_boot=n_boot, seed=seed)
 
 
+def paired_permutation_p(diffs: Sequence[float], n_resamples: int = 20000, seed: int = 0) -> float:
+    """Two-sided sign-flip permutation test of ``mean(diffs) == 0`` for paired differences.
+
+    Under the null hypothesis the sign of every paired difference is exchangeable. Exact enumeration for up
+    to 16 pairs, otherwise a Monte-Carlo estimate with the add-one correction (never exactly 0).
+    """
+    values = np.asarray(list(diffs), dtype=np.float64)
+    if values.size == 0:
+        raise ValueError("no paired differences")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("paired differences must be finite")
+    if n_resamples < 1:
+        raise ValueError(f"n_resamples must be >= 1, got {n_resamples}")
+    observed = abs(float(values.mean()))
+    tolerance = 1e-12 * max(1.0, float(np.abs(values).max()))  # ties of the statistic count as extreme
+    if values.size <= 16:
+        n = values.size
+        signs = 1.0 - 2.0 * ((np.arange(2**n)[:, None] >> np.arange(n)) & 1)
+        statistics = np.abs((signs * values).mean(axis=1))
+        return float(np.mean(statistics >= observed - tolerance))
+    rng = np.random.default_rng(seed)
+    signs = rng.choice(np.array([-1.0, 1.0]), size=(n_resamples, values.size))
+    statistics = np.abs((signs * values).mean(axis=1))
+    return float((1 + np.count_nonzero(statistics >= observed - tolerance)) / (n_resamples + 1))
+
+
+def holm_adjust(pvalues: Sequence[float]) -> list[float]:
+    """Holm-Bonferroni adjusted p-values (family-wise error rate), in the order of the input."""
+    if any(not 0.0 <= p <= 1.0 for p in pvalues):
+        raise ValueError("p-values must lie in [0, 1]")
+    m = len(pvalues)
+    order = sorted(range(m), key=lambda i: pvalues[i])
+    adjusted = [1.0] * m
+    running = 0.0
+    for rank, index in enumerate(order):
+        running = max(running, min(1.0, (m - rank) * pvalues[index]))
+        adjusted[index] = running
+    return adjusted
+
+
 # --------------------------------------------------------------------------------------------- summary
 
 

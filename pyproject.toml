@@ -93,6 +93,7 @@ ignore = ["ANN401", "RUF001", "RUF002", "RUF003"]
 "tests/*" = ["ANN"]
 # German report prose lives in long f-string templates; wrapping them hurts readability more than it helps.
 "kortyn/report.py" = ["E501"]
+"kortyn/report_phase2.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"

@@ -213,11 +213,21 @@ def mean_or_nan(values: Sequence[float]) -> float:
 
 
 def bar_with_round_end(
-    ax: Axes, x: float, value: float, width: float, color: str, radius_px: float = 4.0
+    ax: Axes,
+    x: float,
+    value: float,
+    width: float,
+    color: str,
+    radius_px: float = 4.0,
+    hatch: str | None = None,
 ) -> None:
-    """Vertical bar: 4px rounded data end, square at the baseline (axis limits must be final)."""
+    """Vertical bar: 4px rounded data end, square at the baseline (axis limits must be final).
+
+    ``hatch``: optional texture in the surface color (secondary encoding, e.g. a variant of a series).
+    """
     if value <= 0:
         return
+    texture: dict[str, Any] = {"hatch": hatch, "hatchcolor": SURFACE} if hatch else {}
     ax.figure.canvas.draw()  # make sure the axes geometry is current
     bbox = ax.get_window_extent()
     x0, x1 = ax.get_xlim()
@@ -236,10 +246,13 @@ def bar_with_round_end(
         facecolor=color,
         edgecolor="none",
         zorder=3,
+        **texture,
     )
     ax.add_patch(patch)
     ax.add_patch(
-        Rectangle((left, 0.0), width, min(value, ry * 1.5), facecolor=color, edgecolor="none", zorder=3)
+        Rectangle(
+            (left, 0.0), width, min(value, ry * 1.5), facecolor=color, edgecolor="none", zorder=3, **texture
+        )
     )
 
 
@@ -1294,10 +1307,15 @@ def write_report(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Create reports/phase1.md and figures from results/.")
+    parser = argparse.ArgumentParser(
+        description="Create reports/phase1.md and reports/phase2.md with figures from results/."
+    )
     parser.add_argument("--config", default=str(DEFAULT_BASE_CONFIG))
     parser.add_argument("--results-dir", default=None)
     parser.add_argument("--reports-dir", default=None)
+    parser.add_argument(
+        "--phase", choices=["all", "1", "2"], default="all", help="all = every phase with results"
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -1310,18 +1328,35 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     results_dir = Path(args.results_dir or config.experiment.results_dir)
     reports_dir = Path(args.reports_dir or config.experiment.reports_dir)
-    profiles: list[ProfileData] = []
-    for suite in config.experiment.suites:
-        directory = results_dir / suite.profile
-        if directory.is_dir():
-            data = load_profile(directory)
-            if data is not None:
-                profiles.append(data)
-    if not profiles:
+    written: list[Path] = []
+    if args.phase in ("all", "1"):
+        profiles: list[ProfileData] = []
+        for suite in config.experiment.suites:
+            directory = results_dir / suite.profile
+            if directory.is_dir():
+                data = load_profile(directory)
+                if data is not None:
+                    profiles.append(data)
+        if profiles:
+            written.append(write_report(config, results_dir, reports_dir, profiles))
+        elif args.phase == "1":
+            LOG.error("no phase-1 results in %s; run python -m kortyn.run_experiment first", results_dir)
+            return 1
+    if args.phase in ("all", "2"):
+        # imported here: the phase-2 report builds on this module's styles and loaders
+        from kortyn.report_phase2 import write_phase2_report
+
+        phase2 = write_phase2_report(config, results_dir, reports_dir)
+        if phase2 is not None:
+            written.append(phase2)
+        elif args.phase == "2":
+            LOG.error("no phase-2 results in %s/phase2", results_dir)
+            return 1
+    if not written:
         LOG.error("no results found in %s; run python -m kortyn.run_experiment first", results_dir)
         return 1
-    report = write_report(config, results_dir, reports_dir, profiles)
-    LOG.info("report written to %s", report)
+    for report in written:
+        LOG.info("report written to %s", report)
     return 0
 
 

@@ -11,11 +11,13 @@ from kortyn.metrics import (
     bootstrap_ci,
     emergency_flags,
     final_episodes,
+    holm_adjust,
     ipdv,
     max_reward,
     mcnemar_exact,
     paired_mean_difference,
     paired_outcomes,
+    paired_permutation_p,
     percentile,
     plan_ages_s,
     read_jsonl,
@@ -288,3 +290,39 @@ def test_summary_reports_plan_age_emergencies_and_brain_load():
     assert summary.inference_utilization == pytest.approx(10 * 349.0 / 20000.0)
     assert summary.queue_wait_mean_ms == pytest.approx(2.0)
     assert summary.brain_counter_utilization == pytest.approx(5000.0 / 20000.0)
+
+
+def test_paired_permutation_test_is_exact_for_few_pairs():
+    # 4 equal positive differences: only "all +" and "all -" are as extreme as observed -> 2 / 16
+    assert paired_permutation_p([0.1, 0.1, 0.1, 0.1]) == pytest.approx(2 / 16)
+    assert paired_permutation_p([0.0, 0.0, 0.0]) == pytest.approx(1.0)
+    assert paired_permutation_p([0.2, -0.2, 0.2, -0.2]) == pytest.approx(1.0)  # mean 0
+    # one large difference among small ones: flipping it is what matters (8 of 16 sign patterns)
+    assert paired_permutation_p([1.0, 0.01, -0.01, 0.01]) == pytest.approx(0.5)
+
+
+def test_paired_permutation_test_monte_carlo_for_many_pairs():
+    shifted = [0.1] * 30
+    p = paired_permutation_p(shifted, n_resamples=5000, seed=1)
+    assert p == pytest.approx(1 / 5001)  # add-one correction: never exactly 0
+    rng = np.random.default_rng(0)
+    noise = list(rng.normal(0.0, 0.1, size=40))
+    first = paired_permutation_p(noise, n_resamples=4000, seed=3)
+    assert first == paired_permutation_p(noise, n_resamples=4000, seed=3)  # deterministic
+    assert 0.05 < first <= 1.0
+    with pytest.raises(ValueError, match="no paired"):
+        paired_permutation_p([])
+    with pytest.raises(ValueError, match="finite"):
+        paired_permutation_p([0.1, float("nan")])
+    with pytest.raises(ValueError, match="n_resamples"):
+        paired_permutation_p([0.1] * 20, n_resamples=0)
+
+
+def test_holm_adjustment_known_values():
+    # sorted 0.01, 0.03, 0.04 -> 3 * 0.01, max(0.03, 2 * 0.03), max(0.06, 1 * 0.04)
+    assert holm_adjust([0.01, 0.04, 0.03]) == pytest.approx([0.03, 0.06, 0.06])
+    assert holm_adjust([0.5, 0.9]) == pytest.approx([1.0, 1.0])  # capped at 1
+    assert holm_adjust([0.02]) == pytest.approx([0.02])
+    assert holm_adjust([]) == []
+    with pytest.raises(ValueError, match=r"\[0, 1\]"):
+        holm_adjust([0.1, 1.5])
