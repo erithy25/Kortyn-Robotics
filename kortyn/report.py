@@ -32,7 +32,7 @@ import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
 from matplotlib.patches import FancyBboxPatch, Patch, Rectangle
-from matplotlib.ticker import PercentFormatter
+from matplotlib.ticker import FuncFormatter
 
 from kortyn.config import DEFAULT_BASE_CONFIG, ConfigError, KortynConfig, load_config
 from kortyn.metrics import (
@@ -160,35 +160,52 @@ def make_figure(
     return fig, axes, Layout(width, height, left_in)
 
 
-def header(fig: Any, layout: Layout, title: str, subtitle: str | None = None) -> None:
+def header(fig: Any, layout: Layout, title: str, subtitle: str | None = None) -> float:
+    """Title and (wrapped) subtitle; returns where a header legend can start, in inches from the top."""
     x = layout.left_in / layout.width_in
     fig.text(
         x, 1 - 0.14 / layout.height_in, title, ha="left", va="top", fontsize=13, fontweight="bold", color=INK
     )
-    if subtitle:
-        # ~0.065 in per character at 8.5 pt: wrap instead of running off the canvas on narrow figures
-        chars = max(40, int((layout.width_in - layout.left_in - 0.2) / 0.065))
-        fig.text(
-            x,
-            1 - 0.45 / layout.height_in,
-            textwrap.fill(subtitle, chars),
-            ha="left",
-            va="top",
-            fontsize=8.5,
-            color=INK_2,
-            linespacing=1.3,
-        )
+    if not subtitle:
+        return 0.45
+    # ~0.065 in per character at 8.5 pt: wrap instead of running off the canvas on narrow figures
+    chars = max(40, int((layout.width_in - layout.left_in - 0.2) / 0.065))
+    wrapped = textwrap.fill(subtitle, chars)
+    fig.text(
+        x,
+        1 - 0.45 / layout.height_in,
+        wrapped,
+        ha="left",
+        va="top",
+        fontsize=8.5,
+        color=INK_2,
+        linespacing=1.3,
+    )
+    return 0.45 + 0.155 * (wrapped.count("\n") + 1) + 0.03
 
 
-def header_legend(fig: Any, layout: Layout, handles: list[Any], ncol: int) -> None:
+def header_legend(fig: Any, layout: Layout, handles: list[Any], ncol: int, top_in: float = 0.62) -> None:
     fig.legend(
         handles=handles,
         loc="upper left",
-        bbox_to_anchor=(layout.left_in / layout.width_in - 0.01, 1 - 0.62 / layout.height_in),
+        bbox_to_anchor=(layout.left_in / layout.width_in - 0.01, 1 - top_in / layout.height_in),
         ncol=ncol,
         handlelength=1.6,
         columnspacing=1.4,
     )
+
+
+def published_rate(published: dict[str, Any] | None) -> float | None:
+    """Population success rate of the published evaluation (all episodes), else the rate on our seeds."""
+    if not published:
+        return None
+    if published.get("all_success_rate") is not None:
+        return float(published["all_success_rate"])
+    return float(published["successes"]) / float(published["seeds"]) if published.get("seeds") else None
+
+
+def percent_axis(ax: Axes, decimals: int = 0) -> None:
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{100 * value:.{decimals}f} %"))
 
 
 def mean_or_nan(values: Sequence[float]) -> float:
@@ -316,7 +333,7 @@ def network_label(meta: dict[str, Any], label: str) -> str:
 # --------------------------------------------------------------------------------------------- figures
 def figure_success(profiles: list[ProfileData], published: dict[str, Any] | None, path: Path) -> None:
     fig, axes, layout = make_figure(1, len(profiles), 4.9, 3.0, sharey=True, footer_in=0.75, header_in=1.45)
-    header(
+    top = header(
         fig,
         layout,
         "Erfolgsquote je Szenario",
@@ -324,23 +341,19 @@ def figure_success(profiles: list[ProfileData], published: dict[str, Any] | None
         "grau = synchrone Referenz",
     )
     legend_handles: list[Any] = [Line2D([], [], color=INK_2, linewidth=1.0, label="Wilson-95 %-KI")]
-    if published:
+    reference = published_rate(published)
+    if published and reference is not None:
         legend_handles.append(
             Line2D(
                 [],
                 [],
                 color=MUTED,
                 linewidth=1.0,
-                label=f"publiziert (DDPM-100, GPU, gleiche Seeds): "
-                f"{100 * published['successes'] / published['seeds']:.0f} %",
+                label=f"publiziert (DDPM-100, GPU): {100 * reference:.0f} % über {published['all_episodes']} "
+                f"Episoden ({100 * published['successes'] / published['seeds']:.0f} % auf diesen Seeds)",
             )
         )
-    fig.legend(
-        handles=legend_handles,
-        loc="upper left",
-        ncol=2,
-        bbox_to_anchor=(layout.left_in / layout.width_in - 0.01, 1 - 0.95 / layout.height_in),
-    )
+    header_legend(fig, layout, legend_handles, ncol=2, top_in=top)
     for ax, profile in zip(axes[0], profiles, strict=True):
         labels = figure_runs(profile)
         xs = np.arange(len(labels), dtype=float)
@@ -351,8 +364,8 @@ def figure_success(profiles: list[ProfileData], published: dict[str, Any] | None
         ax.grid(axis="x", visible=False)
         sampler = profile.meta.get("brain", {}).get("sampler", "")
         ax.set_title(f"{profile.name} ({sampler})", loc="left", pad=10)
-        if published:
-            ax.axhline(published["successes"] / published["seeds"], color=MUTED, linewidth=1.0, zorder=2)
+        if reference is not None:
+            ax.axhline(reference, color=MUTED, linewidth=1.0, zorder=2)
         bbox = ax.get_window_extent()
         width = min(0.55, 24 * (ax.get_xlim()[1] - ax.get_xlim()[0]) / bbox.width)
         for x, label in zip(xs, labels, strict=True):
@@ -422,13 +435,22 @@ def figure_latency(profiles: list[ProfileData], budget_ms: float, path: Path) ->
             )
             handles.append(line)
         ax.axvline(budget_ms, color=STATUS_CRITICAL, linewidth=1.0, zorder=2)
+        below = [
+            r.e2e_ms <= budget_ms
+            for label in NETWORK_RUNS
+            if label in profile.runs
+            for r in profile.runs[label].requests
+            if r.phase == "realtime" and r.e2e_ms is not None
+        ]
+        text_left = bool(below) and sum(below) < len(below) / 2  # curves right of the budget: write left
         ax.annotate(
             f"Budget {budget_ms:.0f} ms:\ndarüber verhungert\nder Roboter",
             (budget_ms, 0.04),
-            xytext=(4, 0),
+            xytext=(-4 if text_left else 4, 0),
             textcoords="offset points",
             fontsize=7.5,
             color=INK_2,
+            ha="right" if text_left else "left",
             va="bottom",
         )
         ax.set_xlim(0, max(budget_ms * 1.3, max_ms * 1.05))
@@ -452,8 +474,8 @@ def figure_breakdown(profiles: list[ProfileData], path: Path) -> None:
     fig, axes, layout = make_figure(
         1, len(profiles), 4.9, 2.2, sharex=True, left_in=1.25, wspace_in=1.3, header_in=1.25
     )
-    header(fig, layout, "Wohin die Reaktionszeit geht", "Mittelwerte über alle Echtzeit-Anfragen")
-    header_legend(fig, layout, [Patch(facecolor=c, label=n) for n, c in components], ncol=3)
+    top = header(fig, layout, "Wohin die Reaktionszeit geht", "Mittelwerte über alle Echtzeit-Anfragen")
+    header_legend(fig, layout, [Patch(facecolor=c, label=n) for n, c in components], ncol=3, top_in=top)
     for ax, profile in zip(axes[0], profiles, strict=True):
         labels = [label for label in NETWORK_RUNS if label in profile.runs]
         ys = np.arange(len(labels))[::-1].astype(float)
@@ -501,7 +523,7 @@ def figure_queue(profile: ProfileData, seed: int, refill_threshold: int, path: P
     labels = [label for label in NETWORK_RUNS if label in profile.runs]
     fig, axes, layout = make_figure(len(labels), 1, 9.2, 1.25, sharex=True, header_in=1.25, hspace_in=0.55)
     sampler = profile.meta.get("brain", {}).get("sampler", "")
-    header(
+    top = header(
         fig,
         layout,
         f"Queue-Füllstand über Zeit · {profile.name} ({sampler})",
@@ -524,6 +546,7 @@ def figure_queue(profile: ProfileData, seed: int, refill_threshold: int, path: P
             Patch(facecolor=STALL_SHADE, label="Netz-Stall"),
         ],
         ncol=4,
+        top_in=top,
     )
     for ax, label in zip(axes[:, 0], labels, strict=True):
         chosen, _ = final_episodes(profile.runs[label].episodes)
@@ -570,8 +593,8 @@ def figure_queue(profile: ProfileData, seed: int, refill_threshold: int, path: P
 def figure_starvation(profiles: list[ProfileData], path: Path) -> None:
     causes = [("Compute (Brain zu langsam)", CATEGORICAL[0]), ("Netz / Stall", CATEGORICAL[1])]
     fig, axes, layout = make_figure(1, len(profiles), 4.9, 2.6, sharey=True, header_in=1.25, footer_in=0.75)
-    header(fig, layout, "Starvation und ihre Ursache", "Verhungerte Zeit pro Minute Laufzeit")
-    header_legend(fig, layout, [Patch(facecolor=c, label=n) for n, c in causes], ncol=2)
+    top = header(fig, layout, "Starvation und ihre Ursache", "Verhungerte Zeit pro Minute Laufzeit")
+    header_legend(fig, layout, [Patch(facecolor=c, label=n) for n, c in causes], ncol=2, top_in=top)
     for ax, profile in zip(axes[0], profiles, strict=True):
         labels = [label for label in figure_runs(profile) if label != "referenz_sync"]
         xs = np.arange(len(labels), dtype=float)
@@ -642,7 +665,7 @@ def figure_ablation(profile: ProfileData, baseline: str, path: Path) -> None:
         ("Zeit verhungert", lambda s: s.starved_time_fraction, lambda s: None, "pct1"),
     ]
     fig, axes, layout = make_figure(1, len(panels), 3.1, 2.7, header_in=1.35, footer_in=0.85, wspace_in=0.7)
-    header(
+    top = header(
         fig,
         layout,
         "Ablation: Latenz oder Stall?",
@@ -654,11 +677,13 @@ def figure_ablation(profile: ProfileData, baseline: str, path: Path) -> None:
         layout,
         [Line2D([], [], color=c, marker="o", markersize=6, linewidth=2.0, label=n) for n, c, _, _ in series],
         ncol=2,
+        top_in=top,
     )
     x_of = {level: float(index) for index, level in enumerate(levels)}
     for ax, (title, value_of, ci_of, style) in zip(axes[0], panels, strict=True):
         lows: list[float] = []
         highs: list[float] = []
+        ends: list[tuple[float, float]] = []
         for _, color, points, side in series:
             xs = [x_of[level] + 0.08 * side for level, _ in points]
             ys = [float(value_of(profile.runs[label].summary) or 0.0) for _, label in points]
@@ -679,18 +704,7 @@ def figure_ablation(profile: ProfileData, baseline: str, path: Path) -> None:
                 ax.plot([x, x], [low, high], color=color, linewidth=1.0, zorder=2)
                 lows.append(low)
                 highs.append(high)
-            value = ys[-1]
-            label_text = {"pct0": f"{value:.0%}", "pct1": f"{value:.1%}", "f3": f"{value:.3f}"}[style]
-            ax.annotate(
-                label_text.replace("%", " %"),
-                (xs[-1], value),
-                xytext=(7 * side, 0),
-                textcoords="offset points",
-                ha="left" if side > 0 else "right",
-                va="center",
-                fontsize=8,
-                color=INK,
-            )
+            ends.append((xs[-1], ys[-1]))
         if style == "f3":
             ax.set_ylim(min(0.8, math.floor((min(lows) - 0.01) * 20) / 20), 1.0)
         elif style == "pct0":
@@ -698,8 +712,22 @@ def figure_ablation(profile: ProfileData, baseline: str, path: Path) -> None:
         else:
             ax.set_ylim(0.0, max(0.02, 1.15 * max(highs)))
         if style.startswith("pct"):
-            ax.yaxis.set_major_formatter(PercentFormatter(1.0, decimals=0 if style == "pct0" else 1))
-        ax.set_xlim(-0.5, len(levels) - 0.5)
+            percent_axis(ax, 0 if style == "pct0" else 1)
+        # values of the last level, right of both series, nudged apart when they would overlap
+        y_low, y_high = ax.get_ylim()
+        gap = 0.075 * (y_high - y_low)
+        order = sorted(range(len(ends)), key=lambda i: ends[i][1])
+        placed = [ends[i][1] for i in order]
+        for k in range(1, len(placed)):
+            if placed[k] - placed[k - 1] < gap:
+                middle = (placed[k] + placed[k - 1]) / 2
+                placed[k - 1], placed[k] = middle - gap / 2, middle + gap / 2
+        x_text = max(x for x, _ in ends) + 0.14
+        for index, y_text in zip(order, placed, strict=True):
+            value = ends[index][1]
+            text = f"{value:.3f}" if style == "f3" else f"{100 * value:.{0 if style == 'pct0' else 1}f} %"
+            ax.text(x_text, y_text, text, ha="left", va="center", fontsize=8, color=INK)
+        ax.set_xlim(-0.5, len(levels) - 0.05)
         ax.set_xticks(
             list(x_of.values()),
             [network_label(profile.meta, no_stall_of.get(lv, lv)).replace(" ± ", "±") for lv in levels],
@@ -708,6 +736,158 @@ def figure_ablation(profile: ProfileData, baseline: str, path: Path) -> None:
         ax.grid(axis="x", visible=False)
         ax.set_title(title, loc="left", pad=8)
     axes[0][len(panels) // 2].set_xlabel("Netz-RTT (Round-Trip ± Jitter)")
+    fig.savefig(path, dpi=DPI)
+    plt.close(fig)
+
+
+SHORT_LABELS = {
+    "referenz_sync": "Sync",
+    "gut": "gut",
+    "buero_wlan": "Büro-WLAN",
+    "schlecht": "schlecht",
+    "sehr_schlecht": "sehr schlecht",
+}
+
+
+def annotate_points(
+    ax: Axes, points: list[tuple[float, float]], labels: list[tuple[float, float, str]], fontsize: float = 7.5
+) -> None:
+    """Direct labels that avoid the canvas edge, all other points and each other (first free position)."""
+    fig = ax.figure
+    box = ax.get_window_extent()
+    to_axes = ax.transData + ax.transAxes.inverted()
+    px_per_pt = fig.dpi / 72.0
+    occupied = [tuple(to_axes.transform(point)) for point in points]
+    taken: list[tuple[float, float, float, float]] = []
+    marker = 5.0 * px_per_pt / box.width  # half a marker, in axes fractions
+    for x, y, text in sorted(labels, key=lambda label: -label[0]):  # the right edge constrains most
+        ax_x, ax_y = to_axes.transform((x, y))
+        width = 0.6 * fontsize * len(text) * px_per_pt / box.width
+        height = 1.25 * fontsize * px_per_pt / box.height
+        below = -3 - 1.25 * fontsize
+        candidates: list[tuple[float, float, str]] = [
+            (6, 3, "left"),
+            (6, below, "left"),
+            (-6, 3, "right"),
+            (-6, below, "right"),
+            (0, 7, "center"),
+            (0, below - 4, "center"),
+            (0, 20, "center"),
+        ]
+        for dx, dy, ha in candidates:
+            shift = {"left": 0.0, "right": width, "center": width / 2}[ha]
+            x0 = ax_x + dx * px_per_pt / box.width - shift
+            y0 = ax_y + dy * px_per_pt / box.height
+            x1, y1 = x0 + width, y0 + height
+            inside = x0 >= 0.0 and x1 <= 1.03 and y0 >= 0.0 and y1 <= 1.0  # may reach into the right margin
+            clear = all(
+                not (x0 - marker < ox < x1 + marker and y0 - marker < oy < y1 + marker)
+                for ox, oy in occupied
+                if (ox, oy) != (ax_x, ax_y)
+            )
+            free = all(x1 < a0 or x0 > a1 or y1 < b0 or y0 > b1 for a0, b0, a1, b1 in taken)
+            if inside and clear and free:
+                taken.append((x0, y0, x1, y1))
+                ax.annotate(
+                    text,
+                    (x, y),
+                    xytext=(dx, dy),
+                    textcoords="offset points",
+                    fontsize=fontsize,
+                    color=INK_2,
+                    ha=ha,
+                    va="bottom",
+                )
+                break
+
+
+def figure_age(profiles: list[ProfileData], path: Path) -> None:
+    """Quality against the age of the executed actions, for every run of every profile."""
+    fig, axes, layout = make_figure(1, 2, 4.3, 2.9, header_in=1.4, footer_in=0.8, wspace_in=0.8)
+    top = header(
+        fig,
+        layout,
+        "Je älter der ausgeführte Plan, desto schlechter",
+        "Jeder Punkt = ein Lauf (50 Episoden, gleiche Seeds) · x = mittleres Alter der ausgeführten Aktion "
+        "(Beobachtung → Ausführung) · Konfidenzintervalle in den Tabellen",
+    )
+    colors = {profile.name: CATEGORICAL[index % len(CATEGORICAL)] for index, profile in enumerate(profiles)}
+    handles: list[Any] = [
+        Line2D(
+            [],
+            [],
+            color=colors[profile.name],
+            marker="o",
+            markersize=6,
+            linestyle="none",
+            label=f"{profile.name} ({profile.meta.get('brain', {}).get('sampler', '')})",
+        )
+        for profile in profiles
+    ]
+    handles += [
+        Line2D(
+            [],
+            [],
+            color=INK_2,
+            marker="o",
+            markerfacecolor=SURFACE,
+            markersize=6,
+            linestyle="none",
+            label="hohl = synchrone Referenz",
+        ),
+        Line2D(
+            [],
+            [],
+            color=INK_2,
+            marker="D",
+            markersize=5,
+            linestyle="none",
+            label="Raute = Ablation ohne Stall",
+        ),
+    ]
+    header_legend(fig, layout, handles, ncol=len(handles), top_in=top)
+    panels: list[tuple[str, Callable[[RunSummary], float | None], bool]] = [
+        ("Erfolgsquote", lambda s: s.success_rate, True),
+        ("Ø Max-Reward", lambda s: s.max_reward_mean, False),
+    ]
+    for ax, (title, value_of, is_rate) in zip(axes[0], panels, strict=True):
+        points: list[tuple[float, float, str, str, str]] = []
+        for profile in profiles:
+            for label in ordered(profile.runs):
+                run = profile.runs[label]
+                value = value_of(run.summary)
+                if run.summary.mean_action_age_ticks is None or value is None:
+                    continue
+                age_s = run.summary.mean_action_age_ticks / run.episodes[0].fps
+                points.append((age_s, float(value), label, profile.name, run.summary.mode))
+        for age_s, value, label, name, mode in points:
+            sync = mode == "sync"
+            ax.plot(
+                [age_s],
+                [value],
+                marker="D" if label.endswith(ABLATION_SUFFIX) else "o",
+                markersize=6 if label.endswith(ABLATION_SUFFIX) else 7,
+                linestyle="none",
+                color=colors[name],
+                markerfacecolor=SURFACE if sync else colors[name],
+                markeredgecolor=colors[name] if sync else SURFACE,
+                markeredgewidth=1.5,
+                zorder=3,
+            )
+        ax.set_xlim(0, max(p[0] for p in points) * 1.12)
+        if is_rate:
+            ax.set_ylim(0, 1.0)
+            percent_axis(ax)
+        else:
+            ax.set_ylim(min(0.8, math.floor((min(p[1] for p in points) - 0.02) * 20) / 20), 1.0)
+        named: list[tuple[float, float, str]] = []
+        for age_s, value, label, name, _ in points:
+            text = SHORT_LABELS.get(label)
+            if text is not None and not (label == "referenz_sync" and name != profiles[0].name):
+                named.append((age_s, value, text))
+        annotate_points(ax, [(p[0], p[1]) for p in points], named)
+        ax.set_xlabel("Ø Alter der ausgeführten Aktion, s")
+        ax.set_title(title, loc="left", pad=8)
     fig.savefig(path, dpi=DPI)
     plt.close(fig)
 
@@ -730,7 +910,7 @@ def table_main(profile: ProfileData, baseline: str) -> list[str]:
     rows = [
         "| Szenario | Netz (RTT) | n | Erfolg [95 %-KI] | Δ Erfolg vs. gut (McNemar p) | Ø Max-Reward "
         "| Δ Reward vs. gut [95 %-KI] | E2E p50 / p95 / p99 (ms) | Reaktion p50 (ms) | Netz-RTT p50 (ms) "
-        "| Jitter (ms) | Starvation/min | verhungert | Payload ↑/↓ (B) |",
+        "| Jitter (ms) | Starvation-Ereignisse/min | verhungert | Payload ↑/↓ (B) |",
         "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     base = profile.runs.get(baseline)
@@ -759,9 +939,7 @@ def table_main(profile: ProfileData, baseline: str) -> list[str]:
                     fmt(s.reaction_p50_ms) if realtime else "–",
                     fmt(s.network_p50_ms, 1),
                     fmt(s.jitter_ipdv_ms, 1),
-                    f"{s.starvation_events_per_min:.1f} Ereign. · {s.starved_ticks_per_min:.0f} Ticks"
-                    if realtime
-                    else "–",
+                    f"{s.starvation_events_per_min:.1f}" if realtime else "–",
                     pct(s.starved_time_fraction, 1) if realtime else "–",
                     f"{fmt(s.request_bytes_mean)} / {fmt(s.response_bytes_mean)}",
                 ]
@@ -900,18 +1078,18 @@ def validation_rows(
         if published.get("all_success_rate") is not None:
             rows.append(
                 f"| A₀ · publiziert, alle Episoden (DDPM-100, GPU) | Populationswert des Checkpoints | "
-                f"{published['all_success_rate']:.1%} | {fmt(published.get('all_avg_max_reward'), 3)} | "
+                f"{pct(published['all_success_rate'], 1)} | {fmt(published.get('all_avg_max_reward'), 3)} | "
                 f"{published['all_episodes']} |"
             )
         rows.append(
             f"| A · publiziert, Seeds wie hier (`eval_info.json`, DDPM-100, GPU) | Referenz | "
-            f"{published['successes'] / published['seeds']:.0%} | {fmt(published.get('avg_max_reward'), 3)} | "
+            f"{pct(published['successes'] / published['seeds'])} | {fmt(published.get('avg_max_reward'), 3)} | "
             f"{published['seeds']} |"
         )
     for _, summary in sorted(lerobot.items()):
         rows.append(
             f"| B · `lerobot-eval`, migrierter Checkpoint, {summary['sampler']} ({summary['device']}) | "
-            f"Migration + Sampler | {summary['success_rate']:.0%} | {fmt(summary.get('avg_max_reward'), 3)} | "
+            f"Migration + Sampler | {pct(summary['success_rate'])} | {fmt(summary.get('avg_max_reward'), 3)} | "
             f"{summary['episodes']} |"
         )
     for profile in profiles:
@@ -924,7 +1102,7 @@ def validation_rows(
                 s = profile.runs[label].summary
                 sampler = profile.meta.get("brain", {}).get("sampler", profile.name)
                 rows.append(
-                    f"| {stage} · Kortyn `{label}`, {sampler} | {isolates} | {s.success_rate:.0%} | "
+                    f"| {stage} · Kortyn `{label}`, {sampler} | {isolates} | {pct(s.success_rate)} | "
                     f"{fmt(s.max_reward_mean, 3)} | {s.episodes} |"
                 )
     return rows
@@ -951,11 +1129,13 @@ def write_report(
         "latency": "phase1_latenzverteilung.png",
         "breakdown": "phase1_latenz_zerlegung.png",
         "starvation": "phase1_starvation.png",
+        "age": "phase1_aktionsalter.png",
     }
     figure_success(profiles, published, reports_dir / figures["success"])
     figure_latency(profiles, budget, reports_dir / figures["latency"])
     figure_breakdown(profiles, reports_dir / figures["breakdown"])
     figure_starvation(profiles, reports_dir / figures["starvation"])
+    figure_age(profiles, reports_dir / figures["age"])
     ablation_figures: dict[str, str] = {}
     for profile in profiles:
         if ablation_pairs(profile) and "gut" in profile.runs:
@@ -1009,6 +1189,14 @@ def write_report(
         sampler = profile.meta.get("brain", {}).get("sampler", profile.name)
         lines += [f"## Ergebnisse · Brain-Profil `{profile.name}` ({sampler})", ""]
         lines += table_main(profile, "gut")
+        if "gut_wiederholung" in profile.runs and "gut" in profile.runs:
+            noise = reward_delta(profile.runs["gut"].summary, profile.runs["gut_wiederholung"].summary)
+            lines += [
+                "",
+                f"Lesehilfe: `gut_wiederholung` ist exakt dieselbe Bedingung wie `gut`. Ihr Δ ({noise} Reward) "
+                "zeigt das Rauschen zwischen zwei Läufen (Echtzeit ist nicht bit-genau wiederholbar). Kleinere "
+                "Effekte sind mit n = 50 nicht belastbar.",
+            ]
         lines += ["", "<details><summary>Diagnose (Budget, Starvation-Ursache, Messhygiene)</summary>", ""]
         lines += table_diagnostics(profile, budget)
         lines += ["", "</details>", ""]
@@ -1034,6 +1222,8 @@ def write_report(
         f"![Zerlegung der Reaktionszeit]({figures['breakdown']})",
         "",
         f"![Starvation und Ursache]({figures['starvation']})",
+        "",
+        f"![Aktionsalter und Qualität]({figures['age']})",
         "",
     ]
     for name in queue_figures:
