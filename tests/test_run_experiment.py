@@ -147,6 +147,57 @@ def test_full_pipeline_writes_results_and_resumes(tmp_path, tiny_pusht_checkpoin
         assert (reports / name).stat().st_size > 10_000, name
 
 
+def test_phase_two_strategies_run_end_to_end_with_inpainting(tmp_path, tiny_pusht_checkpoint):
+    """Real Brain + proxy + agent with the tiny diffusion policy: guides travel through the proxy, the
+    Brain inpaints, load counters are read directly from the Brain, strategies land in the metadata."""
+    config = write_config(tmp_path, tiny_pusht_checkpoint)
+    text = config.read_text(encoding="utf-8")
+    text = text.replace(
+        "experiment:",
+        "strategies:\n"
+        "  baseline: {}\n"
+        "  adaptiv_inpaint:\n"
+        "    request: {mode: adaptive, target_age_s: 0.6}\n"
+        "    smoothing: {mode: inpaint, schedule: exp}\n"
+        "    guard: {mode: hold, max_plan_age_s: 1.2}\n"
+        "experiment:",
+    )
+    text = text.replace(
+        "        - {scenario: referenz_sync}\n        - {scenario: gut}\n        - {scenario: schlecht}\n",
+        "        - {scenario: schlecht, strategy: baseline}\n"
+        "        - {scenario: schlecht, strategy: adaptiv_inpaint}\n",
+    )
+    config.write_text(text, encoding="utf-8")
+    assert run_experiment.main(["--config", str(config), "--log-level", "WARNING"]) == 0
+
+    root = tmp_path / "results" / "tiny"
+    meta = json.loads((root / "run_meta.json").read_text())
+    assert meta["runs"]["adaptiv_inpaint__schlecht"]["strategy"] == "adaptiv_inpaint"
+    settings = meta["runs"]["adaptiv_inpaint__schlecht"]["strategy_settings"]
+    assert settings["smoothing"]["mode"] == "inpaint"
+    assert meta["runs"]["baseline__schlecht"]["strategy_settings"]["request"]["mode"] == "threshold"
+
+    inpaint_episodes = list(read_jsonl(root / "adaptiv_inpaint__schlecht" / "episodes.jsonl"))
+    inpaint_requests = [
+        r
+        for r in read_jsonl(root / "adaptiv_inpaint__schlecht" / "requests.jsonl")
+        if r["phase"] == "realtime"
+    ]
+    assert all(e["valid"] for e in inpaint_episodes), [e["invalid_reasons"] for e in inpaint_episodes]
+    assert all(e["strategy"] == "adaptiv_inpaint" for e in inpaint_episodes)
+    assert all(r["status"] == "ok" for r in inpaint_requests)
+    assert all(r["guide_frozen"] >= 2 for r in inpaint_requests)
+    assert {r["trigger"] for r in inpaint_requests} <= {"freshness", "deadline"}
+    for episode in inpaint_episodes:
+        assert episode["brain_load"] is not None
+        assert episode["brain_load"]["requests"] >= 1
+        assert len(episode["ticks"]["plan_age_ms"]) == episode["steps"]
+    baseline_requests = [
+        r for r in read_jsonl(root / "baseline__schlecht" / "requests.jsonl") if r["phase"] == "realtime"
+    ]
+    assert all(r["guide_frozen"] == 0 and r["trigger"] == "threshold" for r in baseline_requests)
+
+
 def stored_meta(**overrides):
     meta = {
         "profile": "p",

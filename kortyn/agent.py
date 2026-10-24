@@ -18,6 +18,13 @@ Real-time contract (``mode: realtime``)
 
 ``mode: sync`` is the reference without real-time: the simulation waits for every chunk and executes
 ``sync_actions_per_chunk`` actions, which is LeRobot's evaluation semantics.
+
+Phase 2 (freshness engine, ``kortyn/freshness.py``): ``run_episode`` takes a :class:`StrategyConfig` that
+decides when to request (fixed threshold or adaptive from the online latency estimate), how arriving plans
+are aligned, whether the Brain inpaints the transition, and what happens without a usable action (repeat
+the last action, or hold and log an emergency). ``StrategyConfig()`` is exactly the behaviour above. Every
+tick logs the plan age of the executed action; the Brain's load counters (``GetStats``) are read before
+and after each episode.
 """
 
 from __future__ import annotations
@@ -40,8 +47,24 @@ from typing import Any, Protocol
 import grpc
 import numpy as np
 
-from kortyn.codec import CodecError, decode_tensor, encode_observation
-from kortyn.config import DEFAULT_BASE_CONFIG, AgentConfig, ConfigError, NetworkConfig, load_config
+from kortyn.codec import CodecError, decode_tensor, encode_array, encode_observation
+from kortyn.config import (
+    DEFAULT_BASE_CONFIG,
+    AgentConfig,
+    ConfigError,
+    NetworkConfig,
+    StrategyConfig,
+    load_config,
+)
+from kortyn.freshness import (
+    Guide,
+    RequestContext,
+    build_guide,
+    make_request_policy,
+    placement_step,
+    plan_is_usable,
+)
+from kortyn.latency import LatencyEstimator
 from kortyn.metrics import EpisodeRecord, RequestRecord, TickSeries, append_jsonl, runs_of_true
 from kortyn.process_utils import read_cpu_times, steal_fraction
 from kortyn.proto import kortyn_brain_pb2 as pb
@@ -116,6 +139,7 @@ class BrainSpec:
     policy_type: str
     warmup_inference_ms: float
     raw: dict[str, Any] = field(default_factory=dict)
+    supports_guidance: bool = False
 
     @classmethod
     def from_proto(cls, info: pb.BrainInfo) -> BrainSpec:
@@ -140,6 +164,7 @@ class BrainSpec:
                 "torch_threads": int(info.torch_threads),
                 "warmup_inference_ms": float(info.warmup_inference_ms),
             },
+            supports_guidance=bool(info.supports_guidance),
         )
 
 
@@ -176,6 +201,15 @@ class BrainClient:
     def infer(self, request: pb.InferRequest, timeout_s: float) -> pb.InferResponse:
         response: pb.InferResponse = self._stub.Infer(request, timeout=timeout_s)
         return response
+
+    def get_stats(self, timeout_s: float) -> pb.BrainStats:
+        try:
+            stats: pb.BrainStats = self._stub.GetStats(pb.GetStatsRequest(), timeout=timeout_s)
+        except grpc.RpcError as exc:
+            raise BrainUnavailableError(
+                f"Brain stats at {self.address} unavailable: {_rpc_message(exc)}"
+            ) from exc
+        return stats
 
     def infer_future(self, request: pb.InferRequest, timeout_s: float) -> Any:
         return self._stub.Infer.future(request, timeout=timeout_s)
@@ -260,19 +294,30 @@ def _status_from_rpc(exc: grpc.RpcError) -> str:
 
 # --------------------------------------------------------------------------------------------- queue
 class ActionQueue:
-    """Actions indexed by control step. Newer chunks replace overlapping steps; past steps are dropped."""
+    """Actions indexed by control step. Newer chunks replace overlapping steps; past steps are dropped.
+
+    Each entry remembers the observation step of its plan, so the plan age of an action is
+    ``step - obs_step``. The chunk's actions are placed from ``start_step`` on: the observation step itself
+    with timestep alignment (the default), or a later step with naive "shift" alignment.
+    """
 
     def __init__(self) -> None:
         self._entries: dict[int, tuple[FloatArray, int, int]] = {}
-        self._newest_chunk_step = -1
+        self._newest_obs_step = -1
 
     def merge(
-        self, start_step: int, actions: FloatArray, request_id: int, current_step: int
+        self,
+        start_step: int,
+        actions: FloatArray,
+        request_id: int,
+        current_step: int,
+        obs_step: int | None = None,
     ) -> tuple[int, int]:
-        """Merge a chunk whose first action is for ``start_step``. Returns ``(n_stale, n_merged)``."""
-        if start_step < self._newest_chunk_step:
-            return len(actions), 0  # an older chunk must never overwrite a newer one
-        self._newest_chunk_step = start_step
+        """Merge a chunk whose first action is placed at ``start_step``. Returns ``(n_stale, n_merged)``."""
+        plan_step = start_step if obs_step is None else obs_step
+        if plan_step < self._newest_obs_step:
+            return len(actions), 0  # an older plan must never overwrite a newer one
+        self._newest_obs_step = plan_step
         stale = 0
         merged = 0
         for offset, action in enumerate(actions):
@@ -280,14 +325,14 @@ class ActionQueue:
             if step < current_step:
                 stale += 1
                 continue
-            self._entries[step] = (np.asarray(action, dtype=np.float32), request_id, start_step)
+            self._entries[step] = (np.asarray(action, dtype=np.float32), request_id, plan_step)
             merged += 1
         for step in [s for s in self._entries if s < current_step]:
             del self._entries[step]
         return stale, merged
 
     def pop(self, step: int) -> tuple[FloatArray, int, int] | None:
-        """Remove and return ``(action, request_id, chunk_start_step)`` for ``step``; drop older entries."""
+        """Remove and return ``(action, request_id, plan_obs_step)`` for ``step``; drop older entries."""
         for old in [s for s in self._entries if s < step]:
             del self._entries[old]
         return self._entries.pop(step, None)
@@ -295,6 +340,15 @@ class ActionQueue:
     def available(self, from_step: int) -> int:
         """Number of queued actions for ``from_step`` or later."""
         return sum(1 for s in self._entries if s >= from_step)
+
+    def peek(self, from_step: int, max_count: int) -> list[FloatArray]:
+        """Queued actions for ``from_step, from_step + 1, ...`` up to the first gap (<= ``max_count``)."""
+        actions: list[FloatArray] = []
+        step = from_step
+        while len(actions) < max_count and step in self._entries:
+            actions.append(self._entries[step][0])
+            step += 1
+        return actions
 
     def clear(self) -> None:
         self._entries.clear()
@@ -310,6 +364,7 @@ class EpisodeContext:
     mode: str  # "realtime" | "sync"
     seed: int
     attempt: int = 0
+    strategy: str | None = None  # phase 2: name of the freshness strategy (for the records)
 
 
 @dataclass
@@ -350,12 +405,15 @@ class Agent:
         proxy: ProxyControl | None = None,
         clock: Callable[[], float] = time.monotonic,
         sleep: Callable[[float], None] = time.sleep,
+        stats_client: BrainClient | None = None,
     ) -> None:
         self.config = config
         self.env = env
         self.brain = brain
         self.spec = spec
         self.proxy = proxy
+        # Direct (not proxied) control-plane client for the Brain's load counters; None = no load data.
+        self.stats_client = stats_client
         self._clock = clock
         self._sleep = sleep
         self._next_request_id = 1
@@ -387,9 +445,11 @@ class Agent:
                 )
 
     # ------------------------------------------------------------------ requests
-    def _build_request(self, history: deque[Observation], step: int, episode_seed: int) -> pb.InferRequest:
+    def _build_request(
+        self, history: deque[Observation], step: int, episode_seed: int, guide: Guide | None = None
+    ) -> pb.InferRequest:
         stacked = {key: np.stack([frame[key] for frame in history]) for key in self.spec.features}
-        return pb.InferRequest(
+        request = pb.InferRequest(
             client_id=self.config.client_id,
             episode_id=episode_seed,
             request_id=self._take_request_id(),
@@ -398,6 +458,11 @@ class Agent:
             max_actions=self.config.actions_per_chunk,
             observation=encode_observation(stacked),
         )
+        if guide is not None:
+            request.guide_start_timestep = guide.start_step
+            request.guide_actions.CopyFrom(encode_array(guide.actions))
+            request.guide_weights.extend(float(w) for w in guide.weights)
+        return request
 
     def _take_request_id(self) -> int:
         request_id = self._next_request_id
@@ -479,29 +544,67 @@ class Agent:
         return record, actions, int(response.start_timestep)
 
     # ------------------------------------------------------------------ episodes
-    def run_episode(self, ctx: EpisodeContext) -> EpisodeOutcome:
+    def run_episode(self, ctx: EpisodeContext, strategy: StrategyConfig | None = None) -> EpisodeOutcome:
+        """Run one episode; ``strategy`` (phase 2) defaults to the phase-1 behaviour."""
+        strategy = strategy or StrategyConfig()
+        inpaint = strategy.smoothing.mode == "inpaint"
+        if ctx.mode == "realtime" and inpaint and not self.spec.supports_guidance:
+            raise IncompatibleBrainError(
+                f"strategy {ctx.strategy!r} inpaints transitions, but the Brain ({self.spec.policy_type}) "
+                "does not support guides"
+            )
         gc.collect()  # outside the timed loop; the loop itself runs with gc disabled
         if ctx.mode == "sync":
             return self._run_sync(ctx)
         if ctx.mode == "realtime":
-            return self._run_realtime(ctx)
+            return self._run_realtime(ctx, strategy)
         raise ValueError(f"unknown mode {ctx.mode!r}")
 
     def _new_history(self, observation: Observation) -> deque[Observation]:
         # Like LeRobot's populate_queues: the first observation fills the whole history.
         return deque([observation] * self.spec.n_obs_steps, maxlen=self.spec.n_obs_steps)
 
-    def _run_realtime(self, ctx: EpisodeContext) -> EpisodeOutcome:
+    def _brain_stats(self) -> pb.BrainStats | None:
+        if self.stats_client is None:
+            return None
+        try:
+            return self.stats_client.get_stats(timeout_s=2.0)
+        except BrainUnavailableError as exc:
+            LOG.warning("%s", exc)
+            return None
+
+    @staticmethod
+    def _load_delta(before: pb.BrainStats | None, after: pb.BrainStats | None) -> dict[str, float] | None:
+        if before is None or after is None:
+            return None
+        return {
+            "requests": float(after.requests - before.requests),
+            "inferences": float(after.inferences - before.inferences),
+            "abandoned": float(after.abandoned - before.abandoned),
+            "busy_ms": after.busy_ms - before.busy_ms,
+            "queue_wait_ms": after.queue_wait_ms - before.queue_wait_ms,
+            "window_ms": after.uptime_ms - before.uptime_ms,
+        }
+
+    def _run_realtime(self, ctx: EpisodeContext, strategy: StrategyConfig) -> EpisodeOutcome:
         cfg = self.config
         env = self.env
         dt = self.dt
         max_steps = self._max_steps()
+        policy = make_request_policy(strategy.request, cfg.refill_threshold, dt)
+        latency = LatencyEstimator(strategy.latency)
+        guard = strategy.guard
+        inpaint = strategy.smoothing.mode == "inpaint"
         observation = env.reset(seed=ctx.seed)
         history = self._new_history(observation)
         actions = ActionQueue()
         records: dict[int, RequestRecord] = {}
+        # Observation release time per request (absolute clock): plan age = execution - release.
+        released: dict[int, float] = {}
         invalid: list[str] = []
         warmup_ms: float | None = None
+        warmup_id: int | None = None
+        last_requested_step: int | None = None
         cpu_before = read_cpu_times()
 
         if cfg.start_mode == "warm":
@@ -527,17 +630,32 @@ class Agent:
                     invalid=invalid,
                     warmup_ms=warmup_ms,
                     cpu_before=cpu_before,
+                    brain_load=None,
                 )
-            actions.merge(start_step, chunk, record.request_id, current_step=0)
+            latency.observe(warmup_ms / 1000.0)
+            actions.merge(
+                placement_step(start_step, 0, strategy.alignment),
+                chunk,
+                record.request_id,
+                current_step=0,
+                obs_step=start_step,
+            )
+            warmup_id = record.request_id
+            last_requested_step = start_step
 
+        stats_before = self._brain_stats()
         t0 = self._clock()
         if self.proxy is not None:
             self.proxy.arm()
+        if warmup_id is not None:
+            released[warmup_id] = t0  # o_0 belongs to the start of the episode clock
         ticks = TickSeries()
         tick_starts: list[float] = []
         in_flight: _Pending | None = None
         last_action: FloatArray | None = None
         last_chunk_step = 0
+        last_source = -1
+        previous_action: FloatArray | None = None
         success = False
         max_coverage = 0.0
         sum_reward = 0.0
@@ -556,7 +674,7 @@ class Agent:
                 # it arrives in this very tick with only stale actions).
                 pending_id = -1 if in_flight is None else in_flight.record.request_id
 
-                # 1. merge arrived chunks
+                # 1. merge arrived chunks (aligned to their control steps)
                 while True:
                     try:
                         completion = self._inbox.get_nowait()
@@ -578,14 +696,25 @@ class Agent:
                         done.status = "error"
                         done.error = f"bad action tensor: {exc}"
                         continue
+                    latency.observe(completion.t_resp - done.t_obs_s)
+                    obs_step = int(completion.response.start_timestep)
                     done.queue_at_merge = actions.available(k)
                     done.n_stale, _ = actions.merge(
-                        int(completion.response.start_timestep), chunk, done.request_id, current_step=k
+                        placement_step(obs_step, k, strategy.alignment),
+                        chunk,
+                        done.request_id,
+                        current_step=k,
+                        obs_step=obs_step,
                     )
 
-                # 2. execute the action for step k, or starve
+                # 2. execute the action for step k; without a usable one: emergency (repeat or hold)
                 queue_len = actions.available(k)
                 entry = actions.pop(k)
+                starved = 1 if entry is None else 0
+                emergency = 1 if entry is None else 0
+                if entry is not None and not plan_is_usable(k - entry[2], dt, guard):
+                    emergency = 2  # the plan exists but is older than the guard allows
+                    entry = None
                 if entry is not None:
                     action, source_request, chunk_step = entry
                     source = records[source_request]
@@ -594,33 +723,67 @@ class Agent:
                     source.n_used += 1
                     last_action = action
                     last_chunk_step = chunk_step
-                    starved = 0
+                    last_source = source_request
                     age = k - chunk_step
+                    plan_age_ms = 1000.0 * (tick_start - released[source_request])
                 else:
-                    starved = 1
-                    if pending_id in records:
+                    if starved and pending_id in records:
                         records[pending_id].starved_ticks_while_pending += 1
-                    if last_action is None:
-                        action = env.hold_action(observation)
-                        age = -1
-                    else:
+                    if guard.mode == "repeat_last" and last_action is not None:
                         action = last_action
                         age = k - last_chunk_step
+                        plan_age_ms = 1000.0 * (tick_start - released[last_source])
+                    else:
+                        action = env.hold_action(observation)
+                        age = -1
+                        plan_age_ms = -1.0
 
-                # 3. request a new chunk early enough (never blocks the loop)
-                if in_flight is None and actions.available(k + 1) <= cfg.refill_threshold:
-                    request = self._build_request(history, k, ctx.seed)
+                # 3. request a new plan when the strategy says so (never blocks the loop)
+                decision = policy.decide(
+                    RequestContext(
+                        step=k,
+                        available_after=actions.available(k + 1),
+                        in_flight=0 if in_flight is None else 1,
+                        last_obs_step=last_requested_step,
+                        send_offset_s=self._clock() - tick_start,
+                    ),
+                    latency,
+                    dt,
+                )
+                if decision.send:
+                    guide = (
+                        build_guide(
+                            step=k,
+                            previous_action=previous_action,
+                            current_action=action,
+                            queued=actions.peek(k + 1, cfg.actions_per_chunk),
+                            expected_delay_ticks=decision.expected_delay_ticks,
+                            config=strategy.smoothing,
+                        )
+                        if inpaint
+                        else None
+                    )
+                    request = self._build_request(history, k, ctx.seed, guide)
                     t_send = self._clock()
                     record = self._new_record(
                         ctx, request, "realtime", tick_start, t_send, actions.available(k + 1)
                     )
+                    record.trigger = decision.reason
+                    record.expected_delay_ticks = decision.expected_delay_ticks
+                    record.latency_median_ms, record.latency_spread_ms = latency.snapshot()
+                    if guide is not None:
+                        record.guide_frozen = guide.frozen
+                        record.guide_soft = guide.soft
                     records[record.request_id] = record
+                    released[record.request_id] = tick_start
+                    last_requested_step = k
                     future = self.brain.infer_future(request, cfg.request_timeout_s)
                     future.add_done_callback(lambda f, rid=record.request_id: self._on_done(rid, f))
                     in_flight = _Pending(record, future)
 
                 # 4. advance the simulation by exactly one control step
                 result = env.step(action)
+                previous_action = action
                 observation = result.observation
                 history.append(observation)
                 steps = k + 1
@@ -632,6 +795,8 @@ class Agent:
                 ticks.lateness_ms.append(1000.0 * (tick_start - deadline))
                 ticks.action_age.append(age)
                 ticks.pending_request.append(pending_id)
+                ticks.plan_age_ms.append(plan_age_ms)
+                ticks.emergency.append(emergency)
                 if result.success:
                     success = True
                     break
@@ -685,6 +850,7 @@ class Agent:
             invalid=invalid,
             warmup_ms=warmup_ms,
             cpu_before=cpu_before,
+            brain_load=self._load_delta(stats_before, self._brain_stats()),
         )
 
     def _run_sync(self, ctx: EpisodeContext) -> EpisodeOutcome:
@@ -727,6 +893,9 @@ class Agent:
                 ticks.lateness_ms.append(0.0)
                 ticks.action_age.append(k - start_step)
                 ticks.pending_request.append(-1)
+                # the simulation waits for the Brain: plan age in simulated time
+                ticks.plan_age_ms.append(1000.0 * (k - start_step) * self.dt)
+                ticks.emergency.append(0)
                 k += 1
                 if result.success:
                     success = True
@@ -752,6 +921,7 @@ class Agent:
             invalid=invalid,
             warmup_ms=None,
             cpu_before=cpu_before,
+            brain_load=None,
         )
 
     def _max_steps(self) -> int:
@@ -774,6 +944,7 @@ class Agent:
         invalid: list[str],
         warmup_ms: float | None,
         cpu_before: tuple[int, int] | None,
+        brain_load: dict[str, float] | None,
     ) -> EpisodeOutcome:
         cfg = self.config
         steal = steal_fraction(cpu_before, read_cpu_times())
@@ -840,6 +1011,11 @@ class Agent:
             cpu_steal_fraction=steal,
             proxy=proxy_stats,
             ticks=ticks,
+            strategy=ctx.strategy,
+            emergency_ticks=sum(1 for value in ticks.emergency if value),
+            emergency_events=len(runs_of_true([1 if value else 0 for value in ticks.emergency])),
+            emergency_ticks_age=sum(1 for value in ticks.emergency if value == 2),
+            brain_load=brain_load,
         )
         return EpisodeOutcome(episode=episode, requests=requests)
 

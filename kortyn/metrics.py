@@ -15,6 +15,13 @@ Definitions (used consistently by agent, report and README):
                       request was in flight (only after failed requests).
 * **Max reward**      LeRobot's per-episode ``max_reward``; for PushT ``min(max coverage / 0.95, 1)``. A
                       continuous quality measure (1.0 = success) with more statistical power than success.
+* **Plan age**        observation released -> action executed, for every executed plan action (also a
+                      repeated one). Phase 2 logs it in ms per tick; for phase-1 records it is
+                      ``action_age / fps``. Ticks where the robot holds (no plan action) have no plan age.
+* **Emergency**       a tick without a usable plan action: queue empty or plan older than the guard's limit.
+                      For phase-1 records (repeat the last action, no limit) this equals starvation.
+* **Brain load**      requests per second, inference-thread utilization (inference time / episode time) and
+                      mean queue wait, from the request records; the Brain's own counters cross-check them.
 """
 
 from __future__ import annotations
@@ -61,6 +68,13 @@ class RequestRecord:
     n_stale: int = 0
     n_used: int = 0
     starved_ticks_while_pending: int = 0
+    # Phase 2 (freshness engine): why the request was sent and what the agent expected.
+    trigger: str = ""  # "threshold" | "deadline" | "freshness" | "" (warm-up, sync)
+    expected_delay_ticks: int | None = None
+    latency_median_ms: float | None = None  # online estimate at sending time
+    latency_spread_ms: float | None = None
+    guide_frozen: int = 0  # inpainting: frozen / softly guided actions sent with the request
+    guide_soft: int = 0
 
     @property
     def e2e_ms(self) -> float | None:
@@ -105,6 +119,10 @@ class TickSeries:
     lateness_ms: list[float] = field(default_factory=list)  # tick start minus its deadline
     action_age: list[int] = field(default_factory=list)  # control step minus obs step of the chunk
     pending_request: list[int] = field(default_factory=list)  # request id in flight (-1 = none)
+    # Phase 2: plan age of the executed action in ms (observation release -> execution; -1 = no plan
+    # action, the robot held) and the emergency state (0 none, 1 queue empty, 2 plan older than the limit).
+    plan_age_ms: list[float] = field(default_factory=list)
+    emergency: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -136,6 +154,12 @@ class EpisodeRecord:
     cpu_steal_fraction: float | None = None
     proxy: dict[str, Any] | None = None
     ticks: TickSeries = field(default_factory=TickSeries)
+    # Phase 2
+    strategy: str | None = None
+    emergency_ticks: int = 0  # ticks without a usable plan action (queue empty or too old)
+    emergency_events: int = 0  # maximal runs of such ticks
+    emergency_ticks_age: int = 0  # of which the plan existed but was older than the guard's limit
+    brain_load: dict[str, float] | None = None  # Brain counter deltas over the episode (GetStats)
 
     @property
     def duration_s(self) -> float:
@@ -350,6 +374,17 @@ class RunSummary:
     success_by_seed: dict[int, bool] = field(default_factory=dict)
     max_reward_mean: float | None = None
     max_reward_by_seed: dict[int, float] = field(default_factory=dict)
+    # Phase 2 (freshness engine)
+    strategy: str | None = None
+    plan_age_mean_s: float | None = None
+    plan_age_p95_s: float | None = None
+    emergency_events_per_min: float = 0.0
+    emergency_time_fraction: float = 0.0
+    emergency_ticks_age: int = 0
+    requests_per_s: float | None = None
+    inference_utilization: float | None = None
+    queue_wait_mean_ms: float | None = None
+    brain_counter_utilization: float | None = None
 
 
 def final_episodes(episodes: Iterable[EpisodeRecord]) -> tuple[list[EpisodeRecord], int]:
@@ -368,6 +403,21 @@ def final_episodes(episodes: Iterable[EpisodeRecord]) -> tuple[list[EpisodeRecor
         invalid += sum(1 for e in attempts if not e.valid)
         selected.append(valid[0] if valid else attempts[-1])
     return selected, invalid
+
+
+def plan_ages_s(episode: EpisodeRecord) -> list[float]:
+    """Plan age in seconds of every executed plan action of one episode (see module docstring)."""
+    measured = episode.ticks.plan_age_ms
+    if measured and len(measured) == len(episode.ticks.action_age):
+        return [value / 1000.0 for value in measured if value >= 0]
+    return [age / episode.fps for age in episode.ticks.action_age if age >= 0]
+
+
+def emergency_flags(episode: EpisodeRecord) -> list[int]:
+    """1 for every tick without a usable plan action; phase-1 records: the starved ticks."""
+    if episode.ticks.emergency and len(episode.ticks.emergency) == len(episode.ticks.starved):
+        return [1 if value else 0 for value in episode.ticks.emergency]
+    return [1 if value else 0 for value in episode.ticks.starved]
 
 
 def summarize_run(episodes: Sequence[EpisodeRecord], requests: Sequence[RequestRecord]) -> RunSummary:
@@ -411,6 +461,15 @@ def summarize_run(episodes: Sequence[EpisodeRecord], requests: Sequence[RequestR
     wire_down = [float(e.proxy["bytes_down"]) for e in chosen if e.proxy]
     n_requests_proxy = sum(e.n_requests for e in chosen if e.proxy)
     first = chosen[0]
+    realtime_ok = [r for r in measured if r.phase == "realtime"]
+    plan_ages = [age for e in chosen for age in plan_ages_s(e)]
+    flags = [emergency_flags(e) for e in chosen]
+    emergency_events = sum(len(runs_of_true(f)) for f in flags)
+    emergency_ticks = sum(sum(f) for f in flags)
+    realtime = first.mode == "realtime"
+    inference_ms = values("server_inference_ms", realtime_ok)
+    loads = [e.brain_load for e in chosen if e.brain_load]
+    counter_window = sum(load.get("window_ms", 0.0) for load in loads)
     return RunSummary(
         run=first.run,
         profile=first.profile,
@@ -454,4 +513,18 @@ def summarize_run(episodes: Sequence[EpisodeRecord], requests: Sequence[RequestR
         success_by_seed={e.seed: e.success for e in chosen},
         max_reward_mean=mean([max_reward(e.max_coverage) for e in chosen]),
         max_reward_by_seed={e.seed: max_reward(e.max_coverage) for e in chosen},
+        strategy=first.strategy,
+        plan_age_mean_s=mean(plan_ages),
+        plan_age_p95_s=percentile(plan_ages, 95),
+        emergency_events_per_min=emergency_events / minutes if realtime else 0.0,
+        emergency_time_fraction=emergency_ticks / total_ticks if realtime and total_ticks else 0.0,
+        emergency_ticks_age=sum(e.emergency_ticks_age for e in chosen),
+        requests_per_s=len(realtime_ok) / episode_seconds if realtime and episode_seconds > 0 else None,
+        inference_utilization=sum(inference_ms) / (1000.0 * episode_seconds)
+        if realtime and episode_seconds > 0
+        else None,
+        queue_wait_mean_ms=mean(values("server_queue_ms", realtime_ok)) if realtime else None,
+        brain_counter_utilization=sum(load.get("busy_ms", 0.0) for load in loads) / counter_window
+        if counter_window > 0
+        else None,
     )
