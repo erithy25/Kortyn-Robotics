@@ -132,13 +132,17 @@ Kortyn Brain :50051  ◄─ TCP/HTTP2 ─  netem_proxy :50052  ◄─  Kortyn Ag
 
 | Modul | Aufgabe | Start |
 |---|---|---|
-| `kortyn/brain.py` | gRPC-Server: lädt die Policy (LeRobot-Klassen), beantwortet `Infer` mit Action-Chunks, ein Inferenz-Thread, Server-Timings | `python -m kortyn.brain --profile kalibriert` |
+| `kortyn/brain.py` | gRPC-Server: lädt die Policy (LeRobot-Klassen), beantwortet `Infer` mit Action-Chunks (optional mit Inpainting-Guide), ein Inferenz-Thread, Server-Timings, Last-Zähler (`GetStats`) | `python -m kortyn.brain --profile kalibriert` |
 | `kortyn/policy_runner.py` | Beobachtungshistorie → Action-Chunk, exakt LeRobot-Eval-Semantik (Golden-Test) | – |
-| `kortyn/agent.py` | Simulierter Roboter: fester Takt, Action-Queue, Starvation-Zählung, Metriken; `sync`-Referenzmodus | `python -m kortyn.agent --episodes 3` |
+| `kortyn/inpainting.py` | Phase 2: gradientenfreies Inpainting von Diffusion-Chunks (eingefrorener + weich geführter Teil) | – |
+| `kortyn/agent.py` | Simulierter Roboter: fester Takt, Action-Queue, Starvation-Zählung, Metriken; `sync`-Referenzmodus; Phase 2: Strategien, Planalter, Notfall-Halt | `python -m kortyn.agent --episodes 3` |
+| `kortyn/latency.py` | Phase 2: robuste Online-Latenzschätzung (Median, 1,4826·MAD) | – |
+| `kortyn/freshness.py` | Phase 2: Anfrage-Strategien (Schwelle, adaptiv), Ausrichtung, Inpainting-Guides, Planalter-Grenze | – |
 | `kortyn/netem_proxy.py` | TCP-Proxy: Delay, Jitter, Bandbreite, Stalls; per YAML und Control-Port steuerbar | `python -m kortyn.netem_proxy --scenario schlecht` |
-| `kortyn/metrics.py` | Records, Definitionen, Statistik (Perzentile, Wilson, McNemar, Bootstrap) | – |
+| `kortyn/metrics.py` | Records, Definitionen, Statistik (Perzentile, Wilson, McNemar, Bootstrap, Permutationstest, Holm) | – |
 | `kortyn/run_experiment.py` | Startet Brain + Proxy, Szenarien seed-weise verschränkt, JSONL nach `results/` | `python -m kortyn.run_experiment` |
-| `kortyn/report.py` | `reports/phase1.md` + PNG-Abbildungen | `python -m kortyn.report` |
+| `kortyn/report.py` | `reports/phase1.md` + PNG-Abbildungen (ruft auch den Phase-2-Report auf) | `python -m kortyn.report` |
+| `kortyn/report_phase2.py` | `reports/phase2.md`: Tabellen, gepaarte Tests, Auswahlregel, Abbildungen | `python -m kortyn.report_phase2 --select` |
 | `kortyn/calibrate.py` | Wählt die DDIM-Schrittzahl, bei der „gut“ nicht verhungert | `python -m kortyn.calibrate` |
 | `kortyn/lerobot_reference.py` | Offizielles `lerobot-eval` als Referenz | `python -m kortyn.lerobot_reference --profile ddim10` |
 | `kortyn/checkpoint.py` | Download (gepinnte Revision) + Migration ins Processor-Format | – |
