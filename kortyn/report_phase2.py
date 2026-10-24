@@ -767,6 +767,55 @@ def diagnostics_table(stage: Stage) -> list[str]:
     return rows
 
 
+def estimator_coverage(stages: Sequence[Stage]) -> tuple[float, float] | None:
+    """Lowest and highest share of requests within the planned latency quantile over all runs."""
+    shares: list[float] = []
+    for stage in stages:
+        for (strategy, _), cell in stage.cells.items():
+            z = float(stage.settings_of(strategy).get("request", {}).get("latency_quantile_z", 1.645))
+            _, coverage = estimator_quality(chosen_requests(cell.run), z)
+            if coverage is not None:
+                shares.append(coverage)
+    return (min(shares), max(shares)) if shares else None
+
+
+def invalid_attempts_bias(stages: Sequence[Stage]) -> tuple[float, float, int, int] | None:
+    """(failure share of invalid attempts, failure share of valid ones, #invalid, #attempts) over all runs."""
+    invalid = [
+        e for stage in stages for cell in stage.cells.values() for e in cell.run.episodes if not e.valid
+    ]
+    valid = [e for stage in stages for cell in stage.cells.values() for e in cell.run.episodes if e.valid]
+    if not invalid or not valid:
+        return None
+    fail_invalid = sum(1 for e in invalid if not e.success) / len(invalid)
+    fail_valid = sum(1 for e in valid if not e.success) / len(valid)
+    return fail_invalid, fail_valid, len(invalid), len(invalid) + len(valid)
+
+
+def diagnostic_findings(stages: Sequence[Stage]) -> list[str]:
+    lines: list[str] = []
+    coverage = estimator_coverage(stages)
+    if coverage is not None:
+        lines.append(
+            f"- **Latenzschätzer:** Das Planungs-Quantil (Median + 1,645 · σ aus der MAD) deckt nur "
+            f"{pct(coverage[0])}–{pct(coverage[1])} der Anfragen ab statt der 95 %, die eine Normalverteilung "
+            "erwarten ließe – auch ohne Netz: Die E2E-Latenz hat einen schwereren rechten Rand (Scheduling, "
+            "Inferenz-Ausreißer), Stalls verstärken das. Für Deadlines ist ein empirisches Quantil des Fensters "
+            "(z. B. p95) die bessere Wahl als Median + z · MAD."
+        )
+    bias = invalid_attempts_bias(stages)
+    if bias is not None:
+        fail_invalid, fail_valid, n_invalid, n_attempts = bias
+        lines.append(
+            f"- **Validitäts-Gate:** {n_invalid} von {n_attempts} Versuchen ({pct(n_invalid / n_attempts)}) wurden "
+            f"wiederholt. Ungültige Versuche sind häufiger Misserfolge ({pct(fail_invalid)} gegenüber "
+            f"{pct(fail_valid)} bei gültigen), weil lange Episoden mehr Takte für eine Verspätung bieten; die "
+            "Wiederholung hebt die Erfolgsquote dadurch leicht an (≈ Rate ungültiger Versuche × Differenz, "
+            "wenige Prozentpunkte) – für alle Strategien ähnlich, in Vergleichen weitgehend neutral."
+        )
+    return [*lines, ""] if lines else []
+
+
 # --------------------------------------------------------------------------------------------- hypothesis
 @dataclass(frozen=True)
 class Slope:
@@ -1649,11 +1698,12 @@ def write_phase2_report(config: KortynConfig, results_dir: Path, reports_dir: Pa
     lines += [
         "Lesehilfe: *Notfall-Takte* = Takte ohne nutzbare Aktion (leer = Queue leer, zu alt = Planalter über der "
         "harten Grenze); bei der Baseline sind das die verhungerten Takte, in denen sie die letzte Aktion "
-        "wiederholt. *Auslastung Records / Zähler* = Inferenzzeit aus den Request-Records gegen die Brain-Zähler "
-        "(`GetStats`); stimmen sie überein, ist die Lastmessung konsistent. *im Planungs-Quantil* = Anteil der "
-        "Anfragen, deren E2E-Latenz unter dem geschätzten Median + z · σ lag (Ziel ≈ 95 % bei z = 1,645; Stalls "
-        "sind schwere Ausreißer, die ein gleitendes Fenster nicht vorhersagen kann).",
+        "wiederholt. *Reaktion* = Beobachtung → erste ausgeführte Aktion eines Plans. *Auslastung Records / "
+        "Zähler* = Inferenzzeit aus den Request-Records gegen die Brain-Zähler (`GetStats`); stimmen sie überein, "
+        "ist die Lastmessung konsistent. *im Planungs-Quantil* = Anteil der Anfragen, deren E2E-Latenz unter dem "
+        "geschätzten Median + z · σ lag.",
         "",
+        *diagnostic_findings(stages),
         "</details>",
         "",
         "## Stand der Technik und Designentscheidungen",

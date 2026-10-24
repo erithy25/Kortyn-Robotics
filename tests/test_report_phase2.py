@@ -214,9 +214,23 @@ def write_run(
                 "requests": 1.0,
             }
         episodes.append(record)
+        if strategy == "schwelle10" and seed == seeds[0]:
+            # a failed attempt invalidated by the validity gate; the counted attempt is the one above
+            late = episode(
+                seed, success=False, valid=False, steps=300, run=label, scenario=scenario, strategy=strategy
+            )
+            late.invalid_reasons = ["tick lateness 60.0 ms > 50.0 ms"]
+            record.attempt = 1
+            episodes.insert(len(episodes) - 1, late)
         for index in range(requests_per_episode):
             item = request(
-                seed, index + 1, 0.5 * index, 400.0, 300.0, phase="sync" if mode == "sync" else "realtime"
+                seed,
+                index + 1,
+                0.5 * index,
+                400.0,
+                300.0,
+                attempt=record.attempt,
+                phase="sync" if mode == "sync" else "realtime",
             )
             item.server_queue_ms = 0.4
             item.latency_median_ms = 390.0
@@ -329,6 +343,8 @@ def test_phase_two_report_from_all_stages(tmp_path, results):
     assert "- **Messrauschen:** Zwei identische Phase-1-Läufe („gut“)" in text
     assert "- **Lauf-zu-Lauf-Rauschen.**" in text
     assert "- **Stufe-2-Baseline aus Phase 1.**" in text
+    assert "- **Validitäts-Gate:** 5 von 425 Versuchen" in text  # one invalid attempt per schwelle10 run
+    assert "- **Latenzschätzer:** Das Planungs-Quantil" in text
     assert "**Die Kernhypothese hält in dieser Form nicht:**" in text  # fresher but worse in this data
     assert "| Schwelle 10 | `schwelle10` |" in text
     for name in (
