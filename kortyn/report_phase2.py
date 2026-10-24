@@ -92,6 +92,7 @@ PHASE2_DIR = "phase2"
 STAGES = (("1", "Screening", "screening"), ("2", "Bestätigung", "confirmation"))
 BASELINE = "baseline"
 SYNC_RUN = "referenz_sync"
+REPEAT_SUFFIX = "_wiederholung"  # phase 1 measured some conditions twice in one session
 TIE_MARGIN = 0.01  # reward difference below which the lower request rate decides the selection
 SELECT_COUNT = 2
 ALPHA = 0.05
@@ -141,6 +142,7 @@ class Stage:
     scenarios: list[str]
     settings: dict[str, dict[str, Any]]
     baselines: dict[str, Cell] = field(default_factory=dict)
+    repetitions: dict[str, Cell] = field(default_factory=dict)  # phase-1 repetition of the baseline condition
     sync: RunSummary | None = None  # phase-1 synchronous reference on the stage's seeds
 
     @property
@@ -203,6 +205,11 @@ def load_stage(key: str, title: str, directory: Path, phase1: ProfileData | None
             restricted = restrict(phase1.runs[scenario], seeds)
             if restricted is not None:
                 stage.baselines[scenario] = Cell(BASELINE, scenario, restricted, source="Phase 1")
+        repeat = f"{scenario}{REPEAT_SUFFIX}"
+        if phase1 is not None and repeat in phase1.runs:
+            restricted = restrict(phase1.runs[repeat], seeds)
+            if restricted is not None:
+                stage.repetitions[scenario] = Cell(BASELINE, scenario, restricted, source="Phase 1")
     if phase1 is not None and SYNC_RUN in phase1.runs:
         sync = restrict(phase1.runs[SYNC_RUN], seeds)
         stage.sync = None if sync is None else sync.summary
@@ -483,6 +490,12 @@ def stage_tables(
         if base is not None:
             name = "Baseline (Phase-1-Lauf)" if base.source else "Baseline"
             lines.append(result_row(name, base.run.summary, None))
+            repeat = stage.repetitions.get(scenario)
+            if base.source and repeat is not None:  # the same condition again: run-to-run noise, not a test
+                noise = compare(base.run.summary, repeat.run.summary)
+                lines.append(
+                    result_row("_Baseline-Wiederholung (Phase 1, identisch)_", repeat.run.summary, noise)
+                )
         for strategy in stage.candidates:
             cell = stage.cells.get((strategy, scenario))
             if cell is None:
@@ -509,32 +522,55 @@ def ranking_table(stage: Stage, ranks: Sequence[Rank], chosen: Sequence[str]) ->
     return rows
 
 
-def reproduction(stage: Stage, phase1: ProfileData) -> tuple[list[str], bool | None, bool]:
-    """Stage-1 baseline against the phase-1 runs on the same seeds: (table, reproduced?, same timing?).
+@dataclass(frozen=True)
+class Reproduction:
+    rows: list[str]
+    reproduced: bool | None  # no Holm-significant difference (success or reward) in any scenario
+    nominal: bool | None  # not even a nominally significant one (p >= 0.05 without correction)
+    same_timing: bool  # plan age within 0.05 s and request rate within 5 % everywhere
+    strongest: tuple[str, float, float] | None  # (what, nominal p, Holm p) of the smallest p-value
+    tests: int
 
-    Reproduced = no significant difference in success (McNemar) or max reward (permutation test) in any
-    scenario. Same timing = mean plan age within 0.05 s and request rate within 5 % in every scenario.
+
+def reproduction_row(
+    name: str, c: Comparison, old: RunSummary, new: RunSummary, holm: tuple[str, str]
+) -> str:
+    return (
+        f"| {name} | {c.pairs} | {pct(c.base_rate)} → {pct(c.rate)} | {p_text(c.mcnemar_p)}{holm[0]} | "
+        f"{fmt(old.max_reward_mean, 3)} → {fmt(new.max_reward_mean, 3)} | {reward_text(c)} | "
+        f"{p_text(c.reward_p)}{holm[1]} | {fmt(old.plan_age_mean_s, 2)} → {fmt(new.plan_age_mean_s, 2)} | "
+        f"{pct(old.starved_time_fraction, 1)} → {pct(new.starved_time_fraction, 1)} | "
+        f"{fmt(old.requests_per_s, 2)} → {fmt(new.requests_per_s, 2)} | "
+        f"{fmt(old.e2e_p50_ms)} → {fmt(new.e2e_p50_ms)} |"
+    )
+
+
+def reproduction(stage: Stage, phase1: ProfileData) -> Reproduction:
+    """Stage-1 baseline against the phase-1 runs on the same seeds.
+
+    Every scenario contributes two tests (success: McNemar, max reward: permutation); "reproduced" means no
+    difference after Holm adjustment over all of them. Where phase 1 measured the condition twice in one
+    session (``<scenario>_wiederholung``), both comparisons with the repetition are shown as the reference
+    for run-to-run noise of a real-time measurement; they do not enter the verdict.
     """
     rows = [
-        "| Szenario | Seeds | Erfolg Phase 1 → 2 | McNemar p | Ø Max-Reward Phase 1 → 2 | Δ Reward [95 %-KI] | "
-        "Permutation p | Planalter Ø (s) | verhungert | Anfragen/s | E2E p50 (ms) |",
+        "| Vergleich (alt → neu) | Seeds | Erfolg | McNemar p (Holm) | Ø Max-Reward | Δ Reward [95 %-KI] | "
+        "Permutation p (Holm) | Planalter Ø (s) | verhungert | Anfragen/s | E2E p50 (ms) |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
-    verdicts: list[bool] = []
+    primary: list[tuple[str, Comparison, RunSummary, RunSummary]] = []
+    references: list[tuple[str, Comparison, RunSummary, RunSummary]] = []
     timing: list[bool] = []
     for scenario in stage.scenarios:
         own = stage.cells.get((BASELINE, scenario))
-        if own is None or scenario not in phase1.runs:
-            continue
-        old_run = restrict(phase1.runs[scenario], stage.seeds)
-        if old_run is None:
+        old_run = restrict(phase1.runs[scenario], stage.seeds) if scenario in phase1.runs else None
+        if own is None or old_run is None:
             continue
         old, new = old_run.summary, own.run.summary
         c = compare(old, new)
         if c is None:
             continue
-        # the tests decide; the percentile bootstrap interval is descriptive (it under-covers for n ~ 20)
-        verdicts.append(c.mcnemar_p >= ALPHA and (c.reward_p is None or c.reward_p >= ALPHA))
+        primary.append((scenario, c, old, new))
         ages = (old.plan_age_mean_s, new.plan_age_mean_s)
         rates = (old.requests_per_s, new.requests_per_s)
         timing.append(
@@ -545,16 +581,91 @@ def reproduction(stage: Stage, phase1: ProfileData) -> tuple[list[str], bool | N
             and rates[1] is not None
             and abs(rates[1] - rates[0]) <= 0.05 * rates[0]
         )
-        rows.append(
-            f"| {scenario_label(scenario)} | {c.pairs} | {pct(c.base_rate)} → {pct(c.rate)} | "
-            f"{p_text(c.mcnemar_p)} | {fmt(old.max_reward_mean, 3)} → {fmt(new.max_reward_mean, 3)} | "
-            f"{reward_text(c)} | {p_text(c.reward_p)} | "
-            f"{fmt(old.plan_age_mean_s, 2)} → {fmt(new.plan_age_mean_s, 2)} | "
-            f"{pct(old.starved_time_fraction, 1)} → {pct(new.starved_time_fraction, 1)} | "
-            f"{fmt(old.requests_per_s, 2)} → {fmt(new.requests_per_s, 2)} | "
-            f"{fmt(old.e2e_p50_ms)} → {fmt(new.e2e_p50_ms)} |"
+        repeat = stage.repetitions.get(scenario)
+        if repeat is not None:
+            rep = repeat.run.summary
+            for label, a, b in (
+                (f"{scenario_label(scenario)}: Phase-1-Wiederholung → Stufe 1", rep, new),
+                (
+                    f"{scenario_label(scenario)}: Phase 1 → Phase-1-Wiederholung (gleiche Sitzung, identisch)",
+                    old,
+                    rep,
+                ),
+            ):
+                reference = compare(a, b)
+                if reference is not None:
+                    references.append((label, reference, a, b))
+    pvalues: list[tuple[str, float]] = []
+    for scenario, c, _, _ in primary:
+        pvalues.append((f"Erfolg {scenario_label(scenario)}", c.mcnemar_p))
+        if c.reward_p is not None:
+            pvalues.append((f"Max-Reward {scenario_label(scenario)}", c.reward_p))
+    adjusted = holm_adjust([p for _, p in pvalues])
+    holm_of = {name: value for (name, _), value in zip(pvalues, adjusted, strict=True)}
+    for scenario, c, old, new in primary:
+        label = scenario_label(scenario)
+        reward_holm = holm_of.get(f"Max-Reward {label}")
+        holm = (
+            f" ({p_text(holm_of[f'Erfolg {label}'])})",
+            "" if reward_holm is None else f" ({p_text(reward_holm)})",
         )
-    return rows, (all(verdicts) if verdicts else None), bool(timing) and all(timing)
+        rows.append(reproduction_row(f"{label}: Phase 1 → Stufe 1", c, old, new, holm))
+    for label, c, old, new in references:
+        rows.append(reproduction_row(f"_{label}_", c, old, new, ("", "")))
+    strongest = None
+    if pvalues:
+        index = min(range(len(pvalues)), key=lambda i: pvalues[i][1])
+        strongest = (pvalues[index][0], pvalues[index][1], adjusted[index])
+    return Reproduction(
+        rows=rows,
+        reproduced=all(a >= ALPHA for a in adjusted) if adjusted else None,
+        nominal=all(p >= ALPHA for _, p in pvalues) if pvalues else None,
+        same_timing=bool(timing) and all(timing),
+        strongest=strongest,
+        tests=len(pvalues),
+    )
+
+
+def reproduction_text(result: Reproduction, noise: Comparison | None) -> list[str]:
+    timing = " Planalter (± 0,05 s) und Anfragerate (± 5 %) stimmen überein." if result.same_timing else ""
+    reference = ""
+    if noise is not None and noise.reward_delta is not None:
+        reference = (
+            f" Zum Vergleich: Phase 1 gegen ihre eigene, identische Wiederholung in derselben Sitzung ergibt "
+            f"Δ Reward {noise.reward_delta:+.3f} (n = {noise.pairs}, Permutation p = {p_text(noise.reward_p)}) – "
+            "Unterschiede dieser Größe sind Lauf-zu-Lauf-Rauschen der Echtzeitmessung."
+        )
+    if result.reproduced is None:
+        return []
+    if result.reproduced and result.nominal:
+        return [
+            f"✅ **Reproduziert:** kein Unterschied zu Phase 1, auch ohne Korrektur (alle p ≥ 0,05).{timing}",
+            "",
+        ]
+    if result.reproduced and result.strongest is not None:
+        what, nominal, holm = result.strongest
+        return [
+            f"✅ **Reproduziert innerhalb der Unsicherheit:** {what} nominal p = {p_text(nominal)}, nach "
+            f"Holm-Korrektur über alle {result.tests} Reproduktionstests p = {p_text(holm)}.{timing}{reference}",
+            "",
+        ]
+    return [
+        "⚠️ **Abweichung:** mindestens ein Szenario unterscheidet sich auch nach Holm-Korrektur von Phase 1 – "
+        f"Vergleiche gegen Phase-1-Läufe sind mit Vorsicht zu lesen.{timing}{reference}",
+        "",
+    ]
+
+
+def run_noise(phase1: ProfileData | None) -> tuple[str, Comparison] | None:
+    """Phase 1 against its own repetition (same condition, same session, all seeds): run-to-run noise."""
+    if phase1 is None:
+        return None
+    for label in ordered(phase1.runs):
+        if label.endswith(REPEAT_SUFFIX) and label[: -len(REPEAT_SUFFIX)] in phase1.runs:
+            c = compare(phase1.runs[label[: -len(REPEAT_SUFFIX)]].summary, phase1.runs[label].summary)
+            if c is not None:
+                return label[: -len(REPEAT_SUFFIX)], c
+    return None
 
 
 def overview_table(
@@ -836,7 +947,11 @@ def hypothesis_section(evidence: AgeEvidence) -> list[str]:
 
 # --------------------------------------------------------------------------------------------- findings
 def key_findings(
-    final: Stage, comparisons: dict[tuple[str, str], Comparison], chosen: Sequence[str], best: str | None
+    final: Stage,
+    comparisons: dict[tuple[str, str], Comparison],
+    chosen: Sequence[str],
+    best: str | None,
+    noise: tuple[str, Comparison] | None = None,
 ) -> list[str]:
     if best is None:
         return ["- Noch keine Strategie mit vollständigen Daten in allen Szenarien der Stufe."]
@@ -876,17 +991,35 @@ def key_findings(
         )
     base_load = mean_load(final, BASELINE)
     best_load = mean_load(final, best)
-    if base_load is not None and best_load is not None and base_load[0] > 0 and best_load[1] > 0:
+    if (
+        base_load is not None
+        and best_load is not None
+        and base_load[0] > 0
+        and best_load[1] > 0 < base_load[1]
+    ):
+        robots, robots_base = 1 / best_load[1], 1 / base_load[1]
+        capacity = (
+            f"≈ {robots:.1f} Roboter wie mit der Baseline"
+            if abs(robots - robots_base) < 0.05
+            else f"≈ {robots:.1f} statt {robots_base:.1f} Roboter"
+        )
         lines.append(
             f"- **Brain-Mehrlast** (Ø über {len(final.scenarios)} Szenarien, ein Roboter): {base_load[0]:.2f} → "
             f"{best_load[0]:.2f} Anfragen/s (×{best_load[0] / base_load[0]:.2f}); Auslastung des Inferenz-Threads "
-            f"{pct(base_load[1])} → {pct(best_load[1])}. Rechnerisch trägt ein Inferenz-Thread damit ≈ "
-            f"{1 / best_load[1]:.1f} statt {1 / base_load[1]:.1f} Roboter (ohne Warteschlangeneffekte)."
+            f"{pct(base_load[1])} → {pct(best_load[1])}. Rechnerisch trägt ein Inferenz-Thread damit {capacity} "
+            "(ohne Warteschlangeneffekte)."
         )
     if final.sync is not None:
         lines.append(
             f"- **Sync-Referenz** (Phase 1, Simulation wartet auf das Brain, gleiche Seeds): "
             f"{pct(final.sync.success_rate)} Erfolg, Ø Max-Reward {fmt(final.sync.max_reward_mean, 3)}."
+        )
+    if noise is not None and noise[1].reward_delta is not None:
+        scenario, c = noise
+        lines.append(
+            f"- **Messrauschen:** Zwei identische Phase-1-Läufe („{scenario_label(scenario)}“) unterscheiden sich "
+            f"bereits um Δ Reward {c.reward_delta:+.3f} und {100 * c.success_delta:+.0f} pp Erfolg (n = {c.pairs}). "
+            "Kleinere Effekte sind nicht belastbar."
         )
     return lines
 
@@ -1274,6 +1407,22 @@ LIMITATIONS = [
 ]
 
 
+def noise_note(phase1: ProfileData | None) -> list[str]:
+    """Limitation bullet: two identical real-time runs differ by more than seed sampling explains."""
+    noise = run_noise(phase1)
+    if noise is None or noise[1].reward_delta is None:
+        return []
+    scenario, c = noise
+    return [
+        f"- **Lauf-zu-Lauf-Rauschen.** Zwei identische Phase-1-Läufe („{scenario_label(scenario)}“ und seine "
+        f"Wiederholung, gleiche Sitzung, n = {c.pairs}) unterscheiden sich um Δ Reward {c.reward_delta:+.3f} "
+        f"(Permutation p = {p_text(c.reward_p)}) und {100 * c.success_delta:+.0f} pp Erfolg. Echtzeit ist nicht "
+        "bitgenau wiederholbar: Latenz-Jitter verschiebt einzelne Planwechsel um einen Takt, danach laufen die "
+        "Episoden auseinander. Die gepaarten Tests behandeln nur die Seeds als Zufall, nicht den Lauf; "
+        "Unterschiede in dieser Größenordnung sind deshalb nicht belastbar, auch wenn sie nominal signifikant sind."
+    ]
+
+
 def drift_note(final: Stage, screening: Stage | None, phase1: ProfileData | None) -> list[str]:
     """Limitation bullet when stage 2 is compared with the phase-1 runs: they were not measured interleaved."""
     if final.key != "2" or not any(cell.source for cell in final.baselines.values()):
@@ -1440,7 +1589,7 @@ def write_phase2_report(config: KortynConfig, results_dir: Path, reports_dir: Pa
         "",
         f"## Kurzfassung (Stufe {final.key}, {len(final.seeds)} Seeds)",
         "",
-        *key_findings(final, comparisons[final.key], confirmed, best),
+        *key_findings(final, comparisons[final.key], confirmed, best, run_noise(phase1)),
         "",
     ]
     if final.key == "2":
@@ -1462,23 +1611,10 @@ def write_phase2_report(config: KortynConfig, results_dir: Path, reports_dir: Pa
     if screening is not None:
         lines += [f"## Stufe 1 · Screening ({len(screening.seeds)} Seeds)", ""]
         if phase1 is not None:
-            table, reproduced, same_timing = reproduction(screening, phase1)
-            lines += ["### Reproduktion der Baseline (Abnahmekriterium 2)", "", *table, ""]
-            if reproduced is True:
-                timing_note = (
-                    " Planalter (± 0,05 s) und Anfragerate (± 5 %) stimmen überein." if same_timing else ""
-                )
-                lines += [
-                    "✅ **Reproduziert:** in keinem Szenario ein signifikanter Unterschied zu Phase 1 (McNemar- "
-                    f"und Permutationstest p ≥ 0,05).{timing_note}",
-                    "",
-                ]
-            elif reproduced is False:
-                lines += [
-                    "⚠️ **Abweichung:** mindestens ein Szenario unterscheidet sich signifikant von Phase 1 – "
-                    "Vergleiche gegen Phase-1-Läufe sind mit Vorsicht zu lesen.",
-                    "",
-                ]
+            result = reproduction(screening, phase1)
+            noise = run_noise(phase1)
+            lines += ["### Reproduktion der Baseline (Abnahmekriterium 2)", "", *result.rows, ""]
+            lines += reproduction_text(result, None if noise is None else noise[1])
         lines += [
             "### Ergebnisse je Szenario",
             "",
@@ -1527,6 +1663,7 @@ def write_phase2_report(config: KortynConfig, results_dir: Path, reports_dir: Pa
         "## Grenzen",
         "",
         *LIMITATIONS,
+        *noise_note(phase1),
         *drift_note(final, screening, phase1),
         "",
         "## Definitionen",

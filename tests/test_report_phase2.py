@@ -246,6 +246,7 @@ def results(tmp_path):
     phase1_runs = {
         "referenz_sync": ("referenz_sync", 4, lambda s: s % 10 < 7, "sync"),
         "gut": ("gut", 7, lambda s: s % 10 < 6, "realtime"),
+        "gut_wiederholung": ("gut", 7, lambda s: s % 10 < 5, "realtime"),
         "schlecht": ("schlecht", 9, lambda s: s % 10 < 5, "realtime"),
         "sehr_schlecht": ("sehr_schlecht", 10, lambda s: s % 10 < 4, "realtime"),
     }
@@ -323,6 +324,11 @@ def test_phase_two_report_from_all_stages(tmp_path, results):
         "Adaptiv 0.7 s · Inpainting (`adaptiv_inpaint`); ebenfalls in Stufe 2 gemessen: Schwelle 10." in text
     )
     assert "Baseline (Phase-1-Lauf)" in text
+    assert "| _Baseline-Wiederholung (Phase 1, identisch)_ | 50 |" in text  # run-to-run noise next to it
+    assert "_gut: Phase 1 → Phase-1-Wiederholung (gleiche Sitzung, identisch)_" in text
+    assert "- **Messrauschen:** Zwei identische Phase-1-Läufe („gut“)" in text
+    assert "- **Lauf-zu-Lauf-Rauschen.**" in text
+    assert "- **Stufe-2-Baseline aus Phase 1.**" in text
     assert "**Die Kernhypothese hält in dieser Form nicht:**" in text  # fresher but worse in this data
     assert "| Schwelle 10 | `schwelle10` |" in text
     for name in (
@@ -334,6 +340,25 @@ def test_phase_two_report_from_all_stages(tmp_path, results):
     ):
         assert (reports / name).stat().st_size > 10_000, name
         assert f"]({name})" in text
+
+
+def test_reproduction_verdicts():
+    noise = compare(summary_of({s: s < 6 for s in range(50)}), summary_of({s: s < 5 for s in range(50)}))
+    clean = report_phase2.Reproduction([], True, True, True, ("Erfolg gut", 0.8, 1.0), 4)
+    assert report_phase2.reproduction_text(clean, noise)[0].startswith(
+        "✅ **Reproduziert:** kein Unterschied"
+    )
+    within = report_phase2.Reproduction([], True, False, False, ("Max-Reward gut", 0.03, 0.12), 4)
+    text = report_phase2.reproduction_text(within, noise)[0]
+    assert text.startswith("✅ **Reproduziert innerhalb der Unsicherheit:** Max-Reward gut nominal p = 0.03")
+    assert "Holm-Korrektur über alle 4 Reproduktionstests p = 0.12" in text
+    assert "identische Wiederholung" in text
+    failed = report_phase2.Reproduction([], False, False, True, ("Erfolg gut", 0.001, 0.004), 4)
+    assert report_phase2.reproduction_text(failed, None)[0].startswith("⚠️ **Abweichung:**")
+    assert (
+        report_phase2.reproduction_text(report_phase2.Reproduction([], None, None, False, None, 0), None)
+        == []
+    )
 
 
 def test_selection_cli_prints_the_ranking(results, capsys):
@@ -357,6 +382,16 @@ def test_report_without_phase_two_results(tmp_path):
 def test_phase_two_experiment_files_store_results_where_the_report_reads_them():
     screening = load_config(EXPERIMENTS_DIR / "phase2" / "screening.yaml")
     assert screening.experiment.results_dir == "results/phase2/screening"
+    confirmation = load_config(EXPERIMENTS_DIR / "phase2" / "confirmation.yaml")
+    assert confirmation.experiment.results_dir == "results/phase2/confirmation"
+    assert confirmation.experiment.episodes == 50
+    assert confirmation.experiment.seed_start == screening.experiment.seed_start == 1000
+    runs = [(run.scenario, run.strategy) for suite in confirmation.experiment.suites for run in suite.runs]
+    strategies = {strategy for _, strategy in runs}
+    assert len(strategies) == 2
+    assert strategies <= set(screening.strategies)
+    assert {scenario for scenario, _ in runs} == set(report_phase2.SCENARIO_ORDER)
+    assert len(runs) == 12
     assert {run.strategy for suite in screening.experiment.suites for run in suite.runs} == set(
         screening.strategies
     )
