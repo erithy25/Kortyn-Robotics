@@ -2,8 +2,10 @@
 
 Everything that can be tuned lives in YAML files under ``kortyn/experiments/``:
 
-* ``base.yaml``      – ports, paths, Brain profiles, Agent/Proxy parameters, the experiment suite.
+* ``base.yaml``      – ports, paths, Brain profiles, Agent/Proxy parameters, the phase-1 experiment suite.
 * ``<scenario>.yaml`` – one network scenario (delay, jitter, bandwidth, stalls) and the agent mode.
+* ``phase2/*.yaml``   – phase-2 experiments (freshness strategies); they ``extends: ../base.yaml`` so the
+  environment, checkpoint, Brain profiles and seeds are inherited unchanged.
 
 YAML is decoded with ``draccus.decode`` (the config library LeRobot uses), which rejects unknown keys and
 wrongly typed values. Semantic checks (ranges, consistency) live in ``__post_init__`` of each dataclass.
@@ -253,17 +255,136 @@ class AgentConfig:
             raise ConfigError("agent.sync_actions_per_chunk must be in [1, actions_per_chunk]")
 
 
+# --------------------------------------------------------------------------------------------- freshness
+@dataclass
+class LatencyEstimatorConfig:
+    """Online estimate of the end-to-end latency of one robot: median and MAD over a sliding window."""
+
+    # Completed requests the estimate is based on (median/MAD: robust against isolated stalls).
+    window: int = 16
+    # Prior before the first measurement; the warm-up request of every episode replaces it.
+    initial_ms: float = 400.0
+    # Spread assumed while fewer than three samples exist, and a floor for the robust spread afterwards.
+    initial_spread_ms: float = 50.0
+    min_spread_ms: float = 5.0
+
+    def __post_init__(self) -> None:
+        if self.window < 3:
+            raise ConfigError(f"latency.window must be >= 3, got {self.window}")
+        if self.initial_ms <= 0:
+            raise ConfigError(f"latency.initial_ms must be > 0, got {self.initial_ms}")
+        if self.initial_spread_ms < 0 or self.min_spread_ms < 0:
+            raise ConfigError("latency spreads must be >= 0")
+
+
+@dataclass
+class RequestConfig:
+    """When the agent asks the Brain for a new plan."""
+
+    # threshold: request when at most ``refill_threshold`` actions remain after the current tick (phase 1).
+    # adaptive:  request so early that the next plan arrives in time (latency quantile + margin) AND so
+    #            often that the expected mean plan age stays at or below ``target_age_s``.
+    mode: Literal["threshold", "adaptive"] = "threshold"
+    # threshold mode; None = ``agent.refill_threshold`` (6 in phase 1).
+    refill_threshold: int | None = None
+    target_age_s: float = 0.7
+    # Latency used for the deadline: median + z * robust spread (1.645 ~ 95 % for normal noise).
+    latency_quantile_z: float = 1.645
+    # Extra ticks of lead time on top of the latency quantile.
+    safety_margin_ticks: int = 1
+
+    def __post_init__(self) -> None:
+        if self.refill_threshold is not None and self.refill_threshold < 0:
+            raise ConfigError(f"request.refill_threshold must be >= 0, got {self.refill_threshold}")
+        if self.target_age_s <= 0:
+            raise ConfigError(f"request.target_age_s must be > 0, got {self.target_age_s}")
+        if self.latency_quantile_z < 0:
+            raise ConfigError(f"request.latency_quantile_z must be >= 0, got {self.latency_quantile_z}")
+        if self.safety_margin_ticks < 0:
+            raise ConfigError(f"request.safety_margin_ticks must be >= 0, got {self.safety_margin_ticks}")
+
+
+@dataclass
+class SmoothingConfig:
+    """Transition between consecutive plans."""
+
+    # none:    the new plan simply replaces the old one where they overlap (phase 1).
+    # inpaint: the Brain inpaints the new plan: actions that are executed while it computes are frozen to
+    #          the old plan, the rest of the overlap is pulled towards the old plan with decaying weights
+    #          (gradient-free variant of real-time chunking, see kortyn/inpainting.py).
+    mode: Literal["none", "inpaint"] = "none"
+    # Weights over the overlap after the frozen part, as in LeRobot's RTC: linear | exp | zeros (= frozen
+    # part only, "hard" inpainting).
+    schedule: Literal["linear", "exp", "zeros"] = "linear"
+    # Longest soft overlap (actions of the old plan after the frozen part that guide the new plan).
+    max_overlap_steps: int = 10
+
+    def __post_init__(self) -> None:
+        if self.max_overlap_steps < 0:
+            raise ConfigError(f"smoothing.max_overlap_steps must be >= 0, got {self.max_overlap_steps}")
+
+
+@dataclass
+class GuardConfig:
+    """What the robot does when no usable action is left (budget violation = emergency)."""
+
+    # repeat_last: repeat the last executed action (phase 1); hold: stop (PushT: target = current position).
+    mode: Literal["repeat_last", "hold"] = "repeat_last"
+    # Actions older than this (observation -> execution) count as unusable: emergency, the robot holds.
+    max_plan_age_s: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.max_plan_age_s is not None:
+            if self.max_plan_age_s <= 0:
+                raise ConfigError(f"guard.max_plan_age_s must be > 0, got {self.max_plan_age_s}")
+            if self.mode != "hold":
+                raise ConfigError(
+                    "guard.max_plan_age_s needs guard.mode 'hold' (repeating the last action would execute "
+                    "an even older plan)"
+                )
+
+
+@dataclass
+class StrategyConfig:
+    """One freshness strategy. ``StrategyConfig()`` is exactly the phase-1 behaviour (the baseline)."""
+
+    description: str = ""
+    request: RequestConfig = field(default_factory=RequestConfig)
+    # timestep: actions are keyed by control step; steps that already passed are skipped on arrival.
+    # shift:    naive client: the plan starts executing at its arrival tick (stale actions are executed).
+    alignment: Literal["timestep", "shift"] = "timestep"
+    smoothing: SmoothingConfig = field(default_factory=SmoothingConfig)
+    guard: GuardConfig = field(default_factory=GuardConfig)
+    latency: LatencyEstimatorConfig = field(default_factory=LatencyEstimatorConfig)
+
+    def to_dict(self) -> dict[str, Any]:
+        encoded = draccus.encode(self)
+        if not isinstance(encoded, dict):
+            raise ConfigError("StrategyConfig did not encode to a mapping")
+        return encoded
+
+
+BASELINE_STRATEGY = "baseline"
+
+
 # --------------------------------------------------------------------------------------------- suite
 @dataclass
 class RunSpec:
-    """One measured condition inside a suite. ``label`` defaults to the scenario name."""
+    """One measured condition inside a suite.
+
+    ``strategy`` (phase 2) names an entry of ``strategies``; ``None`` keeps the phase-1 behaviour and the
+    phase-1 metadata format. ``label`` defaults to the scenario name, or ``<strategy>__<scenario>``.
+    """
 
     scenario: str
     label: str | None = None
+    strategy: str | None = None
 
     @property
     def run_label(self) -> str:
-        return self.label or self.scenario
+        if self.label:
+            return self.label
+        return self.scenario if self.strategy is None else f"{self.strategy}__{self.scenario}"
 
 
 @dataclass
@@ -308,6 +429,8 @@ class KortynConfig:
     agent: AgentConfig = field(default_factory=AgentConfig)
     env: EnvConfig = field(default_factory=EnvConfig)
     profiles: dict[str, BrainProfile] = field(default_factory=dict)
+    # Phase 2: named freshness strategies. "baseline" (phase 1) exists implicitly unless defined here.
+    strategies: dict[str, StrategyConfig] = field(default_factory=dict)
     experiment: ExperimentConfig = field(default_factory=ExperimentConfig)
 
     def __post_init__(self) -> None:
@@ -315,6 +438,15 @@ class KortynConfig:
             if suite.profile not in self.profiles:
                 raise ConfigError(
                     f"suite references unknown profile {suite.profile!r}; known: {sorted(self.profiles)}"
+                )
+            for run in suite.runs:
+                if run.strategy is not None:
+                    self.strategy(run.strategy)
+        for name, strategy in self.strategies.items():
+            threshold = strategy.request.refill_threshold
+            if threshold is not None and threshold >= self.agent.actions_per_chunk:
+                raise ConfigError(
+                    f"strategy {name!r}: request.refill_threshold must be < agent.actions_per_chunk"
                 )
         ports = {self.brain.port, self.proxy.port, self.proxy.control_port}
         if len(ports) != 3:
@@ -325,6 +457,17 @@ class KortynConfig:
             return self.profiles[name]
         except KeyError as exc:
             raise ConfigError(f"unknown profile {name!r}; known: {sorted(self.profiles)}") from exc
+
+    def strategy(self, name: str | None) -> StrategyConfig:
+        """Strategy by name; ``None`` and an undefined ``"baseline"`` give the phase-1 behaviour."""
+        if name is None:
+            return StrategyConfig()
+        if name in self.strategies:
+            return self.strategies[name]
+        if name == BASELINE_STRATEGY:
+            return StrategyConfig(description="Phase 1 (Baseline)")
+        known = sorted({BASELINE_STRATEGY, *self.strategies})
+        raise ConfigError(f"unknown strategy {name!r}; known: {known}")
 
 
 # --------------------------------------------------------------------------------------------- loading
@@ -368,9 +511,35 @@ def decode[T](cls: type[T], data: dict[str, Any], source: str) -> T:
         raise ConfigError(f"{source}: {root if root is not None else exc}") from exc
 
 
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Mappings are merged key by key; everything else (lists, scalars) in ``override`` replaces ``base``."""
+    merged = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def _read_config_tree(path: Path, chain: tuple[Path, ...] = ()) -> dict[str, Any]:
+    """Read ``path`` and, if it says ``extends: <file>``, merge it over that file (relative to ``path``)."""
+    resolved = path.resolve()
+    if resolved in chain:
+        cycle = " -> ".join(str(p) for p in (*chain, resolved))
+        raise ConfigError(f"circular 'extends': {cycle}")
+    data = _read_yaml(path)
+    parent = data.pop("extends", None)
+    if parent is None:
+        return data
+    if not isinstance(parent, str) or not parent:
+        raise ConfigError(f"{path}: 'extends' must be a file name, got {parent!r}")
+    return _deep_merge(_read_config_tree(path.parent / parent, (*chain, resolved)), data)
+
+
 def load_config(path: Path | str = DEFAULT_BASE_CONFIG) -> KortynConfig:
     path = Path(path)
-    return decode(KortynConfig, _read_yaml(path), str(path))
+    return decode(KortynConfig, _read_config_tree(path), str(path))
 
 
 def resolve_scenario_path(name_or_path: str) -> Path:
