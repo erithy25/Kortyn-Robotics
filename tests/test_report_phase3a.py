@@ -153,3 +153,46 @@ def test_difference_of_success_drops_between_tasks():
     assert delta_difference(ref_a, cond_a, ref_b, run([episode(99)])) is None
     assert plan_period_ms({"agent": {"actions_per_chunk": 15, "refill_threshold": 6}}, 10.0) == 800.0
     assert plan_period_ms({"agent": {"actions_per_chunk": 50, "refill_threshold": 24}}, 80.0) == 312.5
+
+
+def test_validation_cases_collect_every_source_and_the_verdict_flags_shifted_runs(tmp_path):
+    import json
+
+    from kortyn.report_phase3a import load_validation, verdict
+
+    def write(directory, episodes):
+        directory.mkdir(parents=True)
+        (directory / "episodes.jsonl").write_text("".join(json.dumps(e.to_json()) + "\n" for e in episodes))
+        (directory / "requests.jsonl").write_text("")
+
+    seeds = range(1000, 1030)
+    real = [episode(s, success=s % 3 == 0, coverage=0.5 + 0.01 * (s % 7)) for s in seeds]
+    root = tmp_path / "results"
+    model_root = root / "phase3a" / "validation_model" / "kalibriert"
+    write(root / "kalibriert" / "gut", real)
+    write(root / "kalibriert" / "gut_wiederholung", real)
+    write(model_root / "modell__gut", real)  # the pooled model serves both real-time runs of "gut"
+    write(model_root / "episode__gut", real)
+    # episode-calibrated counterpart of the repetition: every episode starves half of its ticks
+    write(model_root / "episode__gut_wiederholung", [episode(s, starved=(1, 1, 0, 0)) for s in seeds])
+    write(root / "phase3a" / "validation_replay" / "kalibriert" / "replay__gut", real)
+
+    cases = {case.scenario: case for case in load_validation(root)}
+    assert set(cases) == {"gut", "gut_wiederholung"}
+    gut, repetition = cases["gut"], cases["gut_wiederholung"]
+    assert gut.model is not None
+    assert gut.episode is not None
+    assert gut.replay is not None
+    assert repetition.model is not None
+    assert repetition.replay is None
+    assert repetition.model.episodes == gut.model.episodes
+    assert set(gut.deltas("episode")) == {"success", "reward", "plan_age", "starvation"}
+
+    model = verdict(list(cases.values()), "model")
+    assert (model.comparisons, model.inside, model.holm_significant, model.in_real_interval) == (8, 8, 0, 8)
+    episode_verdict = verdict(list(cases.values()), "episode")
+    assert episode_verdict.comparisons == 8
+    assert "kalibriert/gut (Wiederholung): Starvation" in episode_verdict.outside
+    assert episode_verdict.holm_significant >= 1
+    replay = verdict(list(cases.values()), "replay")
+    assert (replay.comparisons, replay.inside) == (4, 4)

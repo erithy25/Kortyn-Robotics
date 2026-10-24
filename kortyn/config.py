@@ -439,10 +439,15 @@ class EmpiricalSourceConfig:
     ``paths`` are run directories or glob patterns (``results/kalibriert/*``); runs in sync mode are skipped,
     and only the final attempt of every seed counts (as in the reports). Request quantities use the
     real-time requests (not the warm-up); ``tick_lateness_ms`` uses every control tick.
+
+    ``per_seed``: an episode draws only from the values logged in the episode with the same seed (pooled
+    over the listed runs). That calibrates the sample to the state of the logging machine during that
+    episode (session drift, drift within a session); a seed without logged values is an error.
     """
 
     paths: list[str] = field(default_factory=list)
     quantity: EmpiricalQuantity = "server_total_ms"
+    per_seed: bool = False
 
     def __post_init__(self) -> None:
         if not self.paths:

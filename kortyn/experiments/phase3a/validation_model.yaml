@@ -11,8 +11,10 @@
 #     1.8-2.1 ms per round trip in both profiles),
 #   * ideal control ticks (the real ticks started 0.2 ms late at the median).
 # Replications "modell_r2" (timing_seed 1) redraw every latency: the A/A test of the virtual-time mode.
-# "sitzung" runs take the service time from the phase-1 session that measured the run: the real-time machine
-# inferred ~15 ms faster in the later session of the two no-stall ablations (median 324 vs 339 ms).
+# "episode" runs draw the service time from the server times logged in the same phase-1 episode (same run,
+# same seed): the real-time machine drifted between sessions (median 339 ms vs 324 ms in the later session of
+# the two no-stall ablations) and within a session (ddim10: 795 ms in the first ten seeds, 774-778 ms later).
+# These runs separate the virtual-time mechanics and the network model from that hardware drift.
 # Run:  python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_model.yaml
 extends: ../base.yaml
 
@@ -27,83 +29,120 @@ hardware_profiles:
         kind: empirical
         empirical: {paths: ["results/ddim10/*"], quantity: server_total_ms}
 
-  phase1_cpu_sitzung1:
-    description: "Phase-1-Hauptsitzung (23.10.2026 ab 19:45 UTC): geloggte Serverzeiten"
+  # Episode-calibrated service time: values logged in the phase-1 episode with the same seed.
+  phase1_episode_gut:
+    description: "Phase-1-Lauf gut: Serverzeiten derselben Episode"
     service:
       kalibriert:
         kind: empirical
-        empirical:
-          paths: ["results/kalibriert/gut", "results/kalibriert/gut_wiederholung", "results/kalibriert/buero_wlan",
-                  "results/kalibriert/schlecht", "results/kalibriert/sehr_schlecht"]
-          quantity: server_total_ms
-  phase1_cpu_sitzung2:
-    description: "Phase-1-Ablationssitzung (23.10.2026 ab 23:41 UTC): geloggte Serverzeiten"
+        empirical: {paths: ["results/kalibriert/gut"], quantity: server_total_ms, per_seed: true}
+      ddim10:
+        kind: empirical
+        empirical: {paths: ["results/ddim10/gut"], quantity: server_total_ms, per_seed: true}
+  phase1_episode_gut_wiederholung:
+    description: "Phase-1-Lauf gut_wiederholung: Serverzeiten derselben Episode"
     service:
       kalibriert:
         kind: empirical
-        empirical:
-          paths: ["results/kalibriert/schlecht_ohne_stall", "results/kalibriert/sehr_schlecht_ohne_stall"]
-          quantity: server_total_ms
+        empirical: {paths: ["results/kalibriert/gut_wiederholung"], quantity: server_total_ms, per_seed: true}
+  phase1_episode_buero_wlan:
+    description: "Phase-1-Lauf buero_wlan: Serverzeiten derselben Episode"
+    service:
+      kalibriert:
+        kind: empirical
+        empirical: {paths: ["results/kalibriert/buero_wlan"], quantity: server_total_ms, per_seed: true}
+      ddim10:
+        kind: empirical
+        empirical: {paths: ["results/ddim10/buero_wlan"], quantity: server_total_ms, per_seed: true}
+  phase1_episode_schlecht:
+    description: "Phase-1-Lauf schlecht: Serverzeiten derselben Episode"
+    service:
+      kalibriert:
+        kind: empirical
+        empirical: {paths: ["results/kalibriert/schlecht"], quantity: server_total_ms, per_seed: true}
+      ddim10:
+        kind: empirical
+        empirical: {paths: ["results/ddim10/schlecht"], quantity: server_total_ms, per_seed: true}
+  phase1_episode_sehr_schlecht:
+    description: "Phase-1-Lauf sehr_schlecht: Serverzeiten derselben Episode"
+    service:
+      kalibriert:
+        kind: empirical
+        empirical: {paths: ["results/kalibriert/sehr_schlecht"], quantity: server_total_ms, per_seed: true}
+      ddim10:
+        kind: empirical
+        empirical: {paths: ["results/ddim10/sehr_schlecht"], quantity: server_total_ms, per_seed: true}
+  phase1_episode_schlecht_ohne_stall:
+    description: "Phase-1-Lauf schlecht_ohne_stall: Serverzeiten derselben Episode"
+    service:
+      kalibriert:
+        kind: empirical
+        empirical: {paths: ["results/kalibriert/schlecht_ohne_stall"], quantity: server_total_ms, per_seed: true}
+  phase1_episode_sehr_schlecht_ohne_stall:
+    description: "Phase-1-Lauf sehr_schlecht_ohne_stall: Serverzeiten derselben Episode"
+    service:
+      kalibriert:
+        kind: empirical
+        empirical: {paths: ["results/kalibriert/sehr_schlecht_ohne_stall"], quantity: server_total_ms, per_seed: true}
 
 timings:
   modell:
     description: "Latenzmodell aus den Phase-1-Logs (Netz = Proxy-Modell, Serverzeit = phase1_cpu)"
     latency: model
     hardware: phase1_cpu
-    client_overhead:
+    client_overhead: &client_overhead
       kind: empirical
       empirical: {paths: ["results/kalibriert/*", "results/ddim10/*"], quantity: send_offset_ms}
-    transport_overhead:
+    transport_overhead: &transport_overhead
       kind: empirical
       empirical:
         paths: ["results/kalibriert/gut", "results/kalibriert/gut_wiederholung", "results/ddim10/gut"]
         quantity: network_ms
-    delivery_lateness: {kind: constant, value_ms: 1.0}
-    tick_lateness: {kind: constant, value_ms: 0.0}
+    delivery_lateness: &delivery_lateness {kind: constant, value_ms: 1.0}
+    tick_lateness: &ideal_ticks {kind: constant, value_ms: 0.0}
   modell_r2:
     description: "wie modell, alle Latenzen neu gezogen (timing_seed 1): A/A-Replikation"
     latency: model
     hardware: phase1_cpu
     timing_seed: 1
-    client_overhead:
-      kind: empirical
-      empirical: {paths: ["results/kalibriert/*", "results/ddim10/*"], quantity: send_offset_ms}
-    transport_overhead:
-      kind: empirical
-      empirical:
-        paths: ["results/kalibriert/gut", "results/kalibriert/gut_wiederholung", "results/ddim10/gut"]
-        quantity: network_ms
-    delivery_lateness: {kind: constant, value_ms: 1.0}
-    tick_lateness: {kind: constant, value_ms: 0.0}
+    client_overhead: *client_overhead
+    transport_overhead: *transport_overhead
+    delivery_lateness: *delivery_lateness
+    tick_lateness: *ideal_ticks
 
-  sitzung1:
-    description: "wie modell, Servicezeit der Phase-1-Hauptsitzung"
+  # wie modell, nur die Servicezeit stammt aus derselben Phase-1-Episode (Lauf und Seed)
+  episode_gut: &episode
+    description: "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf gut)"
     latency: model
-    hardware: phase1_cpu_sitzung1
-    client_overhead:
-      kind: empirical
-      empirical: {paths: ["results/kalibriert/*", "results/ddim10/*"], quantity: send_offset_ms}
-    transport_overhead:
-      kind: empirical
-      empirical:
-        paths: ["results/kalibriert/gut", "results/kalibriert/gut_wiederholung", "results/ddim10/gut"]
-        quantity: network_ms
-    delivery_lateness: {kind: constant, value_ms: 1.0}
-    tick_lateness: {kind: constant, value_ms: 0.0}
-  sitzung2:
-    description: "wie modell, Servicezeit der Phase-1-Ablationssitzung"
-    latency: model
-    hardware: phase1_cpu_sitzung2
-    client_overhead:
-      kind: empirical
-      empirical: {paths: ["results/kalibriert/*", "results/ddim10/*"], quantity: send_offset_ms}
-    transport_overhead:
-      kind: empirical
-      empirical:
-        paths: ["results/kalibriert/gut", "results/kalibriert/gut_wiederholung", "results/ddim10/gut"]
-        quantity: network_ms
-    delivery_lateness: {kind: constant, value_ms: 1.0}
-    tick_lateness: {kind: constant, value_ms: 0.0}
+    hardware: phase1_episode_gut
+    client_overhead: *client_overhead
+    transport_overhead: *transport_overhead
+    delivery_lateness: *delivery_lateness
+    tick_lateness: *ideal_ticks
+  episode_gut_wiederholung:
+    <<: *episode
+    description: "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf gut_wiederholung)"
+    hardware: phase1_episode_gut_wiederholung
+  episode_buero_wlan:
+    <<: *episode
+    description: "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf buero_wlan)"
+    hardware: phase1_episode_buero_wlan
+  episode_schlecht:
+    <<: *episode
+    description: "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf schlecht)"
+    hardware: phase1_episode_schlecht
+  episode_sehr_schlecht:
+    <<: *episode
+    description: "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf sehr_schlecht)"
+    hardware: phase1_episode_sehr_schlecht
+  episode_schlecht_ohne_stall:
+    <<: *episode
+    description: "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf schlecht_ohne_stall)"
+    hardware: phase1_episode_schlecht_ohne_stall
+  episode_sehr_schlecht_ohne_stall:
+    <<: *episode
+    description: "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf sehr_schlecht_ohne_stall)"
+    hardware: phase1_episode_sehr_schlecht_ohne_stall
 
 experiment:
   results_dir: results/phase3a/validation_model
@@ -122,12 +161,14 @@ experiment:
         - {scenario: sehr_schlecht_ohne_stall, timing: modell}
         - {scenario: gut, timing: modell_r2}
         - {scenario: sehr_schlecht, timing: modell_r2}
-        - {scenario: gut, timing: sitzung1, label: sitzung__gut}
-        - {scenario: buero_wlan, timing: sitzung1, label: sitzung__buero_wlan}
-        - {scenario: schlecht, timing: sitzung1, label: sitzung__schlecht}
-        - {scenario: sehr_schlecht, timing: sitzung1, label: sitzung__sehr_schlecht}
-        - {scenario: schlecht_ohne_stall, timing: sitzung2, label: sitzung__schlecht_ohne_stall}
-        - {scenario: sehr_schlecht_ohne_stall, timing: sitzung2, label: sitzung__sehr_schlecht_ohne_stall}
+        - {scenario: gut, timing: episode_gut, label: episode__gut}
+        - {scenario: gut, timing: episode_gut_wiederholung, label: episode__gut_wiederholung}
+        - {scenario: buero_wlan, timing: episode_buero_wlan, label: episode__buero_wlan}
+        - {scenario: schlecht, timing: episode_schlecht, label: episode__schlecht}
+        - {scenario: sehr_schlecht, timing: episode_sehr_schlecht, label: episode__sehr_schlecht}
+        - {scenario: schlecht_ohne_stall, timing: episode_schlecht_ohne_stall, label: episode__schlecht_ohne_stall}
+        - {scenario: sehr_schlecht_ohne_stall, timing: episode_sehr_schlecht_ohne_stall,
+           label: episode__sehr_schlecht_ohne_stall}
     - profile: ddim10
       runs:
         - {scenario: referenz_sync, timing: modell}
@@ -136,3 +177,7 @@ experiment:
         - {scenario: schlecht, timing: modell}
         - {scenario: sehr_schlecht, timing: modell}
         - {scenario: gut, timing: modell_r2}
+        - {scenario: gut, timing: episode_gut, label: episode__gut}
+        - {scenario: buero_wlan, timing: episode_buero_wlan, label: episode__buero_wlan}
+        - {scenario: schlecht, timing: episode_schlecht, label: episode__schlecht}
+        - {scenario: sehr_schlecht, timing: episode_sehr_schlecht, label: episode__sehr_schlecht}

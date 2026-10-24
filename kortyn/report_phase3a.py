@@ -467,23 +467,23 @@ class ValidationCase:
     replay: Run | None
     model_deltas: dict[str, Delta]
     replay_deltas: dict[str, Delta]
-    session: Run | None = None  # latency model with the service time of the run's own phase-1 session
-    session_deltas: dict[str, Delta] | None = None
+    episode: Run | None = None  # latency model, service time drawn from the same phase-1 episode
+    episode_deltas: dict[str, Delta] | None = None
 
     def deltas(self, source: str) -> dict[str, Delta]:
         if source == "model":
             return self.model_deltas
-        if source == "session":
-            return self.session_deltas or {}
+        if source == "episode":
+            return self.episode_deltas or {}
         return self.replay_deltas
 
 
 SOURCES = (
     ("model", "Simulationszeit: Modell (gepoolt)"),
-    ("session", "Simulationszeit: Modell (sitzungsgenau)"),
+    ("episode", "Simulationszeit: Modell (episodengenau)"),
     ("replay", "Simulationszeit: Replay"),
 )
-SOURCE_SHORT = {"model": "Modell", "session": "Modell sitzungsgenau", "replay": "Replay"}
+SOURCE_SHORT = {"model": "Modell", "episode": "Modell episodengenau", "replay": "Replay"}
 
 
 def load_validation(results: Path) -> list[ValidationCase]:
@@ -496,9 +496,9 @@ def load_validation(results: Path) -> list[ValidationCase]:
             model_label = "gut" if scenario == "gut_wiederholung" else scenario
             model_root = results / "phase3a" / "validation_model" / profile
             model = load_run(model_root / f"modell__{model_label}")
-            session = load_run(model_root / f"sitzung__{model_label}")
+            episode = load_run(model_root / f"episode__{scenario}")
             replay = load_run(results / "phase3a" / "validation_replay" / profile / f"replay__{scenario}")
-            if model is None and replay is None and session is None:
+            if model is None and replay is None and episode is None:
                 continue
             cases.append(
                 ValidationCase(
@@ -509,8 +509,8 @@ def load_validation(results: Path) -> list[ValidationCase]:
                     replay,
                     all_deltas(real, model),
                     all_deltas(real, replay),
-                    session,
-                    all_deltas(real, session),
+                    episode,
+                    all_deltas(real, episode),
                 )
             )
     return cases
@@ -532,7 +532,7 @@ class Verdict:
 
 
 def source_run(case: ValidationCase, source: str) -> Run | None:
-    return {"model": case.model, "session": case.session, "replay": case.replay}[source]
+    return {"model": case.model, "episode": case.episode, "replay": case.replay}[source]
 
 
 def verdict(cases: Sequence[ValidationCase], source: str) -> Verdict:
@@ -565,7 +565,7 @@ def validation_table(cases: Sequence[ValidationCase], profile: str) -> list[str]
         sources: list[tuple[str, Run | None]] = [
             ("Echtzeit (Phase 1)", case.real),
             ("Simulationszeit: Modell (gepoolt)", case.model),
-            ("Simulationszeit: Modell (sitzungsgenau)", case.session),
+            ("Simulationszeit: Modell (episodengenau)", case.episode),
             ("Simulationszeit: Replay", case.replay),
         ]
         first = True
@@ -653,17 +653,40 @@ def replay_table(cases: Sequence[ValidationCase]) -> tuple[list[str], ReplayMatc
     return lines, total
 
 
-def session_speed(results: Path, profile: str) -> list[tuple[str, float]]:
-    """Median inference time per phase-1 run: the real-time machine was not equally fast in all sessions."""
-    rows: list[tuple[str, float]] = []
+def service_drift(results: Path, profile: str, block: int = 10) -> list[str]:
+    """Server time of the real-time machine per phase-1 run and per block of seeds: the hardware drifted
+    between sessions and within a session, which a pooled service-time profile cannot follow."""
+    runs: list[tuple[str, list[RequestRecord]]] = []
     for scenario in VALIDATION_RUNS:
         run = load_run(results / profile / scenario)
         if run is None:
             continue
-        values = [r.server_inference_ms for r in run.requests_of() if r.server_inference_ms is not None]
-        if values:
-            rows.append((scenario, float(np.median(values))))
-    return rows
+        requests = [r for r in run.requests_of(("realtime",)) if r.server_total_ms is not None]
+        if requests:
+            runs.append((scenario, requests))
+    if not runs:
+        return []
+    seeds = sorted({r.seed for _, requests in runs for r in requests})
+    blocks = [seeds[i : i + block] for i in range(0, len(seeds), block)]
+    lines = [
+        "| Lauf | Median | " + " | ".join(f"Seeds {b[0]}–{b[-1]}" for b in blocks) + " |",
+        "|---|---:|" + "---:|" * len(blocks),
+    ]
+    for scenario, requests in runs:
+        cells = []
+        for members in blocks:
+            chosen = set(members)
+            values = [
+                float(r.server_total_ms)
+                for r in requests
+                if r.seed in chosen and r.server_total_ms is not None
+            ]
+            cells.append(f"{np.mean(values):.0f}" if values else "–")
+        median = float(
+            np.median([float(r.server_total_ms) for r in requests if r.server_total_ms is not None])
+        )
+        lines.append(f"| {SCENARIO_LABELS[scenario]} | {median:.0f} | " + " | ".join(cells) + " |")
+    return lines
 
 
 # --------------------------------------------------------------------------------------------- noise, power
@@ -1060,7 +1083,7 @@ def figure_validation(cases: Sequence[ValidationCase], path: Path) -> None:
     )
     sources = (
         ("Modell (gepoolt)", "model", CATEGORICAL[0], "o"),
-        ("Modell (sitzungsgenau)", "session", CATEGORICAL[2], "D"),
+        ("Modell (episodengenau)", "episode", CATEGORICAL[2], "D"),
         ("Replay", "replay", CATEGORICAL[1], "s"),
     )
     labels = [f"{c.profile}: {SCENARIO_LABELS[c.scenario]}" for c in rows]
@@ -1330,12 +1353,13 @@ def write_report(results: Path, reports: Path) -> Path:
             *delta_table(cases, profile),
             "",
         ]
-        speeds = session_speed(results, profile)
-        if speeds:
+        drift = service_drift(results, profile)
+        if drift:
             lines += [
-                "Mediane Inferenzzeit der Phase-1-Läufe (Sitzungsdrift der Echtzeit-Maschine): "
-                + ", ".join(f"{SCENARIO_LABELS[s]} {v:.0f} ms" for s, v in speeds)
-                + ".",
+                "Servicezeit der Echtzeit-Maschine in Phase 1 (Serverzeit je Anfrage in ms: Median des Laufs, "
+                "Mittel je Block aus zehn Seeds):",
+                "",
+                *drift,
                 "",
             ]
     lines += ["### Latenzen", "", *latency_table(cases), "", "![Latenz](figures/phase3a_latency.png)", ""]

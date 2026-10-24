@@ -204,7 +204,7 @@ def stream_rng(*key: int | str) -> random.Random:
 
 
 # --------------------------------------------------------------------------------------------- durations
-_EMPIRICAL_CACHE: dict[tuple[tuple[str, ...], str, str], tuple[float, ...]] = {}
+_EMPIRICAL_CACHE: dict[tuple[tuple[str, ...], str, str], dict[int, tuple[float, ...]]] = {}
 
 
 def _run_directories(patterns: Sequence[str], root: Path) -> list[Path]:
@@ -217,13 +217,16 @@ def _run_directories(patterns: Sequence[str], root: Path) -> list[Path]:
     return sorted(directories)
 
 
-def load_empirical_ms(source: EmpiricalSourceConfig, root: Path = Path()) -> tuple[float, ...]:
-    """All logged values of ``source.quantity`` (ms), sorted, from the final attempts of real-time runs."""
+def load_empirical_by_seed(
+    source: EmpiricalSourceConfig, root: Path = Path()
+) -> dict[int, tuple[float, ...]]:
+    """Logged values of ``source.quantity`` (ms) per episode seed, each sorted, from the final attempts of
+    real-time runs (seeds logged in several of the listed runs pool their values)."""
     key = (tuple(source.paths), source.quantity, str(root.resolve()))
     cached = _EMPIRICAL_CACHE.get(key)
     if cached is not None:
         return cached
-    values: list[float] = []
+    values: dict[int, list[float]] = {}
     for run_dir in _run_directories(source.paths, root):
         episodes, _ = final_episodes(
             EpisodeRecord.from_json(r) for r in read_jsonl(run_dir / "episodes.jsonl")
@@ -232,7 +235,8 @@ def load_empirical_ms(source: EmpiricalSourceConfig, root: Path = Path()) -> tup
         if not episodes:
             continue
         if source.quantity == "tick_lateness_ms":
-            values.extend(value for e in episodes for value in e.ticks.lateness_ms)
+            for e in episodes:
+                values.setdefault(e.seed, []).extend(e.ticks.lateness_ms)
             continue
         chosen = {(e.seed, e.attempt) for e in episodes}
         for data in read_jsonl(run_dir / "requests.jsonl"):
@@ -243,12 +247,17 @@ def load_empirical_ms(source: EmpiricalSourceConfig, root: Path = Path()) -> tup
                 continue
             value = _request_quantity(record, source.quantity)
             if value is not None and math.isfinite(value):
-                values.append(value)
-    if not values:
+                values.setdefault(record.seed, []).append(value)
+    result = {seed: tuple(sorted(v)) for seed, v in sorted(values.items()) if v}
+    if not result:
         raise ConfigError(f"no logged {source.quantity} values found in {source.paths}")
-    result = tuple(sorted(values))
     _EMPIRICAL_CACHE[key] = result
     return result
+
+
+def load_empirical_ms(source: EmpiricalSourceConfig, root: Path = Path()) -> tuple[float, ...]:
+    """All logged values of ``source.quantity`` (ms), sorted, from the final attempts of real-time runs."""
+    return tuple(sorted(v for values in load_empirical_by_seed(source, root).values() for v in values))
 
 
 def _request_quantity(record: RequestRecord, quantity: str) -> float | None:
@@ -271,11 +280,14 @@ class DurationSampler:
     def __init__(self, config: DistributionConfig, root: Path = Path()) -> None:
         self.config = config
         self._samples: tuple[float, ...] = ()
+        self._by_seed: dict[int, tuple[float, ...]] | None = None
         self._mu = 0.0
         self._sigma = 0.0
         if config.kind == "empirical":
             assert config.empirical is not None  # checked by DistributionConfig
             self._samples = load_empirical_ms(config.empirical, root)
+            if config.empirical.per_seed:
+                self._by_seed = load_empirical_by_seed(config.empirical, root)
         elif config.kind == "lognormal":
             variance = math.log1p((config.std_ms / config.mean_ms) ** 2)
             self._sigma = math.sqrt(variance)
@@ -285,7 +297,8 @@ class DurationSampler:
     def is_zero(self) -> bool:
         return self.config.kind == "constant" and self.config.value_ms == 0.0
 
-    def sample_ms(self, rng: random.Random) -> float:
+    def sample_ms(self, rng: random.Random, seed: int | None = None) -> float:
+        """One duration; ``seed`` (episode seed) selects the samples of a ``per_seed`` empirical source."""
         config = self.config
         kind = config.kind
         if kind == "constant":
@@ -297,15 +310,27 @@ class DurationSampler:
         elif kind == "lognormal":
             value = rng.lognormvariate(self._mu, self._sigma)
         else:
-            value = self._samples[rng.randrange(len(self._samples))]
+            samples = self._samples if self._by_seed is None else self._seed_samples(seed)
+            value = samples[rng.randrange(len(samples))]
         value *= config.scale
         value = max(config.min_ms, value)
         if config.max_ms is not None:
             value = min(config.max_ms, value)
         return value
 
-    def sample_s(self, rng: random.Random) -> float:
-        return self.sample_ms(rng) / 1000.0
+    def sample_s(self, rng: random.Random, seed: int | None = None) -> float:
+        return self.sample_ms(rng, seed) / 1000.0
+
+    def _seed_samples(self, seed: int | None) -> tuple[float, ...]:
+        assert self._by_seed is not None
+        assert self.config.empirical is not None
+        samples = self._by_seed.get(seed) if seed is not None else None
+        if not samples:
+            source = self.config.empirical
+            raise SimulationError(
+                f"per-seed empirical source {source.paths} has no logged {source.quantity} for seed {seed}"
+            )
+        return samples
 
     def mean_ms(self) -> float:
         """Mean of the configured distribution before clipping (diagnostics)."""
@@ -604,13 +629,14 @@ class ModelChannel:
         self._link = link
         self._timing = timing
         self._key: tuple[int | str, ...] = (episode_seed, timing_seed, client_id)
+        self._episode_seed = episode_seed
         self._client_id = client_id
 
-    def _rng(self, component: str, obs_step: int) -> random.Random:
-        return stream_rng(*self._key, component, obs_step)
+    def _draw_s(self, sampler: DurationSampler, component: str, obs_step: int) -> float:
+        return sampler.sample_s(stream_rng(*self._key, component, obs_step), self._episode_seed)
 
     def client_overhead_s(self, obs_step: int) -> float:
-        return self._timing.client_overhead.sample_s(self._rng("client", obs_step))
+        return self._draw_s(self._timing.client_overhead, "client", obs_step)
 
     def episode_start(self, warmup_delivery: float) -> float:
         return warmup_delivery
@@ -624,7 +650,7 @@ class ModelChannel:
     def _held(self, direction: str, t: float, nbytes: int, obs_step: int) -> float:
         delivery, held = self._link.transmit(direction, t, nbytes)
         if held and not self._timing.delivery_lateness.is_zero:
-            late = self._timing.delivery_lateness.sample_s(self._rng(f"late-{direction}", obs_step))
+            late = self._draw_s(self._timing.delivery_lateness, f"late-{direction}", obs_step)
             self._link.note_lateness(direction, late)
             delivery += late
         return delivery
@@ -634,7 +660,7 @@ class ModelChannel:
     ) -> None:
         obs_step = int(request.obs_timestep)
         outstanding = _Outstanding(deliver)
-        transport = self._timing.transport_overhead.sample_s(self._rng("transport", obs_step))
+        transport = self._draw_s(self._timing.transport_overhead, "transport", obs_step)
         arrival = self._held(UP, t_send + transport, request.ByteSize(), obs_step)
         deadline = t_send + timeout_s
         job = BrainJob(
@@ -642,7 +668,7 @@ class ModelChannel:
             request=request,
             t_sent=t_send,
             t_arrival=arrival,
-            service_s=self._timing.service.sample_s(self._rng("service", obs_step)),
+            service_s=self._draw_s(self._timing.service, "service", obs_step),
             deadline=deadline,
             on_done=partial(self._on_done, outstanding),
         )
@@ -868,11 +894,12 @@ class SampledTicks:
     def __init__(self, sampler: DurationSampler, episode_seed: int, timing_seed: int, client_id: str) -> None:
         self._sampler = sampler
         self._key: tuple[int | str, ...] = (episode_seed, timing_seed, client_id, "tick")
+        self._episode_seed = episode_seed
 
     def lateness_s(self, step: int) -> float:
         if self._sampler.is_zero:
             return 0.0
-        return self._sampler.sample_s(stream_rng(*self._key, step))
+        return self._sampler.sample_s(stream_rng(*self._key, step), self._episode_seed)
 
 
 class ReplayTicks:

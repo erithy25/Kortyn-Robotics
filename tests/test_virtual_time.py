@@ -41,6 +41,7 @@ from kortyn.virtual_time import (
     VirtualLink,
     WakeAt,
     load_delta,
+    load_empirical_by_seed,
     load_empirical_ms,
     stream_rng,
     stream_seed,
@@ -240,6 +241,55 @@ def test_empirical_samples_use_final_attempts_of_realtime_runs_only(tmp_path):
     assert {sampler.sample_ms(random.Random(i)) for i in range(50)} == {310.0, 320.0}
     with pytest.raises(ConfigError, match="no logged"):
         load_empirical_ms(EmpiricalSourceConfig(paths=["results/none/*"]), root=tmp_path)
+
+
+def test_per_seed_samples_come_from_the_episode_with_the_same_seed(tmp_path):
+    write_run(
+        tmp_path / "results" / "p" / "gut",
+        [_episode(1), _episode(2)],
+        [
+            _request(1, 8, 0.8, 0.8, 1.2, total=310.0),
+            _request(1, 16, 1.6, 1.6, 2.0, total=330.0),
+            _request(2, 8, 0.8, 0.8, 1.2, total=390.0),
+        ],
+    )
+    write_run(
+        tmp_path / "results" / "p" / "schlecht", [_episode(2)], [_request(2, 8, 0.8, 0.8, 1.2, total=410.0)]
+    )
+    source = EmpiricalSourceConfig(paths=["results/p/*"], quantity="server_total_ms", per_seed=True)
+    assert load_empirical_by_seed(source, root=tmp_path) == {1: (310.0, 330.0), 2: (390.0, 410.0)}
+    # the pooled view of the same source is unchanged by the per-seed bookkeeping
+    assert load_empirical_ms(source, root=tmp_path) == (310.0, 330.0, 390.0, 410.0)
+    sampler = DurationSampler(DistributionConfig(kind="empirical", empirical=source), root=tmp_path)
+    assert {sampler.sample_ms(random.Random(i), seed=1) for i in range(50)} == {310.0, 330.0}
+    assert {sampler.sample_ms(random.Random(i), seed=2) for i in range(50)} == {390.0, 410.0}
+    for seed in (3, None):
+        with pytest.raises(SimulationError, match="no logged server_total_ms for seed"):
+            sampler.sample_ms(random.Random(0), seed=seed)
+    # sources without per_seed ignore the episode seed
+    pooled = DurationSampler(
+        DistributionConfig(kind="empirical", empirical=dataclasses.replace(source, per_seed=False)), tmp_path
+    )
+    assert {pooled.sample_ms(random.Random(i), seed=3) for i in range(80)} == {310.0, 330.0, 390.0, 410.0}
+
+
+def test_model_channel_draws_per_seed_service_times_for_its_episode(tmp_path):
+    write_run(
+        tmp_path / "gut",
+        [_episode(7), _episode(8)],
+        [_request(7, 8, 0.8, 0.8, 1.2, total=250.0), _request(8, 8, 0.8, 0.8, 1.2, total=650.0)],
+    )
+    source = EmpiricalSourceConfig(paths=["gut"], quantity="server_total_ms", per_seed=True)
+    service = DurationSampler(DistributionConfig(kind="empirical", empirical=source), root=tmp_path)
+    for seed, expected in ((7, 0.250), (8, 0.650)):
+        sim = Simulation()
+        brain = VirtualBrain(sim, EchoCompute(), FifoScheduler())
+        timing = dataclasses.replace(model_timing(), service=service)
+        channel = ModelChannel(sim, brain, VirtualLink(sim, NetworkConfig(), 1), timing, seed, 0, "c")
+        received: list[Delivery] = []
+        channel.send(make_request(0, 1), 0.0, 0.0, timeout_s=5.0, deliver=received.append)
+        sim.run()
+        assert [d.t_resp for d in received] == pytest.approx([expected])
 
 
 # --------------------------------------------------------------------------------------------- network
