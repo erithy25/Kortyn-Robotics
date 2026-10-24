@@ -9,7 +9,7 @@ import pytest
 
 from kortyn import report, run_experiment
 from kortyn.checkpoint import MARKER_FILE
-from kortyn.metrics import read_jsonl
+from kortyn.metrics import EpisodeRecord, final_episodes, read_jsonl
 
 REPO_ID = "kortyn-test/tiny-pusht"
 REVISION = "test"
@@ -177,14 +177,18 @@ def test_phase_two_strategies_run_end_to_end_with_inpainting(tmp_path, tiny_push
     assert settings["smoothing"]["mode"] == "inpaint"
     assert meta["runs"]["baseline__schlecht"]["strategy_settings"]["request"]["mode"] == "threshold"
 
-    inpaint_episodes = list(read_jsonl(root / "adaptiv_inpaint__schlecht" / "episodes.jsonl"))
+    attempts = list(read_jsonl(root / "adaptiv_inpaint__schlecht" / "episodes.jsonl"))
+    # the runner repeats attempts that the validity gate rejects (machine noise): check the counted ones
+    counted = {(e.seed, e.attempt) for e in final_episodes([EpisodeRecord.from_json(a) for a in attempts])[0]}
+    inpaint_episodes = [e for e in attempts if (e["seed"], e["attempt"]) in counted]
     inpaint_requests = [
         r
         for r in read_jsonl(root / "adaptiv_inpaint__schlecht" / "requests.jsonl")
-        if r["phase"] == "realtime"
+        if r["phase"] == "realtime" and (r["seed"], r["attempt"]) in counted
     ]
-    assert all(e["valid"] for e in inpaint_episodes), [e["invalid_reasons"] for e in inpaint_episodes]
-    assert all(e["strategy"] == "adaptiv_inpaint" for e in inpaint_episodes)
+    assert len(inpaint_episodes) == 2
+    assert all(e["valid"] for e in inpaint_episodes), [e["invalid_reasons"] for e in attempts]
+    assert all(e["strategy"] == "adaptiv_inpaint" for e in attempts)
     assert all(r["status"] == "ok" for r in inpaint_requests)
     assert all(r["guide_frozen"] >= 2 for r in inpaint_requests)
     assert {r["trigger"] for r in inpaint_requests} <= {"freshness", "deadline"}

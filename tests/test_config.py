@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from kortyn.config import (
@@ -173,14 +175,24 @@ def test_phase_two_experiments_inherit_the_phase_one_setup():
     assert EXPERIMENTS_DIR / "phase2" / "screening.yaml" in paths
     for path in paths:
         config = load_config(path)
+        ablation = path.stem.startswith("ablation_sync_")  # sync reference with another execution horizon
         assert config.brain == base.brain
         assert config.env == base.env
-        assert config.agent == base.agent
+        if ablation:
+            assert config.agent.sync_actions_per_chunk != base.agent.sync_actions_per_chunk
+            assert (
+                replace(config.agent, sync_actions_per_chunk=base.agent.sync_actions_per_chunk) == base.agent
+            )
+        else:
+            assert config.agent == base.agent
         assert config.profiles["kalibriert"] == base.profiles["kalibriert"]
         assert config.experiment.seed_start == base.experiment.seed_start
         for suite in config.experiment.suites:
             assert suite.profile == "kalibriert"
             for run in suite.runs:
+                if ablation:
+                    assert (run.scenario, run.strategy) == ("referenz_sync", None)
+                    continue
                 assert run.strategy is not None
                 config.strategy(run.strategy)
                 load_scenario(run.scenario)
