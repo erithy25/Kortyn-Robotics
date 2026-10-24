@@ -184,7 +184,11 @@ class BrainServicer(pb_grpc.KortynBrainServicer):  # type: ignore[misc]  # gener
                     self._counters.abandoned += 1
                 return None
             result = runner.infer(
-                observation, seed=int(request.seed), max_actions=int(max_actions), guide=guide
+                observation,
+                seed=int(request.seed),
+                max_actions=int(max_actions),
+                guide=guide,
+                task=request.task or None,
             )
             with self._lock:
                 self._counters.inferences += 1

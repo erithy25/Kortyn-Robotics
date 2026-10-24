@@ -118,6 +118,7 @@ class LocalBrain:
             digest.update(np.asarray(tensor.shape, dtype=np.int64).tobytes())
             digest.update(tensor.data)
         digest.update(np.asarray([request.seed, max_actions], dtype=np.uint64).tobytes())
+        digest.update(request.task.encode("utf-8"))
         if request.HasField("guide_actions"):
             offset = int(request.guide_start_timestep) - int(request.obs_timestep)
             digest.update(np.asarray([offset], dtype=np.int64).tobytes())
@@ -152,7 +153,13 @@ class LocalBrain:
                 cached.copy(), compute_ms=1000.0 * (time.perf_counter() - started), cache_hit=True
             )
         try:
-            result = runner.infer(observation, seed=int(request.seed), max_actions=max_actions, guide=guide)
+            result = runner.infer(
+                observation,
+                seed=int(request.seed),
+                max_actions=max_actions,
+                guide=guide,
+                task=request.task or None,
+            )
         except ObservationError as exc:
             return ComputeResult(None, f"INVALID_ARGUMENT: {exc}")
         self.inferences += 1
@@ -373,6 +380,7 @@ class VirtualTimeAgent(AgentCore):
         success = False
         max_coverage = 0.0
         sum_reward = 0.0
+        max_step_reward: float | None = None
         steps = 0
         for k in range(max_steps):
             deadline = t0 + k * dt
@@ -494,6 +502,9 @@ class VirtualTimeAgent(AgentCore):
             history.append(observation)
             steps = k + 1
             sum_reward += result.reward
+            max_step_reward = (
+                result.reward if max_step_reward is None else max(max_step_reward, result.reward)
+            )
             if result.coverage is not None:
                 max_coverage = max(max_coverage, result.coverage)
             ticks.queue_len.append(queue_len)
@@ -548,6 +559,7 @@ class VirtualTimeAgent(AgentCore):
             warmup_ms=warmup_ms,
             cpu_before=None,
             brain_load=brain_load,
+            max_step_reward=max_step_reward,
         )
 
     def _sync(
@@ -571,6 +583,7 @@ class VirtualTimeAgent(AgentCore):
         success = False
         max_coverage = 0.0
         sum_reward = 0.0
+        max_step_reward: float | None = None
         k = 0
         while k < max_steps and not success:
             request = self._build_request(history, k, ctx.seed)
@@ -596,6 +609,9 @@ class VirtualTimeAgent(AgentCore):
                 result = env.step(chunk[offset])
                 history.append(result.observation)
                 sum_reward += result.reward
+                max_step_reward = (
+                    result.reward if max_step_reward is None else max(max_step_reward, result.reward)
+                )
                 if result.coverage is not None:
                     max_coverage = max(max_coverage, result.coverage)
                 ticks.queue_len.append(len(chunk) - offset)
@@ -632,6 +648,7 @@ class VirtualTimeAgent(AgentCore):
             warmup_ms=None,
             cpu_before=None,
             brain_load=None,
+            max_step_reward=max_step_reward,
         )
 
     def _delivered_chunk(self, record: RequestRecord, delivery: Delivery) -> FloatArray | None:

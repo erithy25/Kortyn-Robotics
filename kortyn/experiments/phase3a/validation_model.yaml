@@ -11,6 +11,8 @@
 #     1.8-2.1 ms per round trip in both profiles),
 #   * ideal control ticks (the real ticks started 0.2 ms late at the median).
 # Replications "modell_r2" (timing_seed 1) redraw every latency: the A/A test of the virtual-time mode.
+# "sitzung" runs take the service time from the phase-1 session that measured the run: the real-time machine
+# inferred ~15 ms faster in the later session of the two no-stall ablations (median 324 vs 339 ms).
 # Run:  python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_model.yaml
 extends: ../base.yaml
 
@@ -24,6 +26,24 @@ hardware_profiles:
       ddim10:
         kind: empirical
         empirical: {paths: ["results/ddim10/*"], quantity: server_total_ms}
+
+  phase1_cpu_sitzung1:
+    description: "Phase-1-Hauptsitzung (23.10.2026 ab 19:45 UTC): geloggte Serverzeiten"
+    service:
+      kalibriert:
+        kind: empirical
+        empirical:
+          paths: ["results/kalibriert/gut", "results/kalibriert/gut_wiederholung", "results/kalibriert/buero_wlan",
+                  "results/kalibriert/schlecht", "results/kalibriert/sehr_schlecht"]
+          quantity: server_total_ms
+  phase1_cpu_sitzung2:
+    description: "Phase-1-Ablationssitzung (23.10.2026 ab 23:41 UTC): geloggte Serverzeiten"
+    service:
+      kalibriert:
+        kind: empirical
+        empirical:
+          paths: ["results/kalibriert/schlecht_ohne_stall", "results/kalibriert/sehr_schlecht_ohne_stall"]
+          quantity: server_total_ms
 
 timings:
   modell:
@@ -56,6 +76,35 @@ timings:
     delivery_lateness: {kind: constant, value_ms: 1.0}
     tick_lateness: {kind: constant, value_ms: 0.0}
 
+  sitzung1:
+    description: "wie modell, Servicezeit der Phase-1-Hauptsitzung"
+    latency: model
+    hardware: phase1_cpu_sitzung1
+    client_overhead:
+      kind: empirical
+      empirical: {paths: ["results/kalibriert/*", "results/ddim10/*"], quantity: send_offset_ms}
+    transport_overhead:
+      kind: empirical
+      empirical:
+        paths: ["results/kalibriert/gut", "results/kalibriert/gut_wiederholung", "results/ddim10/gut"]
+        quantity: network_ms
+    delivery_lateness: {kind: constant, value_ms: 1.0}
+    tick_lateness: {kind: constant, value_ms: 0.0}
+  sitzung2:
+    description: "wie modell, Servicezeit der Phase-1-Ablationssitzung"
+    latency: model
+    hardware: phase1_cpu_sitzung2
+    client_overhead:
+      kind: empirical
+      empirical: {paths: ["results/kalibriert/*", "results/ddim10/*"], quantity: send_offset_ms}
+    transport_overhead:
+      kind: empirical
+      empirical:
+        paths: ["results/kalibriert/gut", "results/kalibriert/gut_wiederholung", "results/ddim10/gut"]
+        quantity: network_ms
+    delivery_lateness: {kind: constant, value_ms: 1.0}
+    tick_lateness: {kind: constant, value_ms: 0.0}
+
 experiment:
   results_dir: results/phase3a/validation_model
   episodes: 50                  # seeds 1000-1049 (= phase 1)
@@ -73,6 +122,12 @@ experiment:
         - {scenario: sehr_schlecht_ohne_stall, timing: modell}
         - {scenario: gut, timing: modell_r2}
         - {scenario: sehr_schlecht, timing: modell_r2}
+        - {scenario: gut, timing: sitzung1, label: sitzung__gut}
+        - {scenario: buero_wlan, timing: sitzung1, label: sitzung__buero_wlan}
+        - {scenario: schlecht, timing: sitzung1, label: sitzung__schlecht}
+        - {scenario: sehr_schlecht, timing: sitzung1, label: sitzung__sehr_schlecht}
+        - {scenario: schlecht_ohne_stall, timing: sitzung2, label: sitzung__schlecht_ohne_stall}
+        - {scenario: sehr_schlecht_ohne_stall, timing: sitzung2, label: sitzung__sehr_schlecht_ohne_stall}
     - profile: ddim10
       runs:
         - {scenario: referenz_sync, timing: modell}

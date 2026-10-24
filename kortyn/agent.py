@@ -406,6 +406,9 @@ class AgentCore:
         self.spec = spec
         self._next_request_id = 1
         self.dt = 1.0 / env.fps
+        # Phase 3a: camera features may travel compressed; a language instruction comes from the env.
+        self._image_keys = frozenset(key for key, (kind, _) in spec.features.items() if kind == "VISUAL")
+        self._task = str(getattr(env, "task_description", "") or "")
         self._check_compatibility()
 
     # ------------------------------------------------------------------ setup
@@ -443,8 +446,10 @@ class AgentCore:
             obs_timestep=step,
             seed=request_seed(episode_seed, step),
             max_actions=self.config.actions_per_chunk,
-            observation=encode_observation(stacked),
+            observation=encode_observation(stacked, self.config.image_transport, self._image_keys),
         )
+        if self._task:
+            request.task = self._task
         if guide is not None:
             request.guide_start_timestep = guide.start_step
             request.guide_actions.CopyFrom(encode_array(guide.actions))
@@ -520,6 +525,7 @@ class AgentCore:
         warmup_ms: float | None,
         cpu_before: tuple[int, int] | None,
         brain_load: dict[str, float] | None,
+        max_step_reward: float | None = None,
     ) -> EpisodeOutcome:
         cfg = self.config
         steal = steal_fraction(cpu_before, read_cpu_times())
@@ -586,6 +592,7 @@ class AgentCore:
             emergency_events=len(runs_of_true([1 if value else 0 for value in ticks.emergency])),
             emergency_ticks_age=sum(1 for value in ticks.emergency if value == 2),
             brain_load=brain_load,
+            max_step_reward=max_step_reward,
         )
         return EpisodeOutcome(episode=episode, requests=requests)
 

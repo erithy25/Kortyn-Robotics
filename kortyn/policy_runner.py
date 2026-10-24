@@ -15,6 +15,11 @@ semantics exactly (verified by ``tests/test_policy_runner.py::test_matches_lerob
 Phase 2 adds an optional **guide** (inpainting of the transition between plans, see ``kortyn/inpainting.py``):
 the guided path rebuilds the batch exactly like ``predict_action_chunk``'s offline mode and replaces only
 the sampling loop; with all guide weights 0 it reproduces the unguided chunk bit for bit.
+
+Phase 3a adds vision-language-action policies (SmolVLA): the request's language instruction is passed as
+the batch's ``task`` (tokenized by the policy's own preprocessor, as in LeRobot's evaluation), the
+flow-matching noise comes from the same seeded CPU generator, and the profile's ``num_inference_steps``
+sets the number of flow-matching integration steps.
 """
 
 from __future__ import annotations
@@ -35,7 +40,12 @@ import torch
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.configs.types import FeatureType
 from lerobot.policies import get_policy_class, make_pre_post_processors
-from lerobot.processor import NormalizerProcessorStep, TransitionKey, create_transition
+from lerobot.processor import (
+    NormalizerProcessorStep,
+    TokenizerProcessorStep,
+    TransitionKey,
+    create_transition,
+)
 from lerobot.utils.constants import OBS_IMAGES
 
 from kortyn.config import BrainProfile, ConfigError
@@ -73,6 +83,7 @@ class PolicyInfo:
     torch_threads: int
     warmup_inference_ms: float
     supports_guidance: bool = False
+    needs_task: bool = False  # the policy is conditioned on a language instruction
 
 
 @dataclass(frozen=True)
@@ -110,8 +121,20 @@ def resolve_device(requested: str) -> str:
     return requested
 
 
+WARMUP_TASK = "warm up"  # language instruction of the warm-up inferences (content is irrelevant)
+
+
 def _apply_profile(config: PreTrainedConfig, profile: BrainProfile) -> int:
     """Apply sampler/chunk settings to the policy config and return the chunk length."""
+    if config.type == "smolvla":
+        # Flow matching: num_inference_steps = Euler integration steps; the whole chunk is returned.
+        config.num_steps = profile.num_inference_steps
+        chunk = int(config.chunk_size)
+        if profile.n_action_steps is not None:
+            if not 1 <= profile.n_action_steps <= chunk:
+                raise ConfigError(f"n_action_steps={profile.n_action_steps} not in [1, chunk_size={chunk}]")
+            config.n_action_steps = profile.n_action_steps
+        return chunk
     if config.type == "diffusion":
         config.noise_scheduler_type = profile.noise_scheduler_type
         config.num_inference_steps = profile.num_inference_steps
@@ -175,15 +198,22 @@ class PolicyRunner:
         )
         accepts_noise = "noise" in inspect.signature(self.policy.predict_action_chunk).parameters
         horizon = getattr(config, "horizon", None)
-        self._noise_shape: tuple[int, int, int] | None = (
-            (1, int(horizon), self.action_dim) if accepts_noise and horizon is not None else None
-        )
+        self._noise_shape: tuple[int, int, int] | None = None
+        if accepts_noise and horizon is not None:
+            self._noise_shape = (1, int(horizon), self.action_dim)
+        elif accepts_noise and config.type == "smolvla":
+            any_config: Any = config
+            self._noise_shape = (1, int(any_config.chunk_size), int(any_config.max_action_dim))
         self._action_normalizer = next(
             (step for step in self.preprocessor.steps if isinstance(step, NormalizerProcessorStep)), None
         )
-        sampler = (
-            profile.sampler_label if config.type == "diffusion" else str(getattr(config, "type", "policy"))
-        )
+        self.needs_task = any(isinstance(step, TokenizerProcessorStep) for step in self.preprocessor.steps)
+        if config.type == "diffusion":
+            sampler = profile.sampler_label
+        elif config.type == "smolvla":
+            sampler = f"flow-{profile.num_inference_steps}"
+        else:
+            sampler = str(getattr(config, "type", "policy"))
         self._info = PolicyInfo(
             policy_type=str(config.type),
             checkpoint=str(checkpoint_dir),
@@ -198,6 +228,7 @@ class PolicyRunner:
             torch_threads=int(torch.get_num_threads()),
             warmup_inference_ms=0.0,
             supports_guidance=self.supports_guidance,
+            needs_task=self.needs_task,
         )
         LOG.info(
             "loaded %s from %s on %s (n_obs_steps=%d, chunk=%d, sampler=%s)",
@@ -232,8 +263,9 @@ class PolicyRunner:
 
     def warmup(self, iterations: int) -> float:
         """Run ``iterations`` inferences (kernel selection, MPS shader compilation); return median ms."""
+        task = WARMUP_TASK if self.needs_task else None
         timings = [
-            self.infer(self.dummy_observation(), seed=i, max_actions=self.max_actions).inference_ms
+            self.infer(self.dummy_observation(), seed=i, max_actions=self.max_actions, task=task).inference_ms
             for i in range(iterations)
         ]
         median_ms = float(statistics.median(timings)) if timings else 0.0
@@ -346,14 +378,20 @@ class PolicyRunner:
         seed: int,
         max_actions: int,
         guide: GuideSpec | None = None,
+        task: str | None = None,
     ) -> InferenceResult:
         if not 1 <= max_actions <= self.max_actions:
             raise ObservationError(f"max_actions must be in [1, {self.max_actions}], got {max_actions}")
         if guide is not None:
             self.check_guide(guide)
+        if self.needs_task and not task:
+            raise ObservationError(f"{self.config.type} policies need a language instruction (task)")
         start = time.perf_counter()
         self.policy.reset()
-        batch = self.preprocessor(self._to_batch(observation))
+        raw_batch = self._to_batch(observation)
+        if self.needs_task:
+            raw_batch["task"] = [task]
+        batch = self.preprocessor(raw_batch)
         torch.manual_seed(seed % (2**63))
         kwargs: dict[str, Any] = {}
         if self._noise_shape is not None:

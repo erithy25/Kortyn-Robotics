@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1fkortyn/proto/kortyn_brain.proto\x12\tkortyn.v1\"4\n\x06Tensor\x12\r\n\x05\x64type\x18\x01 \x01(\t\x12\r\n\x05shape\x18\x02 \x03(\x03\x12\x0c\n\x04\x64\x61ta\x18\x03 \x01(\x0c\"\x10\n\x0eGetInfoRequest\"7\n\x0b\x46\x65\x61tureSpec\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x0c\n\x04kind\x18\x02 \x01(\t\x12\r\n\x05shape\x18\x03 \x03(\x03\"\xc2\x02\n\tBrainInfo\x12\x13\n\x0bpolicy_type\x18\x01 \x01(\t\x12\x12\n\ncheckpoint\x18\x02 \x01(\t\x12\x0e\n\x06\x64\x65vice\x18\x03 \x01(\t\x12\x13\n\x0bn_obs_steps\x18\x04 \x01(\x05\x12\x13\n\x0bmax_actions\x18\x05 \x01(\x05\x12\x12\n\naction_dim\x18\x06 \x01(\x05\x12.\n\x0einput_features\x18\x07 \x03(\x0b\x32\x16.kortyn.v1.FeatureSpec\x12\x0f\n\x07sampler\x18\x08 \x01(\t\x12\x17\n\x0flerobot_version\x18\t \x01(\t\x12\x15\n\rtorch_version\x18\n \x01(\t\x12\x1b\n\x13warmup_inference_ms\x18\x0b \x01(\x01\x12\x15\n\rtorch_threads\x18\x0c \x01(\x05\x12\x19\n\x11supports_guidance\x18\r \x01(\x08\"\xe7\x02\n\x0cInferRequest\x12\x11\n\tclient_id\x18\x01 \x01(\t\x12\x12\n\nepisode_id\x18\x02 \x01(\x04\x12\x12\n\nrequest_id\x18\x03 \x01(\x04\x12\x14\n\x0cobs_timestep\x18\x04 \x01(\x03\x12\x0c\n\x04seed\x18\x05 \x01(\x04\x12\x13\n\x0bmax_actions\x18\x06 \x01(\r\x12=\n\x0bobservation\x18\x07 \x03(\x0b\x32(.kortyn.v1.InferRequest.ObservationEntry\x12\x1c\n\x14guide_start_timestep\x18\x08 \x01(\x03\x12(\n\rguide_actions\x18\t \x01(\x0b\x32\x11.kortyn.v1.Tensor\x12\x15\n\rguide_weights\x18\n \x03(\x02\x1a\x45\n\x10ObservationEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12 \n\x05value\x18\x02 \x01(\x0b\x32\x11.kortyn.v1.Tensor:\x02\x38\x01\"\xae\x01\n\rInferResponse\x12\x12\n\nrequest_id\x18\x01 \x01(\x04\x12\x16\n\x0estart_timestep\x18\x02 \x01(\x03\x12\"\n\x07\x61\x63tions\x18\x03 \x01(\x0b\x32\x11.kortyn.v1.Tensor\x12\x17\n\x0fserver_queue_ms\x18\x04 \x01(\x01\x12\x1b\n\x13server_inference_ms\x18\x05 \x01(\x01\x12\x17\n\x0fserver_total_ms\x18\x06 \x01(\x01\"\x11\n\x0fGetStatsRequest\"\x80\x01\n\nBrainStats\x12\x10\n\x08requests\x18\x01 \x01(\x04\x12\x12\n\ninferences\x18\x02 \x01(\x04\x12\x11\n\tabandoned\x18\x03 \x01(\x04\x12\x0f\n\x07\x62usy_ms\x18\x04 \x01(\x01\x12\x15\n\rqueue_wait_ms\x18\x05 \x01(\x01\x12\x11\n\tuptime_ms\x18\x06 \x01(\x01\x32\xc4\x01\n\x0bKortynBrain\x12:\n\x07GetInfo\x12\x19.kortyn.v1.GetInfoRequest\x1a\x14.kortyn.v1.BrainInfo\x12:\n\x05Infer\x12\x17.kortyn.v1.InferRequest\x1a\x18.kortyn.v1.InferResponse\x12=\n\x08GetStats\x12\x1a.kortyn.v1.GetStatsRequest\x1a\x15.kortyn.v1.BrainStatsb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1fkortyn/proto/kortyn_brain.proto\x12\tkortyn.v1\"]\n\x06Tensor\x12\r\n\x05\x64type\x18\x01 \x01(\t\x12\r\n\x05shape\x18\x02 \x03(\x03\x12\x0c\n\x04\x64\x61ta\x18\x03 \x01(\x0c\x12\x10\n\x08\x65ncoding\x18\x04 \x01(\t\x12\x15\n\rencoded_shape\x18\x05 \x03(\x03\"\x10\n\x0eGetInfoRequest\"7\n\x0b\x46\x65\x61tureSpec\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x0c\n\x04kind\x18\x02 \x01(\t\x12\r\n\x05shape\x18\x03 \x03(\x03\"\xc2\x02\n\tBrainInfo\x12\x13\n\x0bpolicy_type\x18\x01 \x01(\t\x12\x12\n\ncheckpoint\x18\x02 \x01(\t\x12\x0e\n\x06\x64\x65vice\x18\x03 \x01(\t\x12\x13\n\x0bn_obs_steps\x18\x04 \x01(\x05\x12\x13\n\x0bmax_actions\x18\x05 \x01(\x05\x12\x12\n\naction_dim\x18\x06 \x01(\x05\x12.\n\x0einput_features\x18\x07 \x03(\x0b\x32\x16.kortyn.v1.FeatureSpec\x12\x0f\n\x07sampler\x18\x08 \x01(\t\x12\x17\n\x0flerobot_version\x18\t \x01(\t\x12\x15\n\rtorch_version\x18\n \x01(\t\x12\x1b\n\x13warmup_inference_ms\x18\x0b \x01(\x01\x12\x15\n\rtorch_threads\x18\x0c \x01(\x05\x12\x19\n\x11supports_guidance\x18\r \x01(\x08\"\xf5\x02\n\x0cInferRequest\x12\x11\n\tclient_id\x18\x01 \x01(\t\x12\x12\n\nepisode_id\x18\x02 \x01(\x04\x12\x12\n\nrequest_id\x18\x03 \x01(\x04\x12\x14\n\x0cobs_timestep\x18\x04 \x01(\x03\x12\x0c\n\x04seed\x18\x05 \x01(\x04\x12\x13\n\x0bmax_actions\x18\x06 \x01(\r\x12=\n\x0bobservation\x18\x07 \x03(\x0b\x32(.kortyn.v1.InferRequest.ObservationEntry\x12\x1c\n\x14guide_start_timestep\x18\x08 \x01(\x03\x12(\n\rguide_actions\x18\t \x01(\x0b\x32\x11.kortyn.v1.Tensor\x12\x15\n\rguide_weights\x18\n \x03(\x02\x12\x0c\n\x04task\x18\x0b \x01(\t\x1a\x45\n\x10ObservationEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12 \n\x05value\x18\x02 \x01(\x0b\x32\x11.kortyn.v1.Tensor:\x02\x38\x01\"\xae\x01\n\rInferResponse\x12\x12\n\nrequest_id\x18\x01 \x01(\x04\x12\x16\n\x0estart_timestep\x18\x02 \x01(\x03\x12\"\n\x07\x61\x63tions\x18\x03 \x01(\x0b\x32\x11.kortyn.v1.Tensor\x12\x17\n\x0fserver_queue_ms\x18\x04 \x01(\x01\x12\x1b\n\x13server_inference_ms\x18\x05 \x01(\x01\x12\x17\n\x0fserver_total_ms\x18\x06 \x01(\x01\"\x11\n\x0fGetStatsRequest\"\x80\x01\n\nBrainStats\x12\x10\n\x08requests\x18\x01 \x01(\x04\x12\x12\n\ninferences\x18\x02 \x01(\x04\x12\x11\n\tabandoned\x18\x03 \x01(\x04\x12\x0f\n\x07\x62usy_ms\x18\x04 \x01(\x01\x12\x15\n\rqueue_wait_ms\x18\x05 \x01(\x01\x12\x11\n\tuptime_ms\x18\x06 \x01(\x01\x32\xc4\x01\n\x0bKortynBrain\x12:\n\x07GetInfo\x12\x19.kortyn.v1.GetInfoRequest\x1a\x14.kortyn.v1.BrainInfo\x12:\n\x05Infer\x12\x17.kortyn.v1.InferRequest\x1a\x18.kortyn.v1.InferResponse\x12=\n\x08GetStats\x12\x1a.kortyn.v1.GetStatsRequest\x1a\x15.kortyn.v1.BrainStatsb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,23 +34,23 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_INFERREQUEST_OBSERVATIONENTRY']._loaded_options = None
   _globals['_INFERREQUEST_OBSERVATIONENTRY']._serialized_options = b'8\001'
   _globals['_TENSOR']._serialized_start=46
-  _globals['_TENSOR']._serialized_end=98
-  _globals['_GETINFOREQUEST']._serialized_start=100
-  _globals['_GETINFOREQUEST']._serialized_end=116
-  _globals['_FEATURESPEC']._serialized_start=118
-  _globals['_FEATURESPEC']._serialized_end=173
-  _globals['_BRAININFO']._serialized_start=176
-  _globals['_BRAININFO']._serialized_end=498
-  _globals['_INFERREQUEST']._serialized_start=501
-  _globals['_INFERREQUEST']._serialized_end=860
-  _globals['_INFERREQUEST_OBSERVATIONENTRY']._serialized_start=791
-  _globals['_INFERREQUEST_OBSERVATIONENTRY']._serialized_end=860
-  _globals['_INFERRESPONSE']._serialized_start=863
-  _globals['_INFERRESPONSE']._serialized_end=1037
-  _globals['_GETSTATSREQUEST']._serialized_start=1039
-  _globals['_GETSTATSREQUEST']._serialized_end=1056
-  _globals['_BRAINSTATS']._serialized_start=1059
-  _globals['_BRAINSTATS']._serialized_end=1187
-  _globals['_KORTYNBRAIN']._serialized_start=1190
-  _globals['_KORTYNBRAIN']._serialized_end=1386
+  _globals['_TENSOR']._serialized_end=139
+  _globals['_GETINFOREQUEST']._serialized_start=141
+  _globals['_GETINFOREQUEST']._serialized_end=157
+  _globals['_FEATURESPEC']._serialized_start=159
+  _globals['_FEATURESPEC']._serialized_end=214
+  _globals['_BRAININFO']._serialized_start=217
+  _globals['_BRAININFO']._serialized_end=539
+  _globals['_INFERREQUEST']._serialized_start=542
+  _globals['_INFERREQUEST']._serialized_end=915
+  _globals['_INFERREQUEST_OBSERVATIONENTRY']._serialized_start=846
+  _globals['_INFERREQUEST_OBSERVATIONENTRY']._serialized_end=915
+  _globals['_INFERRESPONSE']._serialized_start=918
+  _globals['_INFERRESPONSE']._serialized_end=1092
+  _globals['_GETSTATSREQUEST']._serialized_start=1094
+  _globals['_GETSTATSREQUEST']._serialized_end=1111
+  _globals['_BRAINSTATS']._serialized_start=1114
+  _globals['_BRAINSTATS']._serialized_end=1242
+  _globals['_KORTYNBRAIN']._serialized_start=1245
+  _globals['_KORTYNBRAIN']._serialized_end=1441
 # @@protoc_insertion_point(module_scope)

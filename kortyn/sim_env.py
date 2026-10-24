@@ -10,7 +10,7 @@ from __future__ import annotations
 import importlib
 import os
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 
@@ -19,6 +19,9 @@ import numpy as np
 
 from kortyn.config import EnvConfig
 from kortyn.typing_utils import Array, FloatArray
+
+if TYPE_CHECKING:
+    from kortyn.metaworld_env import MetaWorldEnv
 
 Observation = dict[str, Array]
 
@@ -99,6 +102,8 @@ class SimEnv:
 
     def hold_action(self, observation: Observation) -> FloatArray:
         """Action that keeps the robot where it is (PushT: target = current agent position)."""
+        if self.config.hold_action_key is None:
+            return np.zeros(self.action_dim, dtype=np.float32)
         value = np.asarray(observation[self.config.hold_action_key], dtype=np.float32)
         if value.shape != (self.action_dim,):
             raise EnvError(
@@ -111,6 +116,10 @@ class SimEnv:
         self._env.close()
 
 
-def make_env(config: EnvConfig) -> SimEnv:
-    """Create the environment described by ``config``."""
+def make_env(config: EnvConfig) -> SimEnv | MetaWorldEnv:
+    """Create the environment described by ``config`` (gym env, or a Meta-World task in phase 3a)."""
+    if config.kind == "metaworld":
+        from kortyn.metaworld_env import MetaWorldEnv
+
+        return MetaWorldEnv(config)
     return SimEnv(config)

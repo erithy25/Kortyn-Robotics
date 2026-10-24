@@ -167,6 +167,9 @@ class EpisodeRecord:
     # timing model and its diagnostics (replay matches, real compute time, inference cache hits).
     clock: str = "wall"
     virtual: dict[str, Any] | None = None
+    # Largest per-step reward of the episode (LeRobot's ``max_reward`` for envs without a coverage, e.g.
+    # Meta-World: reward scale 0-10). Not recorded by the real-time agent of phases 1/2.
+    max_step_reward: float | None = None
 
     @property
     def duration_s(self) -> float:

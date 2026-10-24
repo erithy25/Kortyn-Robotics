@@ -23,8 +23,13 @@ service KortynBrain {
 // Dense, C-contiguous, little-endian array.
 message Tensor {
   string dtype = 1;          // numpy dtype name, e.g. "uint8" or "float32"
-  repeated int64 shape = 2;
+  repeated int64 shape = 2;  // shape of the decoded array
   bytes data = 3;
+  // Image transport (phase 3a), only for uint8 images (T, H, W, C). Empty encoding = raw bytes of `shape`.
+  // "raw" / "jpeg" / "png": `data` holds the T frames stacked vertically at `encoded_shape` (T, h, w, C),
+  // as raw bytes or one compressed image; the receiver decodes them and scales them back to `shape`.
+  string encoding = 4;
+  repeated int64 encoded_shape = 5;
 }
 
 message GetInfoRequest {}
@@ -67,6 +72,8 @@ message InferRequest {
   int64 guide_start_timestep = 8;
   Tensor guide_actions = 9;         // float32 (G, action_dim)
   repeated float guide_weights = 10;
+  // Language instruction for vision-language-action policies (phase 3a, e.g. SmolVLA); empty = none.
+  string task = 11;
 }
 
 message InferResponse {

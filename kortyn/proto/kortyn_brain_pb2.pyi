@@ -7,14 +7,18 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Tensor(_message.Message):
-    __slots__ = ("dtype", "shape", "data")
+    __slots__ = ("dtype", "shape", "data", "encoding", "encoded_shape")
     DTYPE_FIELD_NUMBER: _ClassVar[int]
     SHAPE_FIELD_NUMBER: _ClassVar[int]
     DATA_FIELD_NUMBER: _ClassVar[int]
+    ENCODING_FIELD_NUMBER: _ClassVar[int]
+    ENCODED_SHAPE_FIELD_NUMBER: _ClassVar[int]
     dtype: str
     shape: _containers.RepeatedScalarFieldContainer[int]
     data: bytes
-    def __init__(self, dtype: _Optional[str] = ..., shape: _Optional[_Iterable[int]] = ..., data: _Optional[bytes] = ...) -> None: ...
+    encoding: str
+    encoded_shape: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, dtype: _Optional[str] = ..., shape: _Optional[_Iterable[int]] = ..., data: _Optional[bytes] = ..., encoding: _Optional[str] = ..., encoded_shape: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class GetInfoRequest(_message.Message):
     __slots__ = ()
@@ -61,7 +65,7 @@ class BrainInfo(_message.Message):
     def __init__(self, policy_type: _Optional[str] = ..., checkpoint: _Optional[str] = ..., device: _Optional[str] = ..., n_obs_steps: _Optional[int] = ..., max_actions: _Optional[int] = ..., action_dim: _Optional[int] = ..., input_features: _Optional[_Iterable[_Union[FeatureSpec, _Mapping]]] = ..., sampler: _Optional[str] = ..., lerobot_version: _Optional[str] = ..., torch_version: _Optional[str] = ..., warmup_inference_ms: _Optional[float] = ..., torch_threads: _Optional[int] = ..., supports_guidance: _Optional[bool] = ...) -> None: ...
 
 class InferRequest(_message.Message):
-    __slots__ = ("client_id", "episode_id", "request_id", "obs_timestep", "seed", "max_actions", "observation", "guide_start_timestep", "guide_actions", "guide_weights")
+    __slots__ = ("client_id", "episode_id", "request_id", "obs_timestep", "seed", "max_actions", "observation", "guide_start_timestep", "guide_actions", "guide_weights", "task")
     class ObservationEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -79,6 +83,7 @@ class InferRequest(_message.Message):
     GUIDE_START_TIMESTEP_FIELD_NUMBER: _ClassVar[int]
     GUIDE_ACTIONS_FIELD_NUMBER: _ClassVar[int]
     GUIDE_WEIGHTS_FIELD_NUMBER: _ClassVar[int]
+    TASK_FIELD_NUMBER: _ClassVar[int]
     client_id: str
     episode_id: int
     request_id: int
@@ -89,7 +94,8 @@ class InferRequest(_message.Message):
     guide_start_timestep: int
     guide_actions: Tensor
     guide_weights: _containers.RepeatedScalarFieldContainer[float]
-    def __init__(self, client_id: _Optional[str] = ..., episode_id: _Optional[int] = ..., request_id: _Optional[int] = ..., obs_timestep: _Optional[int] = ..., seed: _Optional[int] = ..., max_actions: _Optional[int] = ..., observation: _Optional[_Mapping[str, Tensor]] = ..., guide_start_timestep: _Optional[int] = ..., guide_actions: _Optional[_Union[Tensor, _Mapping]] = ..., guide_weights: _Optional[_Iterable[float]] = ...) -> None: ...
+    task: str
+    def __init__(self, client_id: _Optional[str] = ..., episode_id: _Optional[int] = ..., request_id: _Optional[int] = ..., obs_timestep: _Optional[int] = ..., seed: _Optional[int] = ..., max_actions: _Optional[int] = ..., observation: _Optional[_Mapping[str, Tensor]] = ..., guide_start_timestep: _Optional[int] = ..., guide_actions: _Optional[_Union[Tensor, _Mapping]] = ..., guide_weights: _Optional[_Iterable[float]] = ..., task: _Optional[str] = ...) -> None: ...
 
 class InferResponse(_message.Message):
     __slots__ = ("request_id", "start_timestep", "actions", "server_queue_ms", "server_inference_ms", "server_total_ms")

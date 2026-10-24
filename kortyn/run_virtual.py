@@ -27,14 +27,16 @@ import os
 import shutil
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from kortyn.config import (
+    AgentConfig,
     BrainProfile,
     ConfigError,
+    ImageTransportConfig,
     KortynConfig,
     NetworkConfig,
     RunSpec,
@@ -72,10 +74,21 @@ class VirtualRunPlan:
     strategy_name: str | None
     strategy: StrategyConfig | None
     replay_run: str | None
+    sync_actions_per_chunk: int | None = None
+    image_transport: ImageTransportConfig | None = None
 
     @property
     def network(self) -> NetworkConfig:
         return self.scenario.network if self.scenario.mode == "realtime" else NetworkConfig()
+
+    def agent_config(self, base: AgentConfig) -> AgentConfig:
+        """The suite's agent settings with this run's overrides."""
+        config = base
+        if self.sync_actions_per_chunk is not None:
+            config = replace(config, sync_actions_per_chunk=self.sync_actions_per_chunk)
+        if self.image_transport is not None:
+            config = replace(config, image_transport=self.image_transport)
+        return config
 
 
 def select_virtual_plans(config: KortynConfig, profile: str, runs: list[str] | None) -> list[VirtualRunPlan]:
@@ -109,6 +122,8 @@ def select_virtual_plans(config: KortynConfig, profile: str, runs: list[str] | N
                 strategy_name=spec.strategy,
                 strategy=config.strategy(spec.strategy) if spec.strategy is not None else None,
                 replay_run=(spec.replay_run or spec.scenario) if timing.latency == "replay" else None,
+                sync_actions_per_chunk=spec.sync_actions_per_chunk,
+                image_transport=spec.image_transport,
             )
         )
     return plans
@@ -130,6 +145,10 @@ def virtual_run_entry(config: KortynConfig, profile: str, plan: VirtualRunPlan) 
         entry["service_time"] = draccus.encode(hardware.service[profile])
     if plan.replay_run is not None:
         entry["replay_run"] = plan.replay_run
+    if plan.sync_actions_per_chunk is not None:
+        entry["sync_actions_per_chunk"] = plan.sync_actions_per_chunk
+    if plan.image_transport is not None:
+        entry["image_transport"] = draccus.encode(plan.image_transport)
     if plan.strategy_name is not None:
         entry["strategy"] = plan.strategy_name
         entry["strategy_settings"] = (plan.strategy or StrategyConfig()).to_dict()
@@ -186,7 +205,7 @@ def _init_worker(setup: WorkerSetup) -> None:
         if plan.replay_run is not None:
             replay = ReplayLog(Path(plan.timing.replay.results_dir) / setup.profile / plan.replay_run)
         agents[plan.label] = VirtualTimeAgent(
-            config.agent,
+            plan.agent_config(config.agent),
             env,
             compute.spec,
             compute,
@@ -382,11 +401,7 @@ class VirtualSuiteRunner:
                 "request_timeout_s": self.config.agent.request_timeout_s,
                 "sync_actions_per_chunk": self.config.agent.sync_actions_per_chunk,
             },
-            "env": {
-                "gym_id": self.config.env.gym_id,
-                "fps": self.config.env.fps,
-                "max_episode_steps": self.config.env.max_episode_steps,
-            },
+            "env": env_meta(self.config),
             "seeds": [self.seeds[0], self.seeds[-1]],
             "workers": self.workers,
             "torch_threads": self.torch_threads,
@@ -401,6 +416,22 @@ class VirtualSuiteRunner:
         meta = merge_run_meta(previous, current, sorted(set(session_runs)), with_data)
         self.root.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+
+def env_meta(config: KortynConfig) -> dict[str, Any]:
+    """Environment identity of a results directory (phase-1 keys; Meta-World adds task and camera)."""
+    env = config.env
+    meta: dict[str, Any] = {"gym_id": env.gym_id, "fps": env.fps, "max_episode_steps": env.max_episode_steps}
+    if env.kind == "metaworld" and env.metaworld is not None:
+        meta = {
+            "kind": "metaworld",
+            "task": env.metaworld.task,
+            "camera_name": env.metaworld.camera_name,
+            "instruction": env.metaworld.instruction,
+            "fps": env.fps,
+            "max_episode_steps": env.max_episode_steps,
+        }
+    return meta
 
 
 # --------------------------------------------------------------------------------------------- digest

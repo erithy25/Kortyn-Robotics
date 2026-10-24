@@ -193,9 +193,27 @@ class ProxyConfig:
 
 # --------------------------------------------------------------------------------------------- agent
 @dataclass
-class EnvConfig:
-    """Simulation environment. Defaults mirror LeRobot's ``PushtEnv`` config (checked by a unit test)."""
+class MetaWorldEnvConfig:
+    """One Meta-World (v3) task, built like LeRobot's ``MetaworldEnv`` (phase 3a)."""
 
+    task: str = "push-v3"
+    camera_name: str = "corner2"
+    # Language instruction sent with every request; None = LeRobot's task description (its evaluation).
+    instruction: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.task.endswith("-v3"):
+            raise ConfigError(f"metaworld.task must be a v3 task name like 'push-v3', got {self.task!r}")
+
+
+@dataclass
+class EnvConfig:
+    """Simulation environment. Defaults mirror LeRobot's ``PushtEnv`` config (checked by a unit test).
+
+    ``kind: metaworld`` (phase 3a) uses the ``metaworld`` section instead of the gym fields.
+    """
+
+    kind: Literal["gym", "metaworld"] = "gym"
     gym_id: str = "gym_pusht/PushT-v0"
     # Module that registers ``gym_id`` with gymnasium on import.
     package: str = "gym_pusht"
@@ -209,16 +227,47 @@ class EnvConfig:
         default_factory=lambda: {"pixels": "observation.image", "agent_pos": "observation.state"}
     )
     # LeRobot key whose value is a valid "stay where you are" action (PushT: the agent position, because
-    # actions are absolute position targets). Used before the first chunk in cold-start mode.
-    hold_action_key: str = "observation.state"
+    # actions are absolute position targets). Used before the first chunk in cold-start mode. None = the
+    # zero action (Meta-World: actions are end-effector displacements).
+    hold_action_key: str | None = "observation.state"
+    metaworld: MetaWorldEnvConfig | None = None
 
     def __post_init__(self) -> None:
         if self.fps <= 0:
             raise ConfigError(f"env.fps must be > 0, got {self.fps}")
         if self.max_episode_steps < 1:
             raise ConfigError(f"env.max_episode_steps must be >= 1, got {self.max_episode_steps}")
-        if self.hold_action_key not in self.features_map.values():
+        if self.hold_action_key is not None and self.hold_action_key not in self.features_map.values():
             raise ConfigError(f"env.hold_action_key {self.hold_action_key!r} is not a mapped feature key")
+        if self.kind == "metaworld" and self.metaworld is None:
+            raise ConfigError("env.kind 'metaworld' needs an env.metaworld section")
+
+
+@dataclass
+class ImageTransportConfig:
+    """How camera images travel to the Brain (phase 3a). The default sends raw frames at camera resolution.
+
+    ``height`` / ``width`` scale the frames down before sending (the Brain scales them back to the policy's
+    input size, so the policy sees a blurrier image); ``codec`` compresses them (``jpeg`` with ``quality``,
+    lossless ``png``) or sends raw bytes.
+    """
+
+    codec: Literal["raw", "jpeg", "png"] = "raw"
+    quality: int = 90
+    height: int | None = None
+    width: int | None = None
+
+    def __post_init__(self) -> None:
+        if not 1 <= self.quality <= 100:
+            raise ConfigError(f"image_transport.quality must be in [1, 100], got {self.quality}")
+        for name, value in (("height", self.height), ("width", self.width)):
+            if value is not None and value < 8:
+                raise ConfigError(f"image_transport.{name} must be >= 8 or null, got {value}")
+
+    @property
+    def is_identity(self) -> bool:
+        """Raw frames at camera resolution: the phase-1 wire format."""
+        return self.codec == "raw" and self.height is None and self.width is None
 
 
 @dataclass
@@ -243,6 +292,8 @@ class AgentConfig:
     max_tick_lateness_ms: float = 50.0
     max_proxy_lateness_ms: float = 20.0
     max_cpu_steal_fraction: float = 0.2
+    # Phase 3a: camera images on the wire (resolution, compression); the default is the phase-1 format.
+    image_transport: ImageTransportConfig = field(default_factory=ImageTransportConfig)
 
     def __post_init__(self) -> None:
         if self.actions_per_chunk < 1:
@@ -511,6 +562,13 @@ class RunSpec:
     strategy: str | None = None
     timing: str | None = None
     replay_run: str | None = None
+    # Per-run agent overrides (phase 3a, virtual time; give the run an explicit label):
+    sync_actions_per_chunk: int | None = None  # executed actions per plan in sync mode
+    image_transport: ImageTransportConfig | None = None  # camera images on the wire
+
+    def __post_init__(self) -> None:
+        if self.sync_actions_per_chunk is not None and self.sync_actions_per_chunk < 1:
+            raise ConfigError(f"run sync_actions_per_chunk must be >= 1, got {self.sync_actions_per_chunk}")
 
     @property
     def run_label(self) -> str:
@@ -605,6 +663,13 @@ class KortynConfig:
                         )
                 elif run.replay_run is not None:
                     raise ConfigError(f"run {run.run_label!r}: replay_run needs a replay timing")
+                if run.sync_actions_per_chunk is not None and not (
+                    1 <= run.sync_actions_per_chunk <= self.agent.actions_per_chunk
+                ):
+                    raise ConfigError(
+                        f"run {run.run_label!r}: sync_actions_per_chunk must be in "
+                        "[1, agent.actions_per_chunk]"
+                    )
         for name, strategy in self.strategies.items():
             threshold = strategy.request.refill_threshold
             if threshold is not None and threshold >= self.agent.actions_per_chunk:
