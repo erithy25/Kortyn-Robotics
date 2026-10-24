@@ -11,7 +11,62 @@ Verbindung stufenweise.
   migriert
 - Alles Open Source, keine Cloud, keine Telemetrie, läuft auf macOS (Apple Silicon, MPS) und Linux (CPU)
 
-Ergebnisse: **[`reports/phase1.md`](reports/phase1.md)** (Tabellen und Abbildungen).
+---
+
+## Ergebnisse auf einen Blick
+
+Messung vom 23./24.10.2026 auf der Entwicklungsmaschine: Linux, 4-vCPU-Xeon, **CPU statt MPS**, Brain auf
+3 Kernen. Je Zeile 50 Episoden mit identischen Seeds. Vollständiger Report mit Konfidenzintervallen, Tests und
+Abbildungen: **[`reports/phase1.md`](reports/phase1.md)**.
+
+| Szenario | Netz (RTT) | `kalibriert` (DDIM-4, Inferenz 0,34 s): Erfolg · verhungert | `ddim10` (DDIM-10, Inferenz 0,78 s): Erfolg · verhungert |
+|---|---|---:|---:|
+| Referenz (synchron, Sim wartet) | – | 60 % · – | 58 % · – |
+| `gut` | 0 ms | 62 % · 0 % | 20 % · 18,8 % |
+| `buero_wlan` | 20 ± 10 ms | 70 % · 0 % | 22 % · 23,6 % |
+| `schlecht` | 80 ± 40 ms + 300 ms Stall alle 10 s | 46 % · 0,1 % | 6 % · 36,1 % |
+| `sehr_schlecht` | 150 ± 80 ms + 1 s Stall alle 10 s | 42 % · 10,7 % | 4 % · 54,0 % |
+| Ablation `schlecht_ohne_stall` | 80 ± 40 ms | 50 % · 0 % | – |
+| Ablation `sehr_schlecht_ohne_stall` | 150 ± 80 ms | 50 % · 0 % | – |
+
+1. **Das Latenzbudget entscheidet.** Der Refill bei ≤ 6 Aktionen gibt dem Roboter 700 ms Reserve.
+   - Bleibt die Ende-zu-Ende-Latenz darunter, kostet Echtzeit nichts: `kalibriert` „gut“ 62 % gegenüber 60 % synchron
+     (McNemar p = 1,0).
+   - Liegt schon die Inferenz darüber, bricht die Erfolgsquote selbst bei perfektem Netz ein: `ddim10` mit 0,78 s
+     fällt von 58 % auf 20 % (p < 0,001). Der Roboter verhungert dann in jedem Zyklus.
+2. **Der Roboter verhungert, sobald Inferenz + Netz + Stall länger als 700 ms dauern.** Bei `kalibriert` passiert das nur in Stalls:
+   - 300-ms-Stalls kratzen am Budget: E2E-p99 708 ms, 0,1 % der Zeit verhungert.
+   - 1-s-Stalls reißen es: p99 1,5 s, 10,7 % der Zeit, 8,6 Ereignisse/min.
+3. **Hauptursache des Qualitätsverlusts ist das Alter der ausgeführten Pläne, nicht der Stillstand.**
+   - Ohne Stalls verhungert der Roboter nie und verliert trotzdem fast genauso viel. Bei 150 ms RTT liegt der Max-Reward gegenüber „gut“ bei −0,092 ohne und −0,105 mit Stalls.
+   - Bis ~0,75 s Planalter gibt es keinen messbaren Effekt (synchron 0,35 s ≈ „gut“ 0,74 s). Darüber fallen Erfolg und Reward stetig, egal ob Netz oder Rechenzeit das Alter verursachen. Siehe `reports/phase1_aktionsalter.png`.
+4. **Büro-WLAN ist unkritisch:** 70 %, kein Unterschied zu „gut“ (p = 0,45).
+5. **Statistik:** Bei n = 50 hat die Erfolgsquote ein 95 %-KI von ±14 pp.
+   - Signifikant auf der Erfolgsquote sind der Echtzeit-Einbruch von `ddim10`, „sehr schlecht“ (`kalibriert`)
+     sowie „schlecht“ und „sehr schlecht“ (`ddim10`).
+   - Auf dem trennschärferen Max-Reward kommen bei `kalibriert` auch „schlecht“ und „sehr schlecht ohne Stall“ hinzu.
+   - Das Rauschen zwischen zwei identischen Läufen beträgt ~0,03 Reward.
+
+**Einordnung:**
+- **Plausibilität:** Der Checkpoint erreicht publiziert 65,4 % (500 Episoden, DDPM-100, GPU). Unsere synchronen und
+  „gut“-Werte von 58–62 % liegen im Konfidenzintervall. Die Migration ist über `lerobot-eval` validiert
+  (DDPM-100: Ø Max-Reward 0,963 gegenüber 0,961 publiziert).
+- **Untergrenze:** PushT ist quasistatisch, Stillstand kostet hier nur Zeit. Für dynamische Aufgaben sind die
+  gemessenen Verluste eine Untergrenze.
+- **Auf dem Mac:** Mit MPS ist die Inferenz schneller, das verschiebt die Budget-Grenze. Vorher `kortyn.calibrate`
+  ausführen.
+
+**Konsequenzen für Phase 2 (Reflex-Modus) und Phase 3 (mehrere Roboter):**
+- **Phase 2:**
+  - Ein reiner Stillstands-Ersatz reicht nicht. Das mittlere Planalter ist Latenz + (Anfrageperiode − 1)/2. Der
+    Agent muss es aktiv begrenzen: Latenz online messen und bei schlechtem Netz öfter anfragen (adaptive
+    Refill-Schwelle). Damit wächst zugleich der Puffer gegen Stalls.
+  - Chunk-Übergänge glätten, z. B. mit Real-Time Chunking/Inpainting.
+  - Für echte Budget-Verletzungen (Stalls) braucht der Agent einen lokalen Reflex-Fallback.
+- **Phase 3:** Ein Brain mit einem Inferenz-Thread ist auf dieser CPU bei ~2 Robotern gesättigt (0,34 s Inferenz
+  pro 0,8 s Anfrageperiode). Häufigere Anfragen aus Phase 2 verschärfen das. Gebraucht werden Batching mit
+  Latenz-Obergrenze, deadline-basiertes Scheduling nach dem Queue-Füllstand der Roboter und eine Admission
+  Control.
 
 ---
 
@@ -55,8 +110,9 @@ uv run python -m kortyn.lerobot_reference --scheduler DDPM --num-inference-steps
 uv run python -m kortyn.report
 ```
 
-Laufzeiten auf der Messmaschine (4-vCPU-Xeon, keine GPU): kompletter Lauf ≈ 3,5 h. Auf Apple Silicon mit
-MPS ist die Inferenz schneller; die Echtzeit-Episoden dauern trotzdem ihre 10–30 s Simulationszeit.
+Laufzeiten auf der Messmaschine (4-vCPU-Xeon, keine GPU): Kalibrierung ≈ 10 min, alle Läufe ≈ 4 h 40 min (650
+Episoden: `kalibriert` 400, `ddim10` 250), LeRobot-Referenz DDPM-100 ≈ 1 h. Auf Apple Silicon mit MPS ist die
+Inferenz schneller; die Echtzeit-Episoden dauern trotzdem ihre 10–30 s Simulationszeit.
 
 > **Mac-Hinweise:** Netzteil anschließen, `caffeinate -i` verwenden (sonst drosselt macOS lange Läufe),
 > Terminal nicht minimieren. Das Brain wählt automatisch `mps` (Fallback CPU); `PYTORCH_ENABLE_MPS_FALLBACK=1`
@@ -125,6 +181,8 @@ gleichverteilt wie netem-Default, Stall = Link friert in beide Richtungen ein, P
 | `buero_wlan` | 20 ± 10 ms | – |
 | `schlecht` | 80 ± 40 ms | 300 ms alle 10 s |
 | `sehr_schlecht` | 150 ± 80 ms | 1000 ms alle 10 s |
+| `schlecht_ohne_stall` (Ablation, nur `kalibriert`) | 80 ± 40 ms | – |
+| `sehr_schlecht_ohne_stall` (Ablation, nur `kalibriert`) | 150 ± 80 ms | – |
 | `referenz_sync` | – (Simulation wartet, LeRobot-Eval-Semantik) | – |
 
 **Reproduzierbarkeit:** Seeds 1000–1049 (= Seeds der veröffentlichten Checkpoint-Evaluation), identische
@@ -138,7 +196,9 @@ gelten als ungültig und werden wiederholt.
 
 **Metriken** (Definitionen in `kortyn/metrics.py`): E2E-Latenz, Reaktionszeit, Netz-RTT, Jitter (RFC 5481),
 Payload (Protobuf und Wire-Bytes), Queue-Füllstand pro Takt, Starvation-Takte/-Ereignisse inkl. Ursache
-(Compute vs. Netz), Aktionsalter, Erfolg und Dauer pro Episode. Rohdaten: `results/<profil>/<lauf>/*.jsonl`.
+(Compute vs. Netz), Aktionsalter, Erfolg, Ø Max-Reward (LeRobot-Metrik, kontinuierlich) und Dauer pro Episode.
+Statistik: Wilson-KI, exakter McNemar-Test und gepaarter Bootstrap über dieselben Seeds.
+Rohdaten: `results/<profil>/<lauf>/*.jsonl`, Metadaten aller Messsitzungen in `results/<profil>/run_meta.json`.
 
 ### Kalibrierung
 
