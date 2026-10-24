@@ -1135,9 +1135,9 @@ def key_findings(
         recovered = gap_recovered(c.base_rate, c.rate, sync_rate)
         verdict = "signifikant" if significant(c.mcnemar_holm) else "nicht signifikant"
         reward_verdict = "signifikant" if significant(c.reward_holm) else "nicht signifikant"
-        gap = (
-            f", rechnerisch {100 * recovered:.0f} % der Lücke zur Sync-Referenz"
-            if recovered is not None and recovered > 0
+        gap = (  # only for a significant gain: a gap closed by noise is no result
+            f", schließt {100 * recovered:.0f} % der Lücke zur Sync-Referenz"
+            if recovered is not None and recovered > 0 and significant(c.mcnemar_holm)
             else ""
         )
         lines.append(
@@ -1178,6 +1178,55 @@ def key_findings(
             f"- **Messrauschen:** Zwei identische Phase-1-Läufe („{scenario_label(scenario)}“) unterscheiden sich "
             f"bereits um Δ Reward {c.reward_delta:+.3f} und {100 * c.success_delta:+.0f} pp Erfolg (n = {c.pairs}). "
             "Kleinere Effekte sind nicht belastbar."
+        )
+    lines += aa_control(final, comparisons)
+    return lines
+
+
+GUARD_IDLE_FRACTION = 0.001  # the emergency guard acted in fewer ticks than this: behaviour = baseline
+
+
+def differs_only_by_guard(settings: dict[str, Any]) -> bool:
+    """Phase-1 request timing, alignment and transitions; only the emergency guard is different."""
+    request = settings.get("request", {})
+    return (
+        request.get("mode", "threshold") == "threshold"
+        and request.get("refill_threshold") in (None, 6)
+        and settings.get("smoothing", {}).get("mode", "none") == "none"
+        and settings.get("alignment", "timestep") == "timestep"
+    )
+
+
+def aa_control(stage: Stage, comparisons: dict[tuple[str, str], Comparison]) -> list[str]:
+    """Scenarios where a guard-only strategy never needed its guard: an A/A comparison with the baseline."""
+    lines: list[str] = []
+    for strategy in stage.candidates:
+        if not differs_only_by_guard(stage.settings_of(strategy)):
+            continue
+        idle: list[tuple[str, Comparison]] = []
+        for scenario in stage.scenarios:
+            cell = stage.cells.get((strategy, scenario))
+            base = stage.baselines.get(scenario)
+            c = comparisons.get((strategy, scenario))
+            if cell is None or base is None or c is None:
+                continue
+            guard = cell.run.summary.emergency_time_fraction
+            starved = base.run.summary.starved_time_fraction
+            if guard < GUARD_IDLE_FRACTION and starved < GUARD_IDLE_FRACTION:
+                idle.append((scenario, c))
+        if not idle:
+            continue
+        deltas = ", ".join(
+            f"{scenario_label(scenario)} {100 * c.success_delta:+.0f} pp / {c.reward_delta:+.3f}"
+            for scenario, c in idle
+            if c.reward_delta is not None
+        )
+        lines.append(
+            f"- **A/A-Kontrolle:** {display_name(strategy, stage.settings_of(strategy))} unterscheidet sich von der "
+            "Baseline nur im Notfall-Halt, und der griff in "
+            f"{', '.join(scenario_label(s) for s, _ in idle)} praktisch nie ein (< {100 * GUARD_IDLE_FRACTION:g} % der "
+            f"Takte). Dort ist der Vergleich faktisch Baseline gegen Baseline: Δ Erfolg / Δ Reward {deltas} – so "
+            "groß ist das Rauschen zwischen zwei Messungen."
         )
     return lines
 

@@ -395,6 +395,39 @@ def test_reproduction_verdicts():
     )
 
 
+def test_aa_control_reports_scenarios_where_only_an_idle_guard_differs(tmp_path):
+    seeds = range(1000, 1020)
+    phase1_dir = tmp_path / "kalibriert"
+    write_run(phase1_dir, "gut", "gut", None, seeds, lambda s: s % 2 == 0, 7, 6)
+    write_meta(phase1_dir, {"gut": {"scenario": "gut", "mode": "realtime", "network": NETWORK["gut"]}})
+    stage_dir = tmp_path / "confirmation" / "kalibriert"
+    schwelle6 = StrategyConfig(request=RequestConfig(refill_threshold=6), guard=GUARD).to_dict()
+    adaptive = STRATEGIES["adaptiv_inpaint"].to_dict()
+    meta = {}
+    for strategy, settings in (("schwelle6", schwelle6), ("adaptiv_inpaint", adaptive)):
+        write_run(stage_dir, f"{strategy}__gut", "gut", strategy, seeds, lambda s: s % 4 == 0, 7, 6)
+        meta[f"{strategy}__gut"] = {
+            "scenario": "gut",
+            "mode": "realtime",
+            "network": NETWORK["gut"],
+            "strategy": strategy,
+            "strategy_settings": settings,
+        }
+    write_meta(stage_dir, meta)
+    phase1 = report.load_profile(phase1_dir)
+    stage = report_phase2.load_stage("2", "Bestätigung", stage_dir, phase1)
+    assert stage is not None
+    lines = report_phase2.aa_control(stage, report_phase2.compare_stage(stage))
+    assert len(lines) == 1  # the adaptive strategy changes the request timing: no A/A comparison
+    assert lines[0].startswith("- **A/A-Kontrolle:** Schwelle 6 unterscheidet sich von der Baseline nur im")
+    assert "gut -25 pp / " in lines[0]
+    assert report_phase2.differs_only_by_guard(schwelle6)
+    assert not report_phase2.differs_only_by_guard(adaptive)
+    assert not report_phase2.differs_only_by_guard(
+        StrategyConfig(request=RequestConfig(refill_threshold=8)).to_dict()
+    )
+
+
 def test_selection_cli_prints_the_ranking(results, capsys):
     assert report_phase2.main(["--select", "--results-dir", str(results), "--log-level", "WARNING"]) == 0
     out = capsys.readouterr().out
