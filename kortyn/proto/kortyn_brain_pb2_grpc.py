@@ -44,6 +44,11 @@ class KortynBrainStub:
                 request_serializer=kortyn_dot_proto_dot_kortyn__brain__pb2.InferRequest.SerializeToString,
                 response_deserializer=kortyn_dot_proto_dot_kortyn__brain__pb2.InferResponse.FromString,
                 _registered_method=True)
+        self.GetStats = channel.unary_unary(
+                '/kortyn.v1.KortynBrain/GetStats',
+                request_serializer=kortyn_dot_proto_dot_kortyn__brain__pb2.GetStatsRequest.SerializeToString,
+                response_deserializer=kortyn_dot_proto_dot_kortyn__brain__pb2.BrainStats.FromString,
+                _registered_method=True)
 
 
 class KortynBrainServicer:
@@ -63,6 +68,13 @@ class KortynBrainServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetStats(self, request, context):
+        """Cumulative load counters of the inference thread (control plane, not part of the real-time path).
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_KortynBrainServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -75,6 +87,11 @@ def add_KortynBrainServicer_to_server(servicer, server):
                     servicer.Infer,
                     request_deserializer=kortyn_dot_proto_dot_kortyn__brain__pb2.InferRequest.FromString,
                     response_serializer=kortyn_dot_proto_dot_kortyn__brain__pb2.InferResponse.SerializeToString,
+            ),
+            'GetStats': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetStats,
+                    request_deserializer=kortyn_dot_proto_dot_kortyn__brain__pb2.GetStatsRequest.FromString,
+                    response_serializer=kortyn_dot_proto_dot_kortyn__brain__pb2.BrainStats.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -131,6 +148,33 @@ class KortynBrain:
             '/kortyn.v1.KortynBrain/Infer',
             kortyn_dot_proto_dot_kortyn__brain__pb2.InferRequest.SerializeToString,
             kortyn_dot_proto_dot_kortyn__brain__pb2.InferResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetStats(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/kortyn.v1.KortynBrain/GetStats',
+            kortyn_dot_proto_dot_kortyn__brain__pb2.GetStatsRequest.SerializeToString,
+            kortyn_dot_proto_dot_kortyn__brain__pb2.BrainStats.FromString,
             options,
             channel_credentials,
             insecure,

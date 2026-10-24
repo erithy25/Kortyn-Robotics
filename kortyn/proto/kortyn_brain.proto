@@ -16,6 +16,8 @@ service KortynBrain {
   rpc GetInfo(GetInfoRequest) returns (BrainInfo);
   // Predict one action chunk for one observation history.
   rpc Infer(InferRequest) returns (InferResponse);
+  // Cumulative load counters of the inference thread (control plane, not part of the real-time path).
+  rpc GetStats(GetStatsRequest) returns (BrainStats);
 }
 
 // Dense, C-contiguous, little-endian array.
@@ -46,6 +48,7 @@ message BrainInfo {
   string torch_version = 10;
   double warmup_inference_ms = 11;  // median of the start-up warm-up inferences
   int32 torch_threads = 12;
+  bool supports_guidance = 13;      // InferRequest.guide_* (inpainting) is understood
 }
 
 message InferRequest {
@@ -58,6 +61,12 @@ message InferRequest {
   // Observation history, oldest first, keyed by LeRobot feature key.
   // Images: uint8 (T, H, W, C). States: float32 (T, D).
   map<string, Tensor> observation = 7;
+  // Optional plan guidance (inpainting): actions for consecutive control steps starting at
+  // guide_start_timestep, in env units, each with a weight in [0, 1]. Weight 1 = frozen: the new chunk
+  // reproduces that action (it is executed before the chunk arrives); 0 = free.
+  int64 guide_start_timestep = 8;
+  Tensor guide_actions = 9;         // float32 (G, action_dim)
+  repeated float guide_weights = 10;
 }
 
 message InferResponse {
@@ -67,4 +76,16 @@ message InferResponse {
   double server_queue_ms = 4;       // waiting for the single inference worker
   double server_inference_ms = 5;   // preprocessing + model + postprocessing
   double server_total_ms = 6;       // handler entry until the response is ready
+}
+
+message GetStatsRequest {}
+
+// Counters since the server started; clients compute load over an interval from two snapshots.
+message BrainStats {
+  uint64 requests = 1;              // Infer calls accepted for inference (passed validation)
+  uint64 inferences = 2;            // model runs completed
+  uint64 abandoned = 3;             // skipped: the client went away before inference started
+  double busy_ms = 4;               // time the inference thread spent running the model
+  double queue_wait_ms = 5;         // summed time requests waited for the inference thread
+  double uptime_ms = 6;             // since the server was built
 }

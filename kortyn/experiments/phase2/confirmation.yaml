@@ -1,0 +1,29 @@
+# Kortyn phase 2 "Freshness Engine" – stage 2 (confirmation).
+#
+# The two best strategies of stage 1 by the rule fixed before stage 1 ran (python -m kortyn.report_phase2
+# --select: largest mean paired max-reward difference against the baseline over "gut" and "sehr_schlecht";
+# within 0.01 the one with fewer requests per second): schwelle6 and schwelle6_inpaint.
+# All network scenarios of phase 1 plus the two no-stall ablations, 50 seeds each (the phase-1 seeds).
+# Baseline: the phase-1 runs in results/kalibriert/ (identical configuration and seeds; stage 1 measured the
+# baseline again for the reproduction check). To measure it again here, add {scenario: <name>, strategy: baseline}.
+# Strategies are inherited from screening.yaml, everything else from base.yaml.
+extends: screening.yaml
+
+experiment:
+  results_dir: results/phase2/confirmation
+  episodes: 50                  # seeds 1000-1049 (= phase 1)
+  suites:
+    - profile: kalibriert
+      runs:
+        - {scenario: gut, strategy: schwelle6}
+        - {scenario: gut, strategy: schwelle6_inpaint}
+        - {scenario: buero_wlan, strategy: schwelle6}
+        - {scenario: buero_wlan, strategy: schwelle6_inpaint}
+        - {scenario: schlecht, strategy: schwelle6}
+        - {scenario: schlecht, strategy: schwelle6_inpaint}
+        - {scenario: sehr_schlecht, strategy: schwelle6}
+        - {scenario: sehr_schlecht, strategy: schwelle6_inpaint}
+        - {scenario: schlecht_ohne_stall, strategy: schwelle6}
+        - {scenario: schlecht_ohne_stall, strategy: schwelle6_inpaint}
+        - {scenario: sehr_schlecht_ohne_stall, strategy: schwelle6}
+        - {scenario: sehr_schlecht_ohne_stall, strategy: schwelle6_inpaint}

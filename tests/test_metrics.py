@@ -9,13 +9,17 @@ from kortyn.metrics import (
     TickSeries,
     append_jsonl,
     bootstrap_ci,
+    emergency_flags,
     final_episodes,
+    holm_adjust,
     ipdv,
     max_reward,
     mcnemar_exact,
     paired_mean_difference,
     paired_outcomes,
+    paired_permutation_p,
     percentile,
+    plan_ages_s,
     read_jsonl,
     runs_of_true,
     summarize_run,
@@ -240,3 +244,85 @@ def test_paired_mean_difference_uses_common_seeds_only():
 def test_summarize_run_rejects_empty_input():
     with pytest.raises(ValueError, match="without episodes"):
         summarize_run([], [])
+
+
+def test_plan_age_uses_the_measured_series_and_falls_back_to_ticks_for_phase_one():
+    phase1 = episode(1000, steps=4)
+    phase1.ticks.action_age = [3, 4, -1, 5]
+    assert plan_ages_s(phase1) == pytest.approx([0.3, 0.4, 0.5])
+    phase2 = episode(1001, steps=4)
+    phase2.ticks.action_age = [3, 4, -1, 5]
+    phase2.ticks.plan_age_ms = [301.0, 402.5, -1.0, 499.0]
+    assert plan_ages_s(phase2) == pytest.approx([0.301, 0.4025, 0.499])
+
+
+def test_emergency_equals_starvation_for_phase_one_records():
+    phase1 = episode(1000, steps=5, starved=(1, 2))
+    assert emergency_flags(phase1) == [0, 1, 1, 0, 0]
+    phase2 = episode(1001, steps=5, starved=(1,))
+    phase2.ticks.emergency = [0, 1, 2, 2, 0]  # queue empty, then a plan older than the limit
+    assert emergency_flags(phase2) == [0, 1, 1, 1, 0]
+
+
+def test_summary_reports_plan_age_emergencies_and_brain_load():
+    first = episode(1000, steps=100, starved=(10, 11), strategy="adaptiv")
+    first.ticks.plan_age_ms = [700.0] * 100
+    first.ticks.emergency = [1 if i in (10, 11) else 2 if i == 50 else 0 for i in range(100)]
+    first.emergency_ticks_age = 1
+    first.brain_load = {"busy_ms": 3000.0, "window_ms": 10000.0, "requests": 9.0}
+    second = episode(1001, steps=100, strategy="adaptiv")
+    second.ticks.plan_age_ms = [500.0] * 100
+    second.ticks.emergency = [0] * 100
+    second.brain_load = {"busy_ms": 2000.0, "window_ms": 10000.0, "requests": 6.0}
+    requests = [request(1000, i, i * 1.0, 400.0, 350.0) for i in range(2, 8)]
+    requests += [request(1001, i, i * 1.0, 400.0, 350.0) for i in range(2, 6)]
+    for record in requests:
+        record.server_queue_ms = 2.0
+    summary = summarize_run([first, second], requests)
+    assert summary.strategy == "adaptiv"
+    assert summary.plan_age_mean_s == pytest.approx(0.6)
+    assert summary.plan_age_p95_s == pytest.approx(0.7)
+    minutes = 20.0 / 60.0  # 200 ticks at 10 Hz
+    assert summary.emergency_events_per_min == pytest.approx(2 / minutes)  # ticks 10-11 and tick 50
+    assert summary.emergency_time_fraction == pytest.approx(3 / 200)
+    assert summary.emergency_ticks_age == 1
+    assert summary.requests_per_s == pytest.approx(10 / 20.0)
+    assert summary.inference_utilization == pytest.approx(10 * 349.0 / 20000.0)
+    assert summary.queue_wait_mean_ms == pytest.approx(2.0)
+    assert summary.brain_counter_utilization == pytest.approx(5000.0 / 20000.0)
+
+
+def test_paired_permutation_test_is_exact_for_few_pairs():
+    # 4 equal positive differences: only "all +" and "all -" are as extreme as observed -> 2 / 16
+    assert paired_permutation_p([0.1, 0.1, 0.1, 0.1]) == pytest.approx(2 / 16)
+    assert paired_permutation_p([0.0, 0.0, 0.0]) == pytest.approx(1.0)
+    assert paired_permutation_p([0.2, -0.2, 0.2, -0.2]) == pytest.approx(1.0)  # mean 0
+    # one large difference among small ones: flipping it is what matters (8 of 16 sign patterns)
+    assert paired_permutation_p([1.0, 0.01, -0.01, 0.01]) == pytest.approx(0.5)
+
+
+def test_paired_permutation_test_monte_carlo_for_many_pairs():
+    shifted = [0.1] * 30
+    p = paired_permutation_p(shifted, n_resamples=5000, seed=1)
+    assert p == pytest.approx(1 / 5001)  # add-one correction: never exactly 0
+    rng = np.random.default_rng(0)
+    noise = list(rng.normal(0.0, 0.1, size=40))
+    first = paired_permutation_p(noise, n_resamples=4000, seed=3)
+    assert first == paired_permutation_p(noise, n_resamples=4000, seed=3)  # deterministic
+    assert 0.05 < first <= 1.0
+    with pytest.raises(ValueError, match="no paired"):
+        paired_permutation_p([])
+    with pytest.raises(ValueError, match="finite"):
+        paired_permutation_p([0.1, float("nan")])
+    with pytest.raises(ValueError, match="n_resamples"):
+        paired_permutation_p([0.1] * 20, n_resamples=0)
+
+
+def test_holm_adjustment_known_values():
+    # sorted 0.01, 0.03, 0.04 -> 3 * 0.01, max(0.03, 2 * 0.03), max(0.06, 1 * 0.04)
+    assert holm_adjust([0.01, 0.04, 0.03]) == pytest.approx([0.03, 0.06, 0.06])
+    assert holm_adjust([0.5, 0.9]) == pytest.approx([1.0, 1.0])  # capped at 1
+    assert holm_adjust([0.02]) == pytest.approx([0.02])
+    assert holm_adjust([]) == []
+    with pytest.raises(ValueError, match=r"\[0, 1\]"):
+        holm_adjust([0.1, 1.5])

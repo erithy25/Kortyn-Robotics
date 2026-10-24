@@ -1,0 +1,32 @@
+{
+  "source": "lerobot/diffusion_pusht@84a7c23178445c6bbf7e1a884ff497017910f653/eval_info.json",
+  "sampler": "DDPM-100 (checkpoint default, GPU, LeRobot eval)",
+  "seeds": 20,
+  "successes": 16,
+  "avg_max_reward": 0.9746163141241825,
+  "all_episodes": 500,
+  "all_success_rate": 0.654,
+  "all_avg_max_reward": 0.9551318575760519,
+  "success_by_seed": {
+    "1000": false,
+    "1001": true,
+    "1002": true,
+    "1003": true,
+    "1004": true,
+    "1005": true,
+    "1006": true,
+    "1007": true,
+    "1008": true,
+    "1009": false,
+    "1010": true,
+    "1011": true,
+    "1012": true,
+    "1013": true,
+    "1014": false,
+    "1015": false,
+    "1016": true,
+    "1017": true,
+    "1018": true,
+    "1019": true
+  }
+}

@@ -50,6 +50,7 @@ from kortyn.config import (
     KortynConfig,
     NetworkConfig,
     ScenarioConfig,
+    StrategyConfig,
     load_config,
     load_scenario,
 )
@@ -384,6 +385,10 @@ def write_published_reference(config: KortynConfig, seeds: Sequence[int], result
 class RunPlan:
     label: str
     scenario: ScenarioConfig
+    # Phase 2: freshness strategy of this run. ``strategy_name`` None = phase-1 run (baseline behaviour,
+    # phase-1 metadata format).
+    strategy_name: str | None = None
+    strategy: StrategyConfig | None = None
 
 
 class SuiteRunner:
@@ -444,6 +449,7 @@ class SuiteRunner:
         proxy: ManagedProcess | None = None
         control: ProxyControl | None = None
         client: BrainClient | None = None
+        stats_client: BrainClient | None = None
         env = None
         try:
             info = wait_for_brain(
@@ -464,8 +470,10 @@ class SuiteRunner:
 
             env = SimEnv(self.config.env)
             client = BrainClient(self.config.proxy.address)
+            # Load counters are control-plane traffic: read directly from the Brain, not through the proxy.
+            stats_client = BrainClient(self.config.brain.address)
             spec = BrainSpec.from_proto(client.get_info(timeout_s=30.0))
-            agent = Agent(self.config.agent, env, client, spec, control)
+            agent = Agent(self.config.agent, env, client, spec, control, stats_client=stats_client)
             self._write_meta(spec, brain_cores, agent_cores, list(pending))
             self._loop(agent, control, pending, brain, proxy)
         finally:
@@ -473,6 +481,8 @@ class SuiteRunner:
                 env.close()
             if client is not None:
                 client.close()
+            if stats_client is not None:
+                stats_client.close()
             if control is not None:
                 control.close()
             if proxy is not None:
@@ -507,8 +517,9 @@ class SuiteRunner:
                         mode=plan.scenario.mode,
                         seed=seed,
                         attempt=attempt,
+                        strategy=plan.strategy_name,
                     )
-                    outcome = agent.run_episode(ctx)
+                    outcome = agent.run_episode(ctx, plan.strategy)
                     run_dir = self.root / label
                     append_jsonl(run_dir / EPISODES_FILE, [outcome.episode.to_json()])
                     append_jsonl(run_dir / REQUESTS_FILE, [r.to_json() for r in outcome.requests])
@@ -525,7 +536,7 @@ class SuiteRunner:
         elapsed = time.monotonic() - started
         eta = elapsed / index * (total - index)
         LOG.info(
-            "[%s %d/%d, ETA %.0f min] seed %d %-17s %s steps=%3d starved=%3d requests=%3d%s",
+            "[%s %d/%d, ETA %.0f min] seed %d %-17s %s steps=%3d starved=%3d emergency=%3d requests=%3d%s",
             self.profile_name,
             index,
             total,
@@ -535,6 +546,7 @@ class SuiteRunner:
             "SUCCESS" if episode.success else "fail   ",
             episode.steps,
             episode.starved_ticks,
+            episode.emergency_ticks,
             episode.n_requests,
             "" if episode.valid else f" INVALID ({'; '.join(episode.invalid_reasons)})",
         )
@@ -551,14 +563,7 @@ class SuiteRunner:
                 "n_action_steps": self.profile.n_action_steps,
             },
             "brain": spec.raw,
-            "runs": {
-                plan.label: {
-                    "scenario": plan.scenario.name,
-                    "mode": plan.scenario.mode,
-                    "network": plan.scenario.network.to_dict(),
-                }
-                for plan in self.plans
-            },
+            "runs": {plan.label: run_entry(plan) for plan in self.plans},
             "agent": {
                 "actions_per_chunk": self.config.agent.actions_per_chunk,
                 "refill_threshold": self.config.agent.refill_threshold,
@@ -586,6 +591,19 @@ class SuiteRunner:
         path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
 
+def run_entry(plan: RunPlan) -> dict[str, Any]:
+    """Metadata of one run. Phase-1 runs (no strategy) keep their original format."""
+    entry: dict[str, Any] = {
+        "scenario": plan.scenario.name,
+        "mode": plan.scenario.mode,
+        "network": plan.scenario.network.to_dict(),
+    }
+    if plan.strategy_name is not None:
+        entry["strategy"] = plan.strategy_name
+        entry["strategy_settings"] = (plan.strategy or StrategyConfig()).to_dict()
+    return entry
+
+
 def select_plans(config: KortynConfig, profile: str, runs: list[str] | None) -> list[RunPlan]:
     """Runs of the profile's suite; ``runs`` filters by run label (a scenario name not used as a label in
     the suite runs that scenario ad hoc, labelled with its name)."""
@@ -596,7 +614,15 @@ def select_plans(config: KortynConfig, profile: str, runs: list[str] | None) -> 
     if runs:
         by_label = {spec.run_label: spec for spec in specs}
         specs = [by_label.get(name, RunSpec(scenario=name)) for name in dict.fromkeys(runs)]
-    return [RunPlan(label=s.run_label, scenario=load_scenario(s.scenario)) for s in specs]
+    return [
+        RunPlan(
+            label=s.run_label,
+            scenario=load_scenario(s.scenario),
+            strategy_name=s.strategy,
+            strategy=config.strategy(s.strategy),
+        )
+        for s in specs
+    ]
 
 
 def main(argv: list[str] | None = None) -> int:

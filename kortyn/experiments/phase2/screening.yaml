@@ -1,0 +1,80 @@
+# Kortyn phase 2 "Freshness Engine" – stage 1 (screening).
+#
+# Inherits everything from base.yaml (environment, checkpoint, Brain profiles, agent, ports, seeds), so the
+# runs are directly comparable with phase 1. Only the freshness strategies and the experiment differ.
+# Stage 1: every strategy combination, 20 seeds, on "gut" and "sehr_schlecht".
+extends: ../base.yaml
+
+strategies:
+  # Phase 1 exactly: refill at <= 6 actions, timestep alignment, no smoothing, repeat the last action.
+  baseline:
+    description: "Phase 1: Schwelle 6, letzte Aktion wiederholen"
+
+  # The same request timing with the phase-2 guard: an empty queue or a plan older than 1.2 s is an
+  # emergency and the robot holds (stops) instead of executing stale commands.
+  schwelle6:
+    description: "Schwelle 6 + Notfall-Halt"
+    request: {mode: threshold, refill_threshold: 6}
+    guard: {mode: hold, max_plan_age_s: 1.2}
+  schwelle8:
+    description: "Schwelle 8 + Notfall-Halt"
+    request: {mode: threshold, refill_threshold: 8}
+    guard: {mode: hold, max_plan_age_s: 1.2}
+  schwelle10:
+    description: "Schwelle 10 + Notfall-Halt"
+    request: {mode: threshold, refill_threshold: 10}
+    guard: {mode: hold, max_plan_age_s: 1.2}
+  # Request on time (latency median + 1.645 robust sigma + 1 tick) and often enough that the expected mean
+  # plan age stays <= 0.7 s (phase 1: quality drops above ~0.75 s), but not more often.
+  adaptiv:
+    description: "Adaptiv (Ziel-Planalter 0,7 s) + Notfall-Halt"
+    request: {mode: adaptive, target_age_s: 0.7, latency_quantile_z: 1.645, safety_margin_ticks: 1}
+    guard: {mode: hold, max_plan_age_s: 1.2}
+
+  # The same four with inpainting of the transition between plans (kortyn/inpainting.py). Exponential
+  # decay over the overlap: the best schedule in the real-time-chunking paper (Black et al. 2025).
+  schwelle6_inpaint:
+    description: "Schwelle 6 + Inpainting + Notfall-Halt"
+    request: {mode: threshold, refill_threshold: 6}
+    smoothing: {mode: inpaint, schedule: exp, max_overlap_steps: 10}
+    guard: {mode: hold, max_plan_age_s: 1.2}
+  schwelle8_inpaint:
+    description: "Schwelle 8 + Inpainting + Notfall-Halt"
+    request: {mode: threshold, refill_threshold: 8}
+    smoothing: {mode: inpaint, schedule: exp, max_overlap_steps: 10}
+    guard: {mode: hold, max_plan_age_s: 1.2}
+  schwelle10_inpaint:
+    description: "Schwelle 10 + Inpainting + Notfall-Halt"
+    request: {mode: threshold, refill_threshold: 10}
+    smoothing: {mode: inpaint, schedule: exp, max_overlap_steps: 10}
+    guard: {mode: hold, max_plan_age_s: 1.2}
+  adaptiv_inpaint:
+    description: "Adaptiv (Ziel-Planalter 0,7 s) + Inpainting + Notfall-Halt"
+    request: {mode: adaptive, target_age_s: 0.7, latency_quantile_z: 1.645, safety_margin_ticks: 1}
+    smoothing: {mode: inpaint, schedule: exp, max_overlap_steps: 10}
+    guard: {mode: hold, max_plan_age_s: 1.2}
+
+experiment:
+  results_dir: results/phase2/screening
+  episodes: 20                  # seeds 1000-1019 (the first 20 phase-1 seeds)
+  suites:
+    - profile: kalibriert
+      runs:
+        - {scenario: gut, strategy: baseline}
+        - {scenario: gut, strategy: schwelle6}
+        - {scenario: gut, strategy: schwelle8}
+        - {scenario: gut, strategy: schwelle10}
+        - {scenario: gut, strategy: adaptiv}
+        - {scenario: gut, strategy: schwelle6_inpaint}
+        - {scenario: gut, strategy: schwelle8_inpaint}
+        - {scenario: gut, strategy: schwelle10_inpaint}
+        - {scenario: gut, strategy: adaptiv_inpaint}
+        - {scenario: sehr_schlecht, strategy: baseline}
+        - {scenario: sehr_schlecht, strategy: schwelle6}
+        - {scenario: sehr_schlecht, strategy: schwelle8}
+        - {scenario: sehr_schlecht, strategy: schwelle10}
+        - {scenario: sehr_schlecht, strategy: adaptiv}
+        - {scenario: sehr_schlecht, strategy: schwelle6_inpaint}
+        - {scenario: sehr_schlecht, strategy: schwelle8_inpaint}
+        - {scenario: sehr_schlecht, strategy: schwelle10_inpaint}
+        - {scenario: sehr_schlecht, strategy: adaptiv_inpaint}

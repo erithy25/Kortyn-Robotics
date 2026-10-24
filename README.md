@@ -1,10 +1,14 @@
-# Kortyn – Phase 1: Baseline-Messung
+# Kortyn – ausgelagerte Roboter-Policy unter schlechtem Netz
 
 Kortyn lagert die KI eines Roboters (die *Policy*) auf einen Server im selben Netz aus („**Kortyn Brain**“)
 und misst, wie zuverlässig der Roboter („**Kortyn Agent**“) weiterarbeitet, wenn das Netz schlecht wird.
-Phase 1 ist die **Baseline**: eine vortrainierte LeRobot-Policy löst eine simulierte Aufgabe, der Roboter
-läuft in **echter Echtzeit** (er wartet nie auf das Modell), und ein Netzwerk-Störproxy verschlechtert die
-Verbindung stufenweise.
+Eine vortrainierte LeRobot-Policy löst eine simulierte Aufgabe, der Roboter läuft in **echter Echtzeit** (er
+wartet nie auf das Modell), und ein Netzwerk-Störproxy verschlechtert die Verbindung stufenweise.
+
+| Phase | Frage | Kurzantwort | Report |
+|---|---|---|---|
+| **1 – Baseline** | Wie stark leidet die ausgelagerte Policy unter Latenz, Jitter und Stalls? | Echtzeit kostet nichts, solange das Latenzbudget hält; danach sinkt die Qualität mit dem Planalter. | [`reports/phase1.md`](reports/phase1.md) |
+| **2 – Freshness Engine** | Holt ein jüngeres Planalter die Qualität zurück, ohne unnötige Brain-Last? | **Nein.** Häufigere Anfragen senken das Planalter, bringen aber keine Qualität und kosten bis zu 2× Brain-Last. Keine Strategie schlägt die Baseline signifikant. | [`reports/phase2.md`](reports/phase2.md) |
 
 - Aufgabe: **PushT** (LeRobot/gym-pusht, 10 Hz, max. 300 Schritte)
 - Policy: **`lerobot/diffusion_pusht`** (Diffusion Policy, Apache-2.0), lokal ins aktuelle LeRobot-Format
@@ -13,7 +17,107 @@ Verbindung stufenweise.
 
 ---
 
-## Ergebnisse auf einen Blick
+## Phase 2: Freshness Engine – Ergebnisse auf einen Blick
+
+Messung vom 24.10.2026 auf derselben Maschine wie Phase 1, mit identischem Checkpoint, Brain-Profil `kalibriert`
+(DDIM-4) und denselben Seeds. Vollständiger Report mit allen Tabellen, gepaarten Tests und Abbildungen:
+**[`reports/phase2.md`](reports/phase2.md)**.
+
+**Stufe 1 – Screening:** alle 9 Strategien, 20 Seeds; Δ Reward = gepaarte Differenz zur frisch gemessenen
+Baseline.
+
+| Strategie | Anfragen/s (gut / sehr schlecht) | Auslastung Brain (gut / sehr schlecht) | Ø Planalter (gut / sehr schlecht) | Δ Reward gut | Δ Reward sehr schlecht |
+|---|---:|---:|---:|---:|---:|
+| Baseline (Phase 1: Schwelle 6, letzte Aktion wiederholen) | 1,23 / 1,16 | 41 % / 38 % | 0,73 / 0,98 s | – | – |
+| Schwelle 6 + Notfall-Halt | 1,23 / 1,16 | 40 % / 38 % | 0,72 / 0,85 s | +0,043 | +0,002 |
+| Schwelle 8 + Notfall-Halt | 1,64 / 1,50 | 54 % / 50 % | 0,63 / 0,78 s | +0,016 | −0,056 |
+| Schwelle 10 + Notfall-Halt | 2,46 / 1,70 | 80 % / 56 % | 0,53 / 0,75 s | −0,064 | −0,033 |
+| Adaptiv (Ziel-Planalter 0,7 s) + Notfall-Halt | 1,40 / 1,68 | 46 % / 56 % | 0,68 / 0,75 s | +0,015 | −0,063 |
+| … jeweils mit Inpainting | wie oben | wie oben | wie oben | −0,069 … +0,038 | −0,092 … −0,013 |
+
+Kein Unterschied ist nach Holm-Korrektur signifikant. Die vorab festgelegte Regel (größte mittlere
+Reward-Differenz, bei < 0,01 weniger Anfragen/s) wählte `schwelle6` und `schwelle6_inpaint` für Stufe 2: das
+Phase-1-Timing mit Notfall-Halt, einmal ohne und einmal mit Inpainting.
+
+**Stufe 2 – Bestätigung:** 50 Seeds, alle Netz-Szenarien; Baseline = die Phase-1-Läufe; Δ gepaart, alle
+Holm-p ≥ 0,92.
+
+| Szenario | Baseline | Schwelle 6 + Notfall-Halt | Schwelle 6 + Inpainting |
+|---|---:|---:|---:|
+| gut | 62 % | 64 % (+2 pp) | 50 % (−12 pp) |
+| Büro-WLAN | 70 % | 54 % (−16 pp) | 58 % (−12 pp) |
+| schlecht | 46 % | 56 % (+10 pp, p = 0,36) | 44 % (−2 pp) |
+| sehr schlecht | 42 % | 46 % (+4 pp, p = 0,81) | 34 % (−8 pp) |
+| schlecht ohne Stall | 50 % | 66 % (+16 pp) | 48 % (−2 pp) |
+| sehr schlecht ohne Stall | 50 % | 50 % (±0 pp) | 42 % (−8 pp) |
+| **über alle 6 gepoolt** (300 Paare) | 53 % | 56 % (+3 pp), Reward +0,011 (p = 0,41) | 46 % (−7 pp), Reward −0,032 (p = 0,03; Holm 0,06) |
+
+1. **Das Planalter ist nicht der Hebel.**
+   - Häufigere Anfragen senken das Ø-Planalter, z. B. Schwelle 10 in „gut“ von 0,73 auf 0,53 s. Qualität bringen sie
+     aber nicht zurück; tendenziell kosten sie welche.
+   - Innerhalb eines Szenarios ist der Zusammenhang flach bis umgekehrt: +0,031 Reward je 0,1 s (KI −0,002 bis
+     +0,073). In Phase 1, zwischen den Szenarien, fiel der Reward dagegen um −0,037 je 0,1 s. Der Unterschied ist
+     signifikant (+0,067, 95 %-KI +0,025 bis +0,119).
+   - Das Planalter aus Phase 1 ist damit ein Symptom von Latenz und Stalls, keine eigenständige Stellschraube.
+   - Häufigere Anfragen ändern nicht die Verzögerung bis zur ersten Aktion eines Plans (Reaktionszeit p50 bleibt
+     400 bzw. 500 ms). Sie erhöhen nur die Zahl der Planwechsel.
+2. **Auch ohne Latenz sind 8 Aktionen je Plan das Optimum** (Zusatz-Ablation im Sync-Modus, 50 Seeds).
+   - Bei 4 statt 8 Aktionen sinkt der Erfolg von 60 % auf 38 % (nominal p = 0,05, nach Holm n. s.), bei 6 auf 48 %,
+     bei 12 auf 56 %. Der Reward ist bei 8 am höchsten, so wurde die Policy auch evaluiert.
+   - Kürzere Pläne sind genau das, was häufigere Anfragen in Echtzeit bewirken. Sie helfen also auch dann nicht, wenn
+     keine Latenz im Spiel ist.
+3. **Inpainting (gradientenfrei) hilft nicht.**
+   - Über alle Szenarien liegt es bei −0,032 Reward und −7 pp Erfolg, nominal signifikant, nach Holm knapp nicht.
+   - Im weichen Überlappungsbereich mischt es alte und neue Vorhersage; bei 4 DDIM-Schritten bleibt zu wenig Raum, das
+     auf einen gültigen Plan zurückzuziehen.
+4. **Der Notfall-Halt ist neutral.**
+   - Er kostet keine Qualität: gepoolt +0,011 Reward, n. s. Dafür macht er Budgetverletzungen sichtbar: 22,6
+     Notfälle/min in „sehr schlecht“. Die Baseline führt dort ohne Meldung Pläne aus, die bis zu 1,9 s alt sind
+     (p95).
+5. **Brain-Last:** Ein Roboter belegt mit dem Phase-1-Timing ≈ 40 % des Inferenz-Threads (1,2 Anfragen/s).
+   - Schwelle 10 verdoppelt das auf 80 %.
+   - Die adaptive Strategie kostet +15 bis +45 % und erreicht ihr Ziel-Planalter in schlechten Netzen trotzdem nicht.
+6. **Messrauschen ist so groß wie die gesuchten Effekte.**
+   - Zwei identische Phase-1-Läufe unterscheiden sich um Δ Reward −0,031.
+   - Die A/A-Kontrolle in Stufe 2 schwankt bis −16 pp: In „Büro-WLAN“ greift der Notfall-Halt nie, Schwelle 6 ist
+     dort faktisch die Baseline.
+   - Effekte unter ≈ 0,03 Reward sind mit 50 Seeds nicht belastbar.
+
+**Konsequenzen für Phase 3 (mehrere Roboter an einem Brain):**
+- **Anfrage-Timing der Baseline beibehalten:** Refill bei ≤ 6, also 8 Aktionen je Plan. Freshness-Mehrlast kauft
+  keine Qualität, sie kostet nur Brain-Kapazität.
+- **Kapazität:** ≈ 40 % Auslastung je Roboter heißt rechnerisch ≈ 2,5 Roboter je Brain-Instanz bei Volllast
+  (DDIM-4, 3 CPU-Kerne). Mit Reserve gegen Wartezeit eher 2.
+- **Der Engpass mit mehreren Robotern ist die Latenz bis zur ersten Aktion**, also Wartezeit plus Stalls. Gegenmittel:
+  - Micro-Batching mehrerer Roboter in einem Denoising-Durchlauf
+  - Deadline-Scheduling im Brain nach dem Queue-Füllstand der Roboter
+  - Admission Control
+- **Notfall-Halt** als Sicherheitsnetz pro Roboter behalten und loggen.
+- **Latenzschätzer:** Median + 1,645·MAD deckt nur 83–89 % der Anfragen ab. Für Deadlines das empirische p95 des
+  Fensters nehmen.
+- **Messdesign:** Varianten immer zeitgleich verschränkt messen und ≥ 100 Seeds einplanen, wenn Effekte unter 0,05
+  Reward zählen sollen.
+
+**Konsequenzen für einen Wechsel auf ein modernes Modell wie SmolVLA:**
+- **Echtes RTC:** SmolVLA (Flow Matching, Chunk 50, 10 Flow-Schritte) bringt LeRobots RTC mit, also Guidance per
+  Autograd statt unseres gradientenfreien Inpaintings. Damit lässt sich die Freshness-Frage neu stellen: RTC soll
+  genau das leisten, was hier scheiterte, nämlich häufiger umplanen ohne Konsistenzverlust.
+- **Hardware:** RTC kostet einen Backward-Pass pro Flow-Schritt. Das Brain braucht dafür GPU oder MPS (Mac) und muss
+  vorher kalibriert werden; das CPU-Brain von hier reicht nicht.
+- **Payload:** 512²-Bilder statt 96² sind ≈ 28× mehr Pixel pro Kamera. Bandbreite und Serialisierung werden relevant:
+  Bildkompression im Protokoll und Messungen mit dem Bandbreitenlimit des Proxys einplanen.
+- **Neue Baseline nötig:** Für PushT gibt es keinen offiziellen SmolVLA-Checkpoint. Zwei Wege:
+  - SmolVLA auf PushT feinjustieren; dann bleibt die Aufgabe vergleichbar, es kostet aber Rechenzeit auf eigener
+    Hardware.
+  - Auf Meta-World wechseln: offizieller Checkpoint `smolvla_metaworld`, MuJoCo, läuft auch auf macOS. Der
+    80-Hz-Steuertakt verschärft dort allerdings das Latenzbudget.
+
+**Laufzeit:** Stufe 1 2 h 48 min, Stufe 2 4 h 25 min, Sync-Ablation 33 min, also 7 h 46 min statt der angepeilten
+≈ 6 h. Das Protokoll (50 Seeds × 6 Szenarien) wurde für die Vergleichbarkeit mit Phase 1 nicht gekürzt.
+
+---
+
+## Phase 1: Ergebnisse auf einen Blick
 
 Messung vom 23./24.10.2026 auf der Entwicklungsmaschine: Linux, 4-vCPU-Xeon, **CPU statt MPS**, Brain auf
 3 Kernen. Je Zeile 50 Episoden mit identischen Seeds. Vollständiger Report mit Konfidenzintervallen, Tests und
@@ -68,6 +172,10 @@ Abbildungen: **[`reports/phase1.md`](reports/phase1.md)**.
   Latenz-Obergrenze, deadline-basiertes Scheduling nach dem Queue-Füllstand der Roboter und eine Admission
   Control.
 
+> **Nachtrag nach Phase 2:** Die Empfehlung „bei schlechtem Netz öfter anfragen“ hat Phase 2 widerlegt.
+> Ein so gesenktes Planalter bringt keine Qualität zurück und kostet Brain-Last; gradientenfreies Inpainting hilft
+> nicht. Der Notfall-Halt ist umgesetzt, ohne lokales Modell (siehe „Phase 2“ oben).
+
 ---
 
 ## Schnellstart (≈ 5 Minuten + Downloads)
@@ -79,7 +187,7 @@ Voraussetzungen: macOS mit Apple Silicon oder Linux x86_64, [`uv`](https://docs.
 git clone https://github.com/erithy25/Kortyn-Robotics.git
 cd Kortyn-Robotics
 uv sync                     # installiert Python 3.12 + alle gepinnten Pakete (uv.lock)
-uv run pytest               # ~1 min, offline, ohne Modell-Download
+uv run pytest               # ~2 min, offline, ohne Modell-Download
 ```
 
 Ein echter End-to-End-Lauf (Brain + Proxy + Agent, 2 Episoden im Szenario „gut“). Beim ersten Start lädt
@@ -106,12 +214,20 @@ uv run python -m kortyn.lerobot_reference --profile kalibriert
 uv run python -m kortyn.lerobot_reference --profile ddim10
 uv run python -m kortyn.lerobot_reference --scheduler DDPM --num-inference-steps 100 --name ddpm100   # ~1 h CPU
 
-# 4. Report
+# 4. Phase 2: Stufe 1 (alle Strategien × 20 Seeds), Auswahl, Stufe 2 (2 Beste × 50 Seeds × 6 Szenarien)
+uv run python -m kortyn.run_experiment --config kortyn/experiments/phase2/screening.yaml
+uv run python -m kortyn.report_phase2 --select          # Rangliste nach der vorab festgelegten Regel
+uv run python -m kortyn.run_experiment --config kortyn/experiments/phase2/confirmation.yaml
+# Zusatz-Ablation: 4 / 6 / 12 statt 8 Aktionen je Plan im Sync-Modus
+for n in 4 6 12; do uv run python -m kortyn.run_experiment --config kortyn/experiments/phase2/ablation_sync_$n.yaml; done
+
+# 5. Reports: reports/phase1.md und reports/phase2.md (--phase 1|2 für nur einen)
 uv run python -m kortyn.report
 ```
 
 Laufzeiten auf der Messmaschine (4-vCPU-Xeon, keine GPU): Kalibrierung ≈ 10 min, alle Läufe ≈ 4 h 40 min (650
-Episoden: `kalibriert` 400, `ddim10` 250), LeRobot-Referenz DDPM-100 ≈ 1 h. Auf Apple Silicon mit MPS ist die
+Episoden: `kalibriert` 400, `ddim10` 250), LeRobot-Referenz DDPM-100 ≈ 1 h; Phase 2: Stufe 1 ≈ 2 h 50 min,
+Stufe 2 ≈ 4 h 25 min, Sync-Ablation ≈ 35 min. Auf Apple Silicon mit MPS ist die
 Inferenz schneller; die Echtzeit-Episoden dauern trotzdem ihre 10–30 s Simulationszeit.
 
 > **Mac-Hinweise:** Netzteil anschließen, `caffeinate -i` verwenden (sonst drosselt macOS lange Läufe),
@@ -132,13 +248,17 @@ Kortyn Brain :50051  ◄─ TCP/HTTP2 ─  netem_proxy :50052  ◄─  Kortyn Ag
 
 | Modul | Aufgabe | Start |
 |---|---|---|
-| `kortyn/brain.py` | gRPC-Server: lädt die Policy (LeRobot-Klassen), beantwortet `Infer` mit Action-Chunks, ein Inferenz-Thread, Server-Timings | `python -m kortyn.brain --profile kalibriert` |
+| `kortyn/brain.py` | gRPC-Server: lädt die Policy (LeRobot-Klassen), beantwortet `Infer` mit Action-Chunks (optional mit Inpainting-Guide), ein Inferenz-Thread, Server-Timings, Last-Zähler (`GetStats`) | `python -m kortyn.brain --profile kalibriert` |
 | `kortyn/policy_runner.py` | Beobachtungshistorie → Action-Chunk, exakt LeRobot-Eval-Semantik (Golden-Test) | – |
-| `kortyn/agent.py` | Simulierter Roboter: fester Takt, Action-Queue, Starvation-Zählung, Metriken; `sync`-Referenzmodus | `python -m kortyn.agent --episodes 3` |
+| `kortyn/inpainting.py` | Phase 2: gradientenfreies Inpainting von Diffusion-Chunks (eingefrorener + weich geführter Teil) | – |
+| `kortyn/agent.py` | Simulierter Roboter: fester Takt, Action-Queue, Starvation-Zählung, Metriken; `sync`-Referenzmodus; Phase 2: Strategien, Planalter, Notfall-Halt | `python -m kortyn.agent --episodes 3` |
+| `kortyn/latency.py` | Phase 2: robuste Online-Latenzschätzung (Median, 1,4826·MAD) | – |
+| `kortyn/freshness.py` | Phase 2: Anfrage-Strategien (Schwelle, adaptiv), Ausrichtung, Inpainting-Guides, Planalter-Grenze | – |
 | `kortyn/netem_proxy.py` | TCP-Proxy: Delay, Jitter, Bandbreite, Stalls; per YAML und Control-Port steuerbar | `python -m kortyn.netem_proxy --scenario schlecht` |
-| `kortyn/metrics.py` | Records, Definitionen, Statistik (Perzentile, Wilson, McNemar, Bootstrap) | – |
+| `kortyn/metrics.py` | Records, Definitionen, Statistik (Perzentile, Wilson, McNemar, Bootstrap, Permutationstest, Holm) | – |
 | `kortyn/run_experiment.py` | Startet Brain + Proxy, Szenarien seed-weise verschränkt, JSONL nach `results/` | `python -m kortyn.run_experiment` |
-| `kortyn/report.py` | `reports/phase1.md` + PNG-Abbildungen | `python -m kortyn.report` |
+| `kortyn/report.py` | `reports/phase1.md` + PNG-Abbildungen (ruft auch den Phase-2-Report auf) | `python -m kortyn.report` |
+| `kortyn/report_phase2.py` | `reports/phase2.md`: Tabellen, gepaarte Tests, Auswahlregel, Abbildungen | `python -m kortyn.report_phase2 --select` |
 | `kortyn/calibrate.py` | Wählt die DDIM-Schrittzahl, bei der „gut“ nicht verhungert | `python -m kortyn.calibrate` |
 | `kortyn/lerobot_reference.py` | Offizielles `lerobot-eval` als Referenz | `python -m kortyn.lerobot_reference --profile ddim10` |
 | `kortyn/checkpoint.py` | Download (gepinnte Revision) + Migration ins Processor-Format | – |
@@ -198,6 +318,10 @@ gelten als ungültig und werden wiederholt.
 Payload (Protobuf und Wire-Bytes), Queue-Füllstand pro Takt, Starvation-Takte/-Ereignisse inkl. Ursache
 (Compute vs. Netz), Aktionsalter, Erfolg, Ø Max-Reward (LeRobot-Metrik, kontinuierlich) und Dauer pro Episode.
 Statistik: Wilson-KI, exakter McNemar-Test und gepaarter Bootstrap über dieselben Seeds.
+Phase 2 ergänzt das Planalter jeder ausgeführten Aktion (Freigabe der Beobachtung → Ausführung), Notfälle pro
+Takt (Queue leer oder Plan älter als die Grenze) und die Brain-Last (Anfragen/s, Auslastung des Inferenz-Threads,
+Wartezeit; gegengeprüft mit den Brain-Zählern per `GetStats`), außerdem einen gepaarten Permutationstest und die
+Holm-Korrektur.
 Rohdaten: `results/<profil>/<lauf>/*.jsonl`, Metadaten aller Messsitzungen in `results/<profil>/run_meta.json`.
 
 ### Kalibrierung
@@ -230,10 +354,31 @@ uv run python -m kortyn.netem_proxy --scenario sehr_schlecht --upstream 127.0.0.
 Eigene Szenarien: neue YAML-Datei in `kortyn/experiments/` (Feld `name` = Dateiname), z. B. mit
 `bandwidth_mbps: 5` für ein Bandbreitenlimit, dann `--run <name>`.
 
+**Phase-2-Strategien** stehen unter `strategies:` und werden pro Lauf gewählt. Experiment-Dateien erben per
+`extends:` von `base.yaml`; Dicts werden zusammengeführt, Listen ersetzt.
+
+```yaml
+extends: ../base.yaml
+strategies:
+  meine_strategie:
+    request: {mode: adaptive, target_age_s: 0.7, latency_quantile_z: 1.645, safety_margin_ticks: 1}
+    smoothing: {mode: inpaint, schedule: exp, max_overlap_steps: 10}   # none | inpaint
+    guard: {mode: hold, max_plan_age_s: 1.2}                           # repeat_last (Phase 1) | hold
+    alignment: timestep                                                # shift = naiver Gegenentwurf
+experiment:
+  results_dir: results/meine_strategie
+  suites:
+    - profile: kalibriert
+      runs:
+        - {scenario: schlecht, strategy: meine_strategie}   # Ergebnis: <results_dir>/kalibriert/meine_strategie__schlecht/
+        - {scenario: schlecht, strategy: baseline}          # baseline = exakt Phase 1
+```
+
 ## Entwicklung
 
 ```bash
-uv run pytest                 # 100+ Tests: Proxy, Metriken, Codec, Migration, Brain, Golden-Test, Echtzeit-Agent
+uv run pytest                 # ~200 Tests: Proxy, Metriken, Codec, Migration, Brain, Golden-Test, Echtzeit-Agent,
+                              #   Latenzschätzer, Anfrage-Strategien, Inpainting, Phase-2-Report
 uv run ruff check . && uv run ruff format --check .
 uv run mypy kortyn            # strict
 # Protokoll geändert? Python-Module neu erzeugen:

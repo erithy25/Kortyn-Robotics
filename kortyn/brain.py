@@ -10,6 +10,10 @@ Design:
 * **Abandoned calls are skipped.** If the client's deadline expired while the request was queued, the
   worker does not run the model for it.
 * **Explicit errors.** Malformed observations -> ``INVALID_ARGUMENT``; model failures -> ``INTERNAL``.
+* **Load counters** (phase 2). ``GetStats`` reports cumulative busy time of the inference thread, queue
+  waiting time and request counts; clients take two snapshots to measure the load over an interval.
+* **Inpainting guides** (phase 2). ``InferRequest.guide_*`` asks for a chunk that reproduces the actions
+  executed before it arrives (``kortyn/inpainting.py``).
 
 Run::
 
@@ -32,15 +36,16 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn
 
 import grpc
+import numpy as np
 
-from kortyn.codec import CodecError, decode_observation, encode_array
+from kortyn.codec import CodecError, decode_observation, decode_tensor, encode_array
 from kortyn.config import DEFAULT_BASE_CONFIG, BrainConfig, BrainProfile, ConfigError, load_config
 from kortyn.process_utils import set_cpu_affinity
 from kortyn.proto import kortyn_brain_pb2 as pb
 from kortyn.proto import kortyn_brain_pb2_grpc as pb_grpc
 
 if TYPE_CHECKING:
-    from kortyn.policy_runner import InferenceResult, PolicyInfo, PolicyRunner
+    from kortyn.policy_runner import GuideSpec, InferenceResult, PolicyInfo, PolicyRunner
 
 LOG = logging.getLogger("kortyn.brain")
 
@@ -78,6 +83,17 @@ class _Window:
     count: int = 0
 
 
+@dataclass
+class _Counters:
+    """Cumulative load counters (``GetStats``)."""
+
+    requests: int = 0
+    inferences: int = 0
+    abandoned: int = 0
+    busy_ms: float = 0.0
+    queue_wait_ms: float = 0.0
+
+
 class BrainServicer(pb_grpc.KortynBrainServicer):  # type: ignore[misc]  # generated base is untyped
     def __init__(self, worker: InferenceWorker, info: PolicyInfo, log_every: int = 200) -> None:
         self._worker = worker
@@ -85,6 +101,8 @@ class BrainServicer(pb_grpc.KortynBrainServicer):  # type: ignore[misc]  # gener
         self._log_every = log_every
         self._lock = threading.Lock()
         self._window = _Window(deque(maxlen=log_every), deque(maxlen=log_every))
+        self._counters = _Counters()
+        self._started = time.perf_counter()
 
     def GetInfo(self, request: pb.GetInfoRequest, context: grpc.ServicerContext) -> pb.BrainInfo:
         info = self._info
@@ -103,6 +121,33 @@ class BrainServicer(pb_grpc.KortynBrainServicer):  # type: ignore[misc]  # gener
             torch_version=info.torch_version,
             warmup_inference_ms=info.warmup_inference_ms,
             torch_threads=info.torch_threads,
+            supports_guidance=info.supports_guidance,
+        )
+
+    def GetStats(self, request: pb.GetStatsRequest, context: grpc.ServicerContext) -> pb.BrainStats:
+        with self._lock:
+            counters = self._counters
+            return pb.BrainStats(
+                requests=counters.requests,
+                inferences=counters.inferences,
+                abandoned=counters.abandoned,
+                busy_ms=counters.busy_ms,
+                queue_wait_ms=counters.queue_wait_ms,
+                uptime_ms=(time.perf_counter() - self._started) * 1000.0,
+            )
+
+    @staticmethod
+    def _decode_guide(request: pb.InferRequest) -> GuideSpec | None:
+        from kortyn.policy_runner import GuideSpec
+
+        if not request.HasField("guide_actions"):
+            return None
+        actions = decode_tensor(request.guide_actions).astype(np.float32)
+        weights = np.asarray(request.guide_weights, dtype=np.float32)
+        return GuideSpec(
+            offset=int(request.guide_start_timestep) - int(request.obs_timestep),
+            actions=actions,
+            weights=weights,
         )
 
     def Infer(self, request: pb.InferRequest, context: grpc.ServicerContext) -> pb.InferResponse:
@@ -113,6 +158,9 @@ class BrainServicer(pb_grpc.KortynBrainServicer):  # type: ignore[misc]  # gener
         try:
             observation = decode_observation(request.observation)
             runner.validate(observation)
+            guide = self._decode_guide(request)
+            if guide is not None:
+                runner.check_guide(guide)
         except (CodecError, ObservationError) as exc:
             LOG.warning("rejecting request %d from %s: %s", request.request_id, request.client_id, exc)
             _abort(context, grpc.StatusCode.INVALID_ARGUMENT, str(exc))
@@ -122,12 +170,23 @@ class BrainServicer(pb_grpc.KortynBrainServicer):  # type: ignore[misc]  # gener
                 grpc.StatusCode.INVALID_ARGUMENT,
                 f"max_actions={max_actions} exceeds the Brain maximum of {self._info.max_actions}",
             )
+        with self._lock:
+            self._counters.requests += 1
 
         def job() -> tuple[float, InferenceResult] | None:
             started = time.perf_counter()
             if not context.is_active():
+                with self._lock:
+                    self._counters.abandoned += 1
                 return None
-            return started, runner.infer(observation, seed=int(request.seed), max_actions=int(max_actions))
+            result = runner.infer(
+                observation, seed=int(request.seed), max_actions=int(max_actions), guide=guide
+            )
+            with self._lock:
+                self._counters.inferences += 1
+                self._counters.busy_ms += result.inference_ms
+                self._counters.queue_wait_ms += (started - entered) * 1000.0
+            return started, result
 
         try:
             outcome = self._worker.submit(job).result()
