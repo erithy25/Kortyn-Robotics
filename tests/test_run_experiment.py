@@ -7,7 +7,7 @@ import socket
 
 import pytest
 
-from kortyn import run_experiment
+from kortyn import report, run_experiment
 from kortyn.checkpoint import MARKER_FILE
 from kortyn.metrics import read_jsonl
 
@@ -114,15 +114,37 @@ def test_full_pipeline_writes_results_and_resumes(tmp_path, tiny_pusht_checkpoin
     assert run_experiment.main(["--config", str(config), "--log-level", "WARNING"]) == 0
     assert sizes == {run: (root / run / "episodes.jsonl").stat().st_size for run in sizes}
 
-    # extending the suite later (ad-hoc run) keeps the metadata of the earlier runs
-    extend = ["--config", str(config), "--run", "buero_wlan", "--log-level", "WARNING"]
+    # extending the suite later (ad-hoc ablation run) keeps the metadata of the earlier runs
+    extend = ["--config", str(config), "--run", "schlecht_ohne_stall", "--log-level", "WARNING"]
     assert run_experiment.main(extend) == 0
     meta = json.loads((root / "run_meta.json").read_text())
-    assert set(meta["runs"]) == {"referenz_sync", "gut", "schlecht", "buero_wlan"}
-    assert meta["runs"]["schlecht"]["network"]["rtt_ms"] == 80
-    assert [s["runs"] for s in meta["sessions"]] == [["referenz_sync", "gut", "schlecht"], ["buero_wlan"]]
-    assert [e["seed"] for e in read_jsonl(root / "buero_wlan" / "episodes.jsonl")] == [1000, 1001]
+    assert set(meta["runs"]) == {"referenz_sync", "gut", "schlecht", "schlecht_ohne_stall"}
+    assert meta["runs"]["schlecht"]["network"]["stall"]["duration_ms"] == 300
+    assert meta["runs"]["schlecht_ohne_stall"]["network"]["stall"] is None
+    assert [s["runs"] for s in meta["sessions"]] == [
+        ["referenz_sync", "gut", "schlecht"],
+        ["schlecht_ohne_stall"],
+    ]
+    assert [e["seed"] for e in read_jsonl(root / "schlecht_ohne_stall" / "episodes.jsonl")] == [1000, 1001]
     assert sizes == {run: (root / run / "episodes.jsonl").stat().st_size for run in sizes}
+
+    # the report renders every table and figure from these results, including the ablation section
+    reports = tmp_path / "reports"
+    render = ["--config", str(config), "--reports-dir", str(reports), "--log-level", "WARNING"]
+    assert report.main(render) == 0
+    text = (reports / "phase1.md").read_text(encoding="utf-8")
+    for heading in ("## Auf einen Blick", "Brain-Profil `tiny`", "### Ablation", "## Definitionen"):
+        assert heading in text
+    for name in (
+        "phase1_erfolgsquote.png",
+        "phase1_latenzverteilung.png",
+        "phase1_latenz_zerlegung.png",
+        "phase1_starvation.png",
+        "phase1_queue_tiny.png",
+        "phase1_ablation_tiny.png",
+        "phase1_aktionsalter.png",
+    ):
+        assert (reports / name).stat().st_size > 10_000, name
 
 
 def stored_meta(**overrides):

@@ -11,7 +11,9 @@ from kortyn.metrics import (
     bootstrap_ci,
     final_episodes,
     ipdv,
+    max_reward,
     mcnemar_exact,
+    paired_mean_difference,
     paired_outcomes,
     percentile,
     read_jsonl,
@@ -180,7 +182,7 @@ def test_final_episodes_prefers_first_valid_attempt():
 def test_summarize_run_aggregates_success_latency_jitter_and_starvation():
     episodes = [
         episode(1000, success=True, steps=100, starved=(10, 11, 50)),  # 2 events, 3 ticks
-        episode(1001, success=False, steps=200, starved=()),
+        episode(1001, success=False, steps=200, starved=(), max_coverage=0.76),
         episode(1002, success=True, steps=300, starved=(5,)),
     ]
     requests = [
@@ -207,6 +209,32 @@ def test_summarize_run_aggregates_success_latency_jitter_and_starvation():
     assert summary.starved_time_fraction == pytest.approx(4 / 600)
     assert summary.request_bytes_mean == pytest.approx(55_400)
     assert summary.success_by_seed == {1000: True, 1001: False, 1002: True}
+    assert summary.max_reward_by_seed == pytest.approx({1000: 1.0, 1001: 0.8, 1002: 1.0})
+    assert summary.max_reward_mean == pytest.approx(2.8 / 3)
+
+
+def test_max_reward_follows_the_pusht_reward_definition():
+    assert max_reward(0.475) == pytest.approx(0.5)
+    assert max_reward(0.95) == pytest.approx(1.0)
+    assert max_reward(0.99) == 1.0  # capped like gym-pusht's clipped reward
+    assert max_reward(-0.1) == 0.0
+
+
+def test_paired_mean_difference_uses_common_seeds_only():
+    a = {1: 0.5, 2: 1.0, 3: 0.9}
+    b = {1: 0.7, 2: 0.8, 4: 0.0}
+    result = paired_mean_difference(a, b)
+    assert result is not None
+    delta, bounds = result
+    assert delta == pytest.approx(0.0)  # seeds 1 and 2: +0.2 and -0.2
+    assert bounds is not None
+    assert bounds[0] == pytest.approx(-0.2)
+    assert bounds[1] == pytest.approx(0.2)
+    assert paired_mean_difference({1: 1.0}, {2: 1.0}) is None
+    shifted = paired_mean_difference({s: 0.9 for s in range(30)}, {s: 0.8 for s in range(30)})
+    assert shifted is not None
+    assert shifted[0] == pytest.approx(-0.1)
+    assert shifted[1] == pytest.approx((-0.1, -0.1))
 
 
 def test_summarize_run_rejects_empty_input():
