@@ -109,3 +109,8 @@ class SimEnv:
 
     def close(self) -> None:
         self._env.close()
+
+
+def make_env(config: EnvConfig) -> SimEnv:
+    """Create the environment described by ``config``."""
+    return SimEnv(config)

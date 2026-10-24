@@ -1,0 +1,83 @@
+# Kortyn phase 3a – validation of the simulation-time mode against phase 1: LATENCY MODEL.
+#
+# The phase-1 scenarios of both Brain profiles (kalibriert = DDIM-4, ddim10 = DDIM-10) with the phase-1 seeds,
+# in virtual time. Latency comes from models fitted to the phase-1 logs, never from the outcomes:
+#   * service time: the logged server times of the real-time runs (hardware profile phase1_cpu),
+#   * client overhead: the logged gap between releasing an observation and sending its request,
+#   * transport overhead: the logged network share of the ideal scenario "gut" (gRPC, loopback, proxy),
+#   * the scenario's link: the netem proxy's own model (delay, jitter, stalls) with the proxy's seeds,
+#   * delivery lateness 1 ms per message the proxy holds back (its asyncio timer wakes ~1 ms late; the logged
+#     network share of buero_wlan / schlecht_ohne_stall / sehr_schlecht_ohne_stall exceeds RTT + "gut" by
+#     1.8-2.1 ms per round trip in both profiles),
+#   * ideal control ticks (the real ticks started 0.2 ms late at the median).
+# Replications "modell_r2" (timing_seed 1) redraw every latency: the A/A test of the virtual-time mode.
+# Run:  python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_model.yaml
+extends: ../base.yaml
+
+hardware_profiles:
+  phase1_cpu:
+    description: "Phase-1-Messmaschine (4 vCPU Xeon, Brain mit 3 Threads): geloggte Serverzeiten"
+    service:
+      kalibriert:
+        kind: empirical
+        empirical: {paths: ["results/kalibriert/*"], quantity: server_total_ms}
+      ddim10:
+        kind: empirical
+        empirical: {paths: ["results/ddim10/*"], quantity: server_total_ms}
+
+timings:
+  modell:
+    description: "Latenzmodell aus den Phase-1-Logs (Netz = Proxy-Modell, Serverzeit = phase1_cpu)"
+    latency: model
+    hardware: phase1_cpu
+    client_overhead:
+      kind: empirical
+      empirical: {paths: ["results/kalibriert/*", "results/ddim10/*"], quantity: send_offset_ms}
+    transport_overhead:
+      kind: empirical
+      empirical:
+        paths: ["results/kalibriert/gut", "results/kalibriert/gut_wiederholung", "results/ddim10/gut"]
+        quantity: network_ms
+    delivery_lateness: {kind: constant, value_ms: 1.0}
+    tick_lateness: {kind: constant, value_ms: 0.0}
+  modell_r2:
+    description: "wie modell, alle Latenzen neu gezogen (timing_seed 1): A/A-Replikation"
+    latency: model
+    hardware: phase1_cpu
+    timing_seed: 1
+    client_overhead:
+      kind: empirical
+      empirical: {paths: ["results/kalibriert/*", "results/ddim10/*"], quantity: send_offset_ms}
+    transport_overhead:
+      kind: empirical
+      empirical:
+        paths: ["results/kalibriert/gut", "results/kalibriert/gut_wiederholung", "results/ddim10/gut"]
+        quantity: network_ms
+    delivery_lateness: {kind: constant, value_ms: 1.0}
+    tick_lateness: {kind: constant, value_ms: 0.0}
+
+experiment:
+  results_dir: results/phase3a/validation_model
+  episodes: 50                  # seeds 1000-1049 (= phase 1)
+  workers: 4                    # results do not depend on the worker count
+  torch_threads: 1              # ... but on the thread count (last float bits): fixed for all model runs
+  suites:
+    - profile: kalibriert
+      runs:
+        - {scenario: referenz_sync, timing: modell}
+        - {scenario: gut, timing: modell}
+        - {scenario: buero_wlan, timing: modell}
+        - {scenario: schlecht, timing: modell}
+        - {scenario: sehr_schlecht, timing: modell}
+        - {scenario: schlecht_ohne_stall, timing: modell}
+        - {scenario: sehr_schlecht_ohne_stall, timing: modell}
+        - {scenario: gut, timing: modell_r2}
+        - {scenario: sehr_schlecht, timing: modell_r2}
+    - profile: ddim10
+      runs:
+        - {scenario: referenz_sync, timing: modell}
+        - {scenario: gut, timing: modell}
+        - {scenario: buero_wlan, timing: modell}
+        - {scenario: schlecht, timing: modell}
+        - {scenario: sehr_schlecht, timing: modell}
+        - {scenario: gut, timing: modell_r2}

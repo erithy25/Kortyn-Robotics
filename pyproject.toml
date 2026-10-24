@@ -1,12 +1,12 @@
 [project]
 name = "kortyn"
 version = "0.1.0"
-description = "Kortyn Phase 1: robot policy offloaded to a network 'Brain', real-time simulated robot 'Agent', network impairment proxy and measurement."
+description = "Kortyn: robot policy offloaded to a network 'Brain', simulated robot 'Agent' in real or virtual time, network impairment model and measurement."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     # LeRobot: policy classes, processor pipelines, PushT env extra, diffusion policy extra.
-    "lerobot[pusht,diffusion]==0.6.1",
+    "lerobot[pusht,diffusion,smolvla,metaworld]==0.6.1",
     "torch==2.11.0",
     "torchvision==0.26.0",
     "diffusers==0.39.0",
@@ -27,6 +27,11 @@ dependencies = [
     "numpy==2.2.6",
     "pyyaml==6.0.3",
     "matplotlib==3.11.2",
+    # Phase 3a: SmolVLA (transformers backbone) and Meta-World (MuJoCo) via the LeRobot extras above.
+    "transformers==5.5.4",
+    "metaworld==3.0.0",
+    # metaworld 3.0.0 writes 11 weld parameters per equality constraint; MuJoCo >= 3.17 expects 12.
+    "mujoco==3.16.0",
 ]
 
 [project.scripts]

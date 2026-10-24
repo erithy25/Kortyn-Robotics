@@ -367,24 +367,159 @@ class StrategyConfig:
 BASELINE_STRATEGY = "baseline"
 
 
+# --------------------------------------------------------------------------------------------- virtual time
+EmpiricalQuantity = Literal[
+    "server_total_ms",
+    "server_inference_ms",
+    "send_offset_ms",
+    "network_ms",
+    "e2e_ms",
+    "tick_lateness_ms",
+]
+
+
+@dataclass
+class EmpiricalSourceConfig:
+    """Samples of one logged quantity, read from earlier runs (``results/<profile>/<run>/``).
+
+    ``paths`` are run directories or glob patterns (``results/kalibriert/*``); runs in sync mode are skipped,
+    and only the final attempt of every seed counts (as in the reports). Request quantities use the
+    real-time requests (not the warm-up); ``tick_lateness_ms`` uses every control tick.
+    """
+
+    paths: list[str] = field(default_factory=list)
+    quantity: EmpiricalQuantity = "server_total_ms"
+
+    def __post_init__(self) -> None:
+        if not self.paths:
+            raise ConfigError("empirical.paths must name at least one run directory or pattern")
+
+
+@dataclass
+class DistributionConfig:
+    """A random duration in milliseconds (latency component of the virtual-time mode).
+
+    ``constant``: ``value_ms``. ``uniform``: ``[low_ms, high_ms]``. ``normal`` / ``lognormal``: mean and
+    standard deviation **of the duration itself** (``mean_ms``, ``std_ms``). ``empirical``: resampled from
+    logged runs. Every sample is multiplied by ``scale`` (sensitivity analysis) and clipped to
+    ``[min_ms, max_ms]``.
+    """
+
+    kind: Literal["constant", "uniform", "normal", "lognormal", "empirical"] = "constant"
+    value_ms: float = 0.0
+    low_ms: float = 0.0
+    high_ms: float = 0.0
+    mean_ms: float = 0.0
+    std_ms: float = 0.0
+    empirical: EmpiricalSourceConfig | None = None
+    scale: float = 1.0
+    min_ms: float = 0.0
+    max_ms: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.scale <= 0:
+            raise ConfigError(f"distribution scale must be > 0, got {self.scale}")
+        if self.min_ms < 0:
+            raise ConfigError(f"distribution min_ms must be >= 0, got {self.min_ms}")
+        if self.max_ms is not None and self.max_ms < self.min_ms:
+            raise ConfigError("distribution max_ms must be >= min_ms")
+        if self.kind == "constant" and self.value_ms < 0:
+            raise ConfigError(f"constant value_ms must be >= 0, got {self.value_ms}")
+        if self.kind == "uniform" and not 0 <= self.low_ms <= self.high_ms:
+            raise ConfigError("uniform needs 0 <= low_ms <= high_ms")
+        if self.kind in ("normal", "lognormal") and (self.mean_ms <= 0 or self.std_ms < 0):
+            raise ConfigError(f"{self.kind} needs mean_ms > 0 and std_ms >= 0")
+        if self.kind == "empirical" and self.empirical is None:
+            raise ConfigError("kind 'empirical' needs an 'empirical' source")
+        if self.kind != "empirical" and self.empirical is not None:
+            raise ConfigError(f"'empirical' source given for kind {self.kind!r}")
+
+
+@dataclass
+class HardwareProfileConfig:
+    """Service time of the Brain on one class of hardware, per Brain profile (model + sampler settings).
+
+    The service time is what one inference occupies the Brain: model plus pre- and post-processing.
+    """
+
+    description: str = ""
+    service: dict[str, DistributionConfig] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.service:
+            raise ConfigError("hardware profile needs at least one 'service' entry (per Brain profile)")
+
+
+@dataclass
+class ReplayConfig:
+    """Where the logged runs live that the replay mode plays back: ``<results_dir>/<profile>/<run>/``."""
+
+    results_dir: str = "results"
+
+
+@dataclass
+class TimingConfig:
+    """How latency arises in the simulation-time (virtual time) mode.
+
+    ``model``: a request sent at virtual time t delivers its plan at t + L with
+    L = client overhead + uplink (scenario: delay, jitter, stalls, bandwidth) + transport overhead
+    + Brain queue (FIFO) + service time (hardware profile) + downlink. ``replay``: L is the end-to-end
+    latency logged for the same request of the same episode in an earlier real-time run, and the control
+    ticks start exactly as late as they did there.
+    """
+
+    description: str = ""
+    latency: Literal["model", "replay"] = "model"
+    # model: hardware profile that provides the service time for the suite's Brain profile
+    hardware: str | None = None
+    # observation released (tick start) -> request leaves the agent (building and encoding the request)
+    client_overhead: DistributionConfig = field(default_factory=DistributionConfig)
+    # per round trip: serialization, kernel and gRPC overhead outside the impaired link
+    transport_overhead: DistributionConfig = field(default_factory=DistributionConfig)
+    # per message the link actually holds back: how late the forwarder delivers (timer granularity)
+    delivery_lateness: DistributionConfig = field(default_factory=DistributionConfig)
+    # start of a control tick after its deadline (constant 0 = ideal clock)
+    tick_lateness: DistributionConfig = field(default_factory=DistributionConfig)
+    replay: ReplayConfig = field(default_factory=ReplayConfig)
+    # Independent latency draws for the same episode seeds (replications of a whole experiment).
+    timing_seed: int = 0
+    # Brain model: parallel inference servers and the order in which waiting requests are served.
+    brain_servers: int = 1
+    scheduler: Literal["fifo"] = "fifo"
+
+    def __post_init__(self) -> None:
+        if self.latency == "model" and not self.hardware:
+            raise ConfigError("timing with latency 'model' needs a hardware profile")
+        if self.brain_servers < 1:
+            raise ConfigError(f"brain_servers must be >= 1, got {self.brain_servers}")
+
+
 # --------------------------------------------------------------------------------------------- suite
 @dataclass
 class RunSpec:
     """One measured condition inside a suite.
 
     ``strategy`` (phase 2) names an entry of ``strategies``; ``None`` keeps the phase-1 behaviour and the
-    phase-1 metadata format. ``label`` defaults to the scenario name, or ``<strategy>__<scenario>``.
+    phase-1 metadata format. ``timing`` (phase 3a) names an entry of ``timings`` and runs the condition in
+    virtual time (``python -m kortyn.run_virtual``); ``replay_run`` is the logged run a replay timing plays
+    back (default: the scenario name). ``label`` defaults to the scenario name, or
+    ``[<timing>__][<strategy>__]<scenario or replay_run>``.
     """
 
     scenario: str
     label: str | None = None
     strategy: str | None = None
+    timing: str | None = None
+    replay_run: str | None = None
 
     @property
     def run_label(self) -> str:
         if self.label:
             return self.label
-        return self.scenario if self.strategy is None else f"{self.strategy}__{self.scenario}"
+        base = self.replay_run or self.scenario
+        if self.strategy is not None:
+            base = f"{self.strategy}__{base}"
+        return base if self.timing is None else f"{self.timing}__{base}"
 
 
 @dataclass
@@ -411,6 +546,11 @@ class ExperimentConfig:
     proxy_startup_timeout_s: float = 30.0
     # Linux: pin the Brain to cores 0..n-2 and agent + proxy to core n-1 (ignored where unsupported).
     pin_cpus: bool = True
+    # Virtual-time runner (phase 3a): worker processes (0 = one per CPU core / torch_threads) and torch
+    # intra-op threads per worker. Results do not depend on the worker count; they do depend (in the last
+    # float bits of the model output) on the thread count, so keep it fixed within one comparison.
+    workers: int = 0
+    torch_threads: int = 1
     suites: list[SuiteConfig] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -418,6 +558,10 @@ class ExperimentConfig:
             raise ConfigError(f"experiment.episodes must be >= 1, got {self.episodes}")
         if self.max_attempts_per_episode < 1:
             raise ConfigError("experiment.max_attempts_per_episode must be >= 1")
+        if self.workers < 0:
+            raise ConfigError(f"experiment.workers must be >= 0, got {self.workers}")
+        if self.torch_threads < 1:
+            raise ConfigError(f"experiment.torch_threads must be >= 1, got {self.torch_threads}")
 
 
 @dataclass
@@ -431,9 +575,18 @@ class KortynConfig:
     profiles: dict[str, BrainProfile] = field(default_factory=dict)
     # Phase 2: named freshness strategies. "baseline" (phase 1) exists implicitly unless defined here.
     strategies: dict[str, StrategyConfig] = field(default_factory=dict)
+    # Phase 3a (virtual time): service-time distributions per hardware class, and named timing models.
+    hardware_profiles: dict[str, HardwareProfileConfig] = field(default_factory=dict)
+    timings: dict[str, TimingConfig] = field(default_factory=dict)
     experiment: ExperimentConfig = field(default_factory=ExperimentConfig)
 
     def __post_init__(self) -> None:
+        for name, timing in self.timings.items():
+            if timing.hardware is not None and timing.hardware not in self.hardware_profiles:
+                raise ConfigError(
+                    f"timing {name!r} references unknown hardware profile {timing.hardware!r}; "
+                    f"known: {sorted(self.hardware_profiles)}"
+                )
         for suite in self.experiment.suites:
             if suite.profile not in self.profiles:
                 raise ConfigError(
@@ -442,6 +595,16 @@ class KortynConfig:
             for run in suite.runs:
                 if run.strategy is not None:
                     self.strategy(run.strategy)
+                if run.timing is not None:
+                    timing = self.timing(run.timing)
+                    hardware = timing.hardware
+                    if hardware is not None and suite.profile not in self.hardware_profiles[hardware].service:
+                        raise ConfigError(
+                            f"hardware profile {hardware!r} has no service time for Brain profile "
+                            f"{suite.profile!r}"
+                        )
+                elif run.replay_run is not None:
+                    raise ConfigError(f"run {run.run_label!r}: replay_run needs a replay timing")
         for name, strategy in self.strategies.items():
             threshold = strategy.request.refill_threshold
             if threshold is not None and threshold >= self.agent.actions_per_chunk:
@@ -468,6 +631,12 @@ class KortynConfig:
             return StrategyConfig(description="Phase 1 (Baseline)")
         known = sorted({BASELINE_STRATEGY, *self.strategies})
         raise ConfigError(f"unknown strategy {name!r}; known: {known}")
+
+    def timing(self, name: str) -> TimingConfig:
+        try:
+            return self.timings[name]
+        except KeyError as exc:
+            raise ConfigError(f"unknown timing {name!r}; known: {sorted(self.timings)}") from exc
 
 
 # --------------------------------------------------------------------------------------------- loading
