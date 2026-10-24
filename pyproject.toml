@@ -91,6 +91,8 @@ ignore = ["ANN401", "RUF001", "RUF002", "RUF003"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN"]
+# German report prose lives in long f-string templates; wrapping them hurts readability more than it helps.
+"kortyn/report.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -111,7 +113,11 @@ module = [
     "matplotlib.*",
     "cv2.*",
     "torchvision.*",
-    "kortyn.proto.kortyn_brain_pb2_grpc",
 ]
 ignore_missing_imports = true
 follow_untyped_imports = false
+
+[[tool.mypy.overrides]]
+# Generated gRPC module without type annotations: treat as Any instead of type-checking calls into it.
+module = ["kortyn.proto.kortyn_brain_pb2_grpc"]
+follow_imports = "skip"

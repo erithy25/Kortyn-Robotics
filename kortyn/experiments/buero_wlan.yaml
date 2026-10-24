@@ -1,0 +1,7 @@
+# Typical office Wi-Fi: 20 ms round trip with ±10 ms jitter (uniform, split over both directions).
+name: buero_wlan
+description: "Büro-WLAN: RTT 20 ± 10 ms"
+mode: realtime
+network:
+  rtt_ms: 20
+  rtt_jitter_ms: 10

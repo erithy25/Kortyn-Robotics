@@ -1,0 +1,10 @@
+# Very bad link: 150 ± 80 ms round trip and a 1 s link freeze every 10 s.
+name: sehr_schlecht
+description: "Sehr schlechtes Netz: RTT 150 ± 80 ms, Stall 1000 ms alle 10 s"
+mode: realtime
+network:
+  rtt_ms: 150
+  rtt_jitter_ms: 80
+  stall:
+    interval_s: 10
+    duration_ms: 1000
