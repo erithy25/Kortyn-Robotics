@@ -332,7 +332,10 @@ def network_label(meta: dict[str, Any], label: str) -> str:
 
 # --------------------------------------------------------------------------------------------- figures
 def figure_success(profiles: list[ProfileData], published: dict[str, Any] | None, path: Path) -> None:
-    fig, axes, layout = make_figure(1, len(profiles), 4.9, 3.0, sharey=True, footer_in=0.75, header_in=1.45)
+    narrow = len(profiles) == 1  # subtitle wraps and the legend needs one row per entry
+    fig, axes, layout = make_figure(
+        1, len(profiles), 4.9, 3.0, sharey=True, footer_in=0.75, header_in=1.85 if narrow else 1.45
+    )
     top = header(
         fig,
         layout,
@@ -353,7 +356,7 @@ def figure_success(profiles: list[ProfileData], published: dict[str, Any] | None
                 f"Episoden ({100 * published['successes'] / published['seeds']:.0f} % auf diesen Seeds)",
             )
         )
-    header_legend(fig, layout, legend_handles, ncol=2, top_in=top)
+    header_legend(fig, layout, legend_handles, ncol=1 if narrow else 2, top_in=top)
     for ax, profile in zip(axes[0], profiles, strict=True):
         labels = figure_runs(profile)
         xs = np.arange(len(labels), dtype=float)
@@ -803,13 +806,16 @@ def annotate_points(
 
 def figure_age(profiles: list[ProfileData], path: Path) -> None:
     """Quality against the age of the executed actions, for every run of every profile."""
+    runs = [(profile, label) for profile in profiles for label in ordered(profile.runs)]
+    counts = sorted({profile.runs[label].summary.episodes for profile, label in runs})
+    episodes = f"{counts[0]}" if len(counts) == 1 else f"{counts[0]}–{counts[-1]}"
     fig, axes, layout = make_figure(1, 2, 4.3, 2.9, header_in=1.4, footer_in=0.8, wspace_in=0.8)
     top = header(
         fig,
         layout,
         "Je älter der ausgeführte Plan, desto schlechter",
-        "Jeder Punkt = ein Lauf (50 Episoden, gleiche Seeds) · x = mittleres Alter der ausgeführten Aktion "
-        "(Beobachtung → Ausführung) · Konfidenzintervalle in den Tabellen",
+        f"Jeder Punkt = ein Lauf ({episodes} Episoden, gleiche Seeds) · x = mittleres Alter der ausgeführten "
+        "Aktion (Beobachtung → Ausführung) · Konfidenzintervalle in den Tabellen",
     )
     colors = {profile.name: CATEGORICAL[index % len(CATEGORICAL)] for index, profile in enumerate(profiles)}
     handles: list[Any] = [
@@ -824,27 +830,31 @@ def figure_age(profiles: list[ProfileData], path: Path) -> None:
         )
         for profile in profiles
     ]
-    handles += [
-        Line2D(
-            [],
-            [],
-            color=INK_2,
-            marker="o",
-            markerfacecolor=SURFACE,
-            markersize=6,
-            linestyle="none",
-            label="hohl = synchrone Referenz",
-        ),
-        Line2D(
-            [],
-            [],
-            color=INK_2,
-            marker="D",
-            markersize=5,
-            linestyle="none",
-            label="Raute = Ablation ohne Stall",
-        ),
-    ]
+    if any(profile.runs[label].summary.mode == "sync" for profile, label in runs):
+        handles.append(
+            Line2D(
+                [],
+                [],
+                color=INK_2,
+                marker="o",
+                markerfacecolor=SURFACE,
+                markersize=6,
+                linestyle="none",
+                label="hohl = synchrone Referenz",
+            )
+        )
+    if any(label.endswith(ABLATION_SUFFIX) for _, label in runs):
+        handles.append(
+            Line2D(
+                [],
+                [],
+                color=INK_2,
+                marker="D",
+                markersize=5,
+                linestyle="none",
+                label="Raute = Ablation ohne Stall",
+            )
+        )
     header_legend(fig, layout, handles, ncol=len(handles), top_in=top)
     panels: list[tuple[str, Callable[[RunSummary], float | None], bool]] = [
         ("Erfolgsquote", lambda s: s.success_rate, True),
