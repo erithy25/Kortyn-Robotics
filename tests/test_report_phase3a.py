@@ -233,3 +233,24 @@ def test_determinism_rows_compare_episodes_and_requests_of_two_executions(tmp_pa
     write(tmp_path / "phase3a" / "determinism" / "kalibriert" / "modell__gut", second, changed)
     assert determinism_rows(tmp_path) == [("kalibriert", "modell__gut", 2, 2, 3, 4)]
     assert determinism_rows(tmp_path / "missing") == []
+
+
+def test_realized_power_pools_the_noise_of_all_real_time_conditions():
+    from kortyn.report_phase3a import TaskData, realized_power
+
+    seeds = range(100)
+    reference = run([episode(s, success=s % 2 == 0) for s in seeds])
+    # 20 % and 40 % of the seeds change their outcome under latency
+    mild = run([episode(s, success=(s % 2 == 0) != (s % 10 < 2)) for s in seeds])
+    strong = run([episode(s, success=(s % 2 == 0) != (s % 10 < 4)) for s in seeds])
+    data = TaskData(
+        "push-v3",
+        {"referenz_sync25": reference, "schnell__gut": mild, "langsam__sehr_schlecht": strong},
+        {},
+    )
+    lines = realized_power([data])
+    assert len(lines) == 3
+    cells = [c.strip() for c in lines[2].strip("|").split("|")]
+    assert cells[:4] == ["push-v3", "2", "100", "30 % [20 %–40 %]"]
+    assert cells[5] == f"{100 * mde_paired_binary(100, 0.3):.0f} %"
+    assert realized_power([TaskData("push-v3", {"referenz_sync25": reference}, {})]) == []

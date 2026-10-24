@@ -899,6 +899,38 @@ def smolvla_table(data: TaskData) -> list[str]:
     return lines
 
 
+def realized_power(tasks: Sequence[TaskData]) -> list[str]:
+    """Noise of the SmolVLA comparisons as measured (each real-time condition against Sync-25 on the same
+    seeds) and the minimal detectable effect it implies at the measured number of seeds."""
+    lines = [
+        "| Aufgabe | Bedingungen | Seeds | diskordante Paare Ø [min–max] | SD Reward-Diff. Ø | MDE Erfolg | "
+        "MDE Ø Max-Reward |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for data in tasks:
+        reference = data.runs.get(SYNC_MATCHED)
+        if reference is None:
+            continue
+        rows = [
+            noise
+            for label, run in data.runs.items()
+            if label_parts(label)[0] in (*GPU_TIMINGS, "grenzfall")
+            and (noise := pair_noise(label, reference, run)) is not None
+        ]
+        if not rows:
+            continue
+        n = min(row.n for row in rows)
+        discordance = [row.discordance for row in rows]
+        sd = float(np.mean([row.reward_sd for row in rows]))
+        mean_discordance = float(np.mean(discordance))
+        lines.append(
+            f"| {data.task} | {len(rows)} | {n} | {fmt_pct(mean_discordance)} "
+            f"[{fmt_pct(min(discordance))}–{fmt_pct(max(discordance))}] | {sd:.2f} | "
+            f"{fmt_pct(mde_paired_binary(n, mean_discordance))} | {mde_paired_mean(n, sd):.2f} |"
+        )
+    return lines if len(lines) > 2 else []
+
+
 def published_comparison(tasks: Sequence[TaskData]) -> list[str]:
     lines = [
         "| Aufgabe | Gruppe | Kortyn Sync-50 (LeRobot-Protokoll) | Kortyn Sync-25 | publiziert (dieser Checkpoint) | Δ Sync-50 − publiziert [KI] |",
@@ -1429,6 +1461,18 @@ def write_report(results: Path, reports: Path) -> Path:
             lines += [f"### {data.task}", "", *smolvla_table(data), ""]
         lines += ["![SmolVLA](phase3a_smolvla.png)", ""]
         lines += ["### Erfolgsverlust gegen die Sync-Referenz je Aufgabe", "", *task_comparison(tasks), ""]
+        power = realized_power(tasks)
+        if power:
+            lines += [
+                "### Realisierte Power (Rauschen der SmolVLA-Vergleiche)",
+                "",
+                "Je Aufgabe über alle Echtzeit-Bedingungen gemittelt: Anteil der Seeds mit verschiedenem Ausgang "
+                "gegenüber Sync-25 und Streuung der Reward-Differenzen; daraus der kleinste Effekt, den die "
+                "gemessene Seed-Zahl mit 80 % Power (α = 5 %, zweiseitig) erkennt.",
+                "",
+                *power,
+                "",
+            ]
         transport = transport_table(tasks)
         if transport:
             lines += ["### Bildübertragung", "", *transport]
