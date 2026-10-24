@@ -1,0 +1,830 @@
+{
+  "profile": "kalibriert",
+  "profile_settings": {
+    "noise_scheduler_type": "DDIM",
+    "num_inference_steps": 4,
+    "n_action_steps": null
+  },
+  "brain": {
+    "policy_type": "diffusion",
+    "checkpoint": "checkpoints/diffusion_pusht_migrated",
+    "device": "cpu",
+    "sampler": "DDIM-4",
+    "n_obs_steps": 2,
+    "max_actions": 15,
+    "lerobot_version": "0.6.1",
+    "torch_version": "2.11.0+cpu",
+    "torch_threads": 3,
+    "warmup_inference_ms": 322.7047149998725
+  },
+  "runs": {
+    "baseline__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "baseline",
+      "strategy_settings": {
+        "description": "Phase 1: Schwelle 6, letzte Aktion wiederholen",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "repeat_last",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle6__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle6",
+      "strategy_settings": {
+        "description": "Schwelle 6 + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 6,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle8__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle8",
+      "strategy_settings": {
+        "description": "Schwelle 8 + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 8,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle10__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle10",
+      "strategy_settings": {
+        "description": "Schwelle 10 + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 10,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "adaptiv__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "adaptiv",
+      "strategy_settings": {
+        "description": "Adaptiv (Ziel-Planalter 0,7 s) + Notfall-Halt",
+        "request": {
+          "mode": "adaptive",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle6_inpaint__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle6_inpaint",
+      "strategy_settings": {
+        "description": "Schwelle 6 + Inpainting + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 6,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "inpaint",
+          "schedule": "exp",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle8_inpaint__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle8_inpaint",
+      "strategy_settings": {
+        "description": "Schwelle 8 + Inpainting + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 8,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "inpaint",
+          "schedule": "exp",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle10_inpaint__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle10_inpaint",
+      "strategy_settings": {
+        "description": "Schwelle 10 + Inpainting + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 10,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "inpaint",
+          "schedule": "exp",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "adaptiv_inpaint__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "adaptiv_inpaint",
+      "strategy_settings": {
+        "description": "Adaptiv (Ziel-Planalter 0,7 s) + Inpainting + Notfall-Halt",
+        "request": {
+          "mode": "adaptive",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "inpaint",
+          "schedule": "exp",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "baseline__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "baseline",
+      "strategy_settings": {
+        "description": "Phase 1: Schwelle 6, letzte Aktion wiederholen",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "repeat_last",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle6__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle6",
+      "strategy_settings": {
+        "description": "Schwelle 6 + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 6,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle8__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle8",
+      "strategy_settings": {
+        "description": "Schwelle 8 + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 8,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle10__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle10",
+      "strategy_settings": {
+        "description": "Schwelle 10 + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 10,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "adaptiv__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "adaptiv",
+      "strategy_settings": {
+        "description": "Adaptiv (Ziel-Planalter 0,7 s) + Notfall-Halt",
+        "request": {
+          "mode": "adaptive",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle6_inpaint__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle6_inpaint",
+      "strategy_settings": {
+        "description": "Schwelle 6 + Inpainting + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 6,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "inpaint",
+          "schedule": "exp",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle8_inpaint__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle8_inpaint",
+      "strategy_settings": {
+        "description": "Schwelle 8 + Inpainting + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 8,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "inpaint",
+          "schedule": "exp",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schwelle10_inpaint__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "schwelle10_inpaint",
+      "strategy_settings": {
+        "description": "Schwelle 10 + Inpainting + Notfall-Halt",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": 10,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "inpaint",
+          "schedule": "exp",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "adaptiv_inpaint__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "strategy": "adaptiv_inpaint",
+      "strategy_settings": {
+        "description": "Adaptiv (Ziel-Planalter 0,7 s) + Inpainting + Notfall-Halt",
+        "request": {
+          "mode": "adaptive",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "inpaint",
+          "schedule": "exp",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": 1.2
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    }
+  },
+  "agent": {
+    "actions_per_chunk": 15,
+    "refill_threshold": 6,
+    "start_mode": "warm",
+    "request_timeout_s": 5.0,
+    "sync_actions_per_chunk": 8
+  },
+  "env": {
+    "gym_id": "gym_pusht/PushT-v0",
+    "fps": 10.0,
+    "max_episode_steps": 300
+  },
+  "seeds": [
+    1000,
+    1019
+  ],
+  "cpu_pinning": {
+    "brain": [
+      0,
+      1,
+      2
+    ],
+    "agent_and_proxy": [
+      3
+    ]
+  },
+  "host": {
+    "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "cpu_count": 4,
+    "python": "3.12.3"
+  },
+  "git_commit": "7c7d2aceaba2d7f9f1890e5e880a89946e1cc032-dirty",
+  "started_utc": "2026-10-24T11:52:44+00:00",
+  "sessions": [
+    {
+      "started_utc": "2026-10-24T11:52:44+00:00",
+      "git_commit": "7c7d2aceaba2d7f9f1890e5e880a89946e1cc032-dirty",
+      "runs": [
+        "baseline__gut",
+        "schwelle6__gut",
+        "schwelle8__gut",
+        "schwelle10__gut",
+        "adaptiv__gut",
+        "schwelle6_inpaint__gut",
+        "schwelle8_inpaint__gut",
+        "schwelle10_inpaint__gut",
+        "adaptiv_inpaint__gut",
+        "baseline__sehr_schlecht",
+        "schwelle6__sehr_schlecht",
+        "schwelle8__sehr_schlecht",
+        "schwelle10__sehr_schlecht",
+        "adaptiv__sehr_schlecht",
+        "schwelle6_inpaint__sehr_schlecht",
+        "schwelle8_inpaint__sehr_schlecht",
+        "schwelle10_inpaint__sehr_schlecht",
+        "adaptiv_inpaint__sehr_schlecht"
+      ],
+      "cpu_pinning": {
+        "brain": [
+          0,
+          1,
+          2
+        ],
+        "agent_and_proxy": [
+          3
+        ]
+      },
+      "host": {
+        "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 322.7047149998725
+    }
+  ]
+}
