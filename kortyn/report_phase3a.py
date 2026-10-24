@@ -525,22 +525,35 @@ def all_deltas(real: Run, other: Run | None) -> dict[str, Delta]:
 @dataclass(frozen=True)
 class Verdict:
     comparisons: int
-    inside: int
+    inside: int  # paired 95 % interval of the difference contains 0 (main criterion)
     holm_significant: int
     outside: list[str]
+    in_real_interval: int  # the simulation-time value lies in the 95 % interval of the real-time measurement
+
+
+def source_run(case: ValidationCase, source: str) -> Run | None:
+    return {"model": case.model, "session": case.session, "replay": case.replay}[source]
 
 
 def verdict(cases: Sequence[ValidationCase], source: str) -> Verdict:
     labels: list[str] = []
     deltas: list[Delta] = []
+    in_real = 0
     for case in cases:
         table = case.deltas(source)
+        run = source_run(case, source)
         for metric, delta in table.items():
             labels.append(f"{case.profile}/{SCENARIO_LABELS[case.scenario]}: {METRIC_LABELS[metric]}")
             deltas.append(delta)
+            if run is not None:
+                seeds = sorted(set(case.real.episodes) & set(run.episodes))
+                real_interval = estimate(metric, case.real.ordered(seeds))
+                in_real += int(real_interval.contains(pooled(metric, run.ordered(seeds)), tolerance=1e-9))
     adjusted = holm_adjust([d.p for d in deltas]) if deltas else []
     outside = [label for label, d in zip(labels, deltas, strict=True) if not d.interval.contains(0.0)]
-    return Verdict(len(deltas), len(deltas) - len(outside), sum(1 for p in adjusted if p < ALPHA), outside)
+    return Verdict(
+        len(deltas), len(deltas) - len(outside), sum(1 for p in adjusted if p < ALPHA), outside, in_real
+    )
 
 
 def validation_table(cases: Sequence[ValidationCase], profile: str) -> list[str]:
@@ -1284,11 +1297,11 @@ def write_report(results: Path, reports: Path) -> Path:
         "Gepaarte Vergleiche je Profil, Szenario und Metrik (Erfolg, Ø Max-Reward, Planalter, Starvation): Zahl "
         "der 95-%-Intervalle der Differenz, die die Null enthalten, und der nach Holm signifikanten Differenzen.",
         "",
-        "| Quelle | Vergleiche | Intervall enthält 0 | Holm-signifikant |",
-        "|---|---:|---:|---:|",
+        "| Quelle | Vergleiche | KI der Differenz enthält 0 | Wert im KI der Echtzeitmessung | Holm-signifikant |",
+        "|---|---:|---:|---:|---:|",
         *[
             f"| {name} | {verdicts[source].comparisons} | {verdicts[source].inside} | "
-            f"{verdicts[source].holm_significant} |"
+            f"{verdicts[source].in_real_interval} | {verdicts[source].holm_significant} |"
             for source, name in SOURCES
         ],
         "",
