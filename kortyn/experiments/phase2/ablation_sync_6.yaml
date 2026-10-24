@@ -1,0 +1,16 @@
+# Kortyn phase 2 – ablation outside the pre-registered stages: does replanning more often hurt even without
+# latency? Synchronous reference (the simulation waits for the Brain, a plan starts with age 0) with 6
+# instead of 8 executed actions per chunk; phase 1 measured 8 (results/kalibriert/referenz_sync). Stage 1
+# executed 4 (Schwelle 10) or 6 (Schwelle 8) actions per plan in real time and lost quality although the
+# plans were fresher. Same seeds as phase 1.
+extends: ../base.yaml
+
+agent:
+  sync_actions_per_chunk: 6
+
+experiment:
+  results_dir: results/phase2/ablation_sync_6
+  suites:
+    - profile: kalibriert
+      runs:
+        - {scenario: referenz_sync}

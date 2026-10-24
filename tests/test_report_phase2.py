@@ -243,9 +243,14 @@ def write_run(
     append_jsonl(directory / label / "requests.jsonl", [r.to_json() for r in requests])
 
 
-def write_meta(directory, runs):
+def write_meta(directory, runs, sync_actions=8):
     directory.mkdir(parents=True, exist_ok=True)
-    meta = {"profile": "kalibriert", "brain": {"sampler": "DDIM-4"}, "runs": runs}
+    meta = {
+        "profile": "kalibriert",
+        "brain": {"sampler": "DDIM-4"},
+        "agent": {"sync_actions_per_chunk": sync_actions},
+        "runs": runs,
+    }
     (directory / "run_meta.json").write_text(json.dumps(meta), encoding="utf-8")
 
 
@@ -311,6 +316,12 @@ def results(tmp_path):
                 "strategy_settings": STRATEGIES[strategy].to_dict(),
             }
     write_meta(confirmation, meta)
+    # ablation: synchronous reference with 4 / 12 executed actions per chunk (phase 1: 8)
+    for actions, age, success in ((4, 2, lambda s: s % 10 < 2), (12, 6, lambda s: s % 10 < 7)):
+        directory = root / "phase2" / f"ablation_sync_{actions}" / "kalibriert"
+        write_run(directory, "referenz_sync", "referenz_sync", None, seeds50, success, age, 6, mode="sync")
+        sync_meta = {"referenz_sync": {"scenario": "referenz_sync", "mode": "sync", "network": {}}}
+        write_meta(directory, sync_meta, sync_actions=actions)
     return root
 
 
@@ -345,6 +356,13 @@ def test_phase_two_report_from_all_stages(tmp_path, results):
     assert "- **Stufe-2-Baseline aus Phase 1.**" in text
     assert "- **Validitäts-Gate:** 5 von 425 Versuchen" in text  # one invalid attempt per schwelle10 run
     assert "- **Latenzschätzer:** Das Planungs-Quantil" in text
+    assert "### Gegenprobe ohne Latenz: Aktionen je Plan im Sync-Modus" in text
+    assert "| **8** (Phase 1) | 1.25 |" in text
+    assert "| 4 | 2.50 |" in text
+    assert (
+        "**Auch ohne Latenz kostet häufigeres Neuplanen Qualität** (signifikant bei 4 Aktionen je Plan)"
+        in text
+    )
     assert "**Die Kernhypothese hält in dieser Form nicht:**" in text  # fresher but worse in this data
     assert "| Schwelle 10 | `schwelle10` |" in text
     for name in (
@@ -408,6 +426,16 @@ def test_phase_two_experiment_files_store_results_where_the_report_reads_them():
     assert strategies <= set(screening.strategies)
     assert {scenario for scenario, _ in runs} == set(report_phase2.SCENARIO_ORDER)
     assert len(runs) == 12
+    for actions in (4, 6, 12):  # ablation: executed actions per plan in the synchronous reference
+        ablation = load_config(EXPERIMENTS_DIR / "phase2" / f"ablation_sync_{actions}.yaml")
+        assert ablation.agent.sync_actions_per_chunk == actions
+        assert (
+            ablation.experiment.results_dir == f"results/phase2/{report_phase2.SYNC_ABLATION_PREFIX}{actions}"
+        )
+        assert [run.scenario for suite in ablation.experiment.suites for run in suite.runs] == [
+            "referenz_sync"
+        ]
+        assert ablation.experiment.episodes == 50
     assert {run.strategy for suite in screening.experiment.suites for run in suite.runs} == set(
         screening.strategies
     )

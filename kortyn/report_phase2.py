@@ -93,6 +93,7 @@ STAGES = (("1", "Screening", "screening"), ("2", "Bestätigung", "confirmation")
 BASELINE = "baseline"
 SYNC_RUN = "referenz_sync"
 REPEAT_SUFFIX = "_wiederholung"  # phase 1 measured some conditions twice in one session
+SYNC_ABLATION_PREFIX = "ablation_sync_"  # results/phase2/ablation_sync_<n>: sync mode, n actions per chunk
 TIE_MARGIN = 0.01  # reward difference below which the lower request rate decides the selection
 SELECT_COUNT = 2
 ALPHA = 0.05
@@ -994,6 +995,114 @@ def hypothesis_section(evidence: AgeEvidence) -> list[str]:
     return [*lines, ""]
 
 
+# --------------------------------------------------------------------------------------------- horizon ablation
+@dataclass(frozen=True)
+class HorizonPoint:
+    """Synchronous reference with ``actions`` executed actions per chunk (no latency, plans start at age 0)."""
+
+    actions: int
+    run: RunData
+    source: str  # "Phase 1" or "Ablation"
+
+
+def load_sync_ablation(root: Path, profile_name: str, phase1: ProfileData | None) -> list[HorizonPoint]:
+    """Phase-1 sync reference plus every ``ablation_sync_<n>`` run, on their common seeds (empty below 2)."""
+    points: list[HorizonPoint] = []
+    if phase1 is not None and SYNC_RUN in phase1.runs:
+        actions = phase1.meta.get("agent", {}).get("sync_actions_per_chunk", 8)
+        points.append(HorizonPoint(int(actions), phase1.runs[SYNC_RUN], "Phase 1"))
+    for directory in sorted(root.glob(f"{SYNC_ABLATION_PREFIX}*")):
+        data = load_profile(directory / profile_name) if (directory / profile_name).is_dir() else None
+        actions = None if data is None else data.meta.get("agent", {}).get("sync_actions_per_chunk")
+        if data is None or SYNC_RUN not in data.runs or not isinstance(actions, int):
+            continue
+        points.append(HorizonPoint(actions, data.runs[SYNC_RUN], "Ablation"))
+    if len(points) < 2:
+        return []
+    common = sorted(set.intersection(*[set(p.run.summary.success_by_seed) for p in points]))
+    restricted = [(p, restrict(p.run, common)) for p in points]
+    return sorted(
+        (HorizonPoint(p.actions, run, p.source) for p, run in restricted if run is not None),
+        key=lambda p: p.actions,
+    )
+
+
+def horizon_section(points: Sequence[HorizonPoint]) -> list[str]:
+    reference = next((p for p in points if p.source == "Phase 1"), None)
+    others = [p for p in points if p is not reference]
+    if reference is None or not others:
+        return []
+    comparisons = {p.actions: compare(reference.run.summary, p.run.summary) for p in others}
+    tested = {k: c for k, c in comparisons.items() if c is not None}
+    keys = list(tested)
+    success_holm = dict(zip(keys, holm_adjust([tested[k].mcnemar_p for k in keys]), strict=True))
+    known = [(k, p) for k in keys if (p := tested[k].reward_p) is not None]
+    reward_holm = dict(zip([k for k, _ in known], holm_adjust([p for _, p in known]), strict=True))
+    tested = {
+        k: replace(c, mcnemar_holm=success_holm[k], reward_holm=reward_holm.get(k)) for k, c in tested.items()
+    }
+    fps = reference.run.episodes[0].fps
+    lines = [
+        "### Gegenprobe ohne Latenz: Aktionen je Plan im Sync-Modus",
+        "",
+        "Zusatz-Ablation außerhalb der vorab festgelegten Stufen: Die Simulation wartet auf das Brain (keine Latenz, "
+        f"jeder Plan beginnt mit Alter 0) und führt n Aktionen je Plan aus; Phase 1 nutzte {reference.actions} "
+        f"(LeRobot-Eval). Gleiche Seeds (n = {reference.run.summary.episodes}).",
+        "",
+        "| Aktionen je Plan | Pläne/s | Planalter Ø (s) | Erfolg [95 %-KI] | Δ Erfolg | McNemar p (Holm) | "
+        f"Ø Max-Reward | Δ Reward vs. {reference.actions} [95 %-KI] | Permutation p (Holm) |",
+        "|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for point in points:
+        s = point.run.summary
+        c = tested.get(point.actions) if point is not reference else None
+        name = f"**{point.actions}** (Phase 1)" if point is reference else str(point.actions)
+        lines.append(
+            f"| {name} | {fps / point.actions:.2f} | {fmt(s.plan_age_mean_s, 2)} | {pct(s.success_rate)} {ci(s.success_ci)} | "
+            + (
+                "– | – | "
+                if c is None
+                else f"{bold_if(f'{100 * c.success_delta:+.0f} pp', significant(c.mcnemar_holm))} | "
+                f"{p_text(c.mcnemar_p)} ({p_text(c.mcnemar_holm)}) | "
+            )
+            + f"{fmt(s.max_reward_mean, 3)} | "
+            + (
+                "– | – |"
+                if c is None
+                else f"{bold_if(reward_text(c), significant(c.reward_holm))} | "
+                f"{p_text(c.reward_p)} ({p_text(c.reward_holm)}) |"
+            )
+        )
+    shorter = [
+        (p.actions, tested[p.actions])
+        for p in others
+        if p.actions < reference.actions and p.actions in tested
+    ]
+    worse = [
+        a
+        for a, c in shorter
+        if c.reward_delta is not None and c.reward_delta < 0 and significant(c.reward_holm)
+    ]
+    lines.append("")
+    if worse:
+        lines.append(
+            f"**Auch ohne Latenz kostet häufigeres Neuplanen Qualität** (signifikant bei {', '.join(map(str, worse))} "
+            "Aktionen je Plan). Das stützt die Erklärung über Planwechsel: Nicht das Alter des Plans, sondern wie oft "
+            "die Policy einen neuen Plan beginnt, begrenzt die Qualität."
+        )
+    elif shorter and all(c.reward_delta is not None and c.reward_delta < 0 for _, c in shorter):
+        lines.append(
+            "Ohne Latenz geht die Tendenz in dieselbe Richtung (weniger Aktionen je Plan, weniger Reward), ist aber "
+            "nach Holm-Korrektur nicht signifikant."
+        )
+    elif shorter:
+        lines.append(
+            "Ohne Latenz kostet häufigeres Neuplanen nichts Messbares: Der Echtzeit-Verlust entsteht erst im "
+            "Zusammenspiel von Planwechseln und Verzögerung."
+        )
+    return [*lines, ""]
+
+
 # --------------------------------------------------------------------------------------------- findings
 def key_findings(
     final: Stage,
@@ -1163,9 +1272,26 @@ def legend_handles(stage: Stage, strategies: Sequence[str], bars: bool) -> list[
     return handles
 
 
-def figure_age_quality(stage: Stage, phase1_profiles: Sequence[ProfileData], path: Path) -> None:
-    """Quality against mean plan age: phase-1 runs in gray, the stage's strategies linked to their baseline."""
+def figure_age_quality(
+    stage: Stage, phase1_profiles: Sequence[ProfileData], path: Path, horizon: Sequence[HorizonPoint] = ()
+) -> None:
+    """Quality against mean plan age: phase-1 runs in gray, the stage's strategies linked to their baseline,
+    and (if measured) the synchronous runs with other numbers of executed actions per plan."""
     handles = legend_handles(stage, [BASELINE, *stage.candidates], bars=False)
+    if horizon:
+        handles.append(
+            Line2D(
+                [],
+                [],
+                color=INK_2,
+                marker="o",
+                markersize=5.5,
+                markerfacecolor=SURFACE,
+                linewidth=1.0,
+                linestyle=":",
+                label="Sync, n Aktionen je Plan",
+            )
+        )
     handles.append(
         Line2D(
             [],
@@ -1256,6 +1382,25 @@ def figure_age_quality(stage: Stage, phase1_profiles: Sequence[ProfileData], pat
             )
             points.append((bx, float(by)))
             labels.append((bx, float(by), scenario_label(scenario)))
+        curve = [
+            (age, float(value), point.actions)
+            for point in horizon
+            if (age := point.run.summary.plan_age_mean_s) is not None
+            and (value := value_of(point.run.summary)) is not None
+        ]
+        if curve:
+            ax.plot(
+                [c[0] for c in curve],
+                [c[1] for c in curve],
+                color=INK_2,
+                linewidth=1.0,
+                linestyle=":",
+                zorder=3,
+            )
+            for x, y, actions in curve:
+                ax.plot([x], [y], marker="o", markersize=5.5, color=INK_2, markerfacecolor=SURFACE, zorder=4)
+                points.append((x, y))
+                labels.append((x, y, f"Sync {actions}"))
         xs = [p[0] for p in points] or [1.0]
         ys = [p[1] for p in points] or [1.0]
         ax.set_xlim(0, max(xs) * 1.12)
@@ -1602,6 +1747,7 @@ def write_phase2_report(config: KortynConfig, results_dir: Path, reports_dir: Pa
             stages.append(stage)
     if not stages:
         return None
+    horizon = load_sync_ablation(root, profile_name, phase1)
     apply_style()
     reports_dir.mkdir(parents=True, exist_ok=True)
     screening = next((s for s in stages if s.key == "1"), None)
@@ -1622,7 +1768,7 @@ def write_phase2_report(config: KortynConfig, results_dir: Path, reports_dir: Pa
         figures[f"success{stage.key}"] = f"phase2_erfolg_stufe{stage.key}.png"
         figure_success(stage, reports_dir / figures[f"success{stage.key}"])
         figures[f"age{stage.key}"] = f"phase2_planalter_qualitaet_stufe{stage.key}.png"
-        figure_age_quality(stage, phase1_profiles, reports_dir / figures[f"age{stage.key}"])
+        figure_age_quality(stage, phase1_profiles, reports_dir / figures[f"age{stage.key}"], horizon)
     if screening is not None:
         figures["tradeoff"] = "phase2_planalter_last.png"
         figure_tradeoff(screening, reports_dir / figures["tradeoff"])
@@ -1655,7 +1801,11 @@ def write_phase2_report(config: KortynConfig, results_dir: Path, reports_dir: Pa
             "",
         ]
     if screening is not None:
-        lines += hypothesis_section(age_evidence(screening, phase1))
+        hypothesis = hypothesis_section(age_evidence(screening, phase1))
+        horizon_lines = horizon_section(horizon)
+        if horizon_lines and not hypothesis:
+            hypothesis = ["## Ist das Planalter der Hebel?", ""]
+        lines += [*hypothesis, *horizon_lines]
     lines += ["## Was gebaut wurde", "", *built_section(screening or final), ""]
     lines += methodology(config, profile_name, final)
     if screening is not None:
