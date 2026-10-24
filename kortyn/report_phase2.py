@@ -1444,9 +1444,10 @@ LIMITATIONS = [
     "(Rückkopplung über die Latenzschätzung), die Schwellen nicht – beides ist ungetestet (Phase 3).",
     "- **PushT ist quasistatisch.** Anhalten kostet hier wenig, weil der Block liegen bleibt. Bei dynamischen "
     "Aufgaben ist der Zielkonflikt zwischen Anhalten (sicher) und Weiterfahren mit altem Plan anders gewichtet.",
-    "- **Ein Inpainting-Schema getestet** (exponentiell, ≤ 10 Takte Überlappung). Ersatz-Inpainting erzwingt den "
-    "eingefrorenen Teil exakt, für den weichen Teil ist es eine Heuristik ohne Konsistenzgarantie (RTC löst das "
-    "mit Guidance – auf der CPU zu teuer).",
+    "- **Inpainting: ein Schema, gradientenfrei.** Getestet nur exponentiell mit ≤ 10 Takten Überlappung. "
+    "Ersatz-Inpainting erzwingt den eingefrorenen Teil exakt; im weichen Teil mischt es alte und neue Vorhersage auf "
+    "x₀-Ebene, und bei nur 4 DDIM-Schritten bleibt wenig Raum, das Gemisch zurück auf einen gültigen Plan zu ziehen "
+    "(bei multimodalen Plänen dasselbe Risiko wie beim Überblenden). RTC löst das mit Guidance – auf der CPU zu teuer.",
     "- **Statistische Trennschärfe.** n = 20 (Stufe 1) bzw. 50 (Stufe 2) gepaarte Seeds: McNemar erkennt nur "
     "große Unterschiede im Erfolg; der kontinuierliche Max-Reward ist empfindlicher. Alle p-Werte zusätzlich "
     "Holm-korrigiert über die Vergleiche einer Stufe.",
