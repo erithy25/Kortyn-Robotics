@@ -46,6 +46,7 @@ from kortyn.economics import (
     onboard_cost,
 )
 from kortyn.fleet import FleetSimConfig, load_fleet_config
+from kortyn.fleet_predict import level_weights
 from kortyn.libero_env import episode_slot, task_language
 from kortyn.phase3_steps import (
     Episode,
@@ -327,6 +328,67 @@ def figure_dose(levels: Sequence[Level], libero: LiberoEnvConfig, budget_ms: flo
     header_legend(fig, layout, handles, ncol=2, top_in=top)
     fig.savefig(path, dpi=DPI)
     plt.close(fig)
+
+
+@dataclass(frozen=True)
+class JitterCheck:
+    """Supplement: the jitter condition measured against its prediction from the fixed levels."""
+
+    pairs: int
+    measured: float  # tasks weighted equally, as the stage-2 curve
+    predicted: float
+    difference: float  # measured - predicted
+    interval: tuple[float, float]  # 95 %, bootstrap over the seeds within each task
+
+
+def jitter_check(
+    fixed: Mapping[float, Mapping[int, Episode]],
+    jitter: Mapping[int, Episode],
+    low_ms: float,
+    high_ms: float,
+    libero: LiberoEnvConfig,
+    draws: int = 10_000,
+    seed: int = 4242,
+) -> JitterCheck | None:
+    """Predict the jitter condition (latency uniform in [low, high]) from the fixed levels like stage 2 does.
+
+    Stage 2 predicts a fleet robot by averaging the interpolated fixed-latency outcomes over its
+    latencies; the jitter condition is the one rollout with varying latency where that rule can be checked
+    directly. Per seed: measured outcome minus the seed's own fixed-level outcomes averaged over a uniform
+    latency grid.
+    """
+    levels = sorted(fixed)
+    if len(levels) < 2 or not high_ms > low_ms:
+        return None
+    seeds = sorted(set(jitter).intersection(*(set(fixed[level]) for level in levels)))
+    if not seeds:
+        return None
+    outcomes = np.array([[float(fixed[level][s].success) for s in seeds] for level in levels])
+    grid = np.linspace(low_ms, high_ms, 1001)
+    weights = level_weights(np.array(levels, dtype=float), grid.tolist(), [1.0] * grid.size)
+    predicted = weights @ outcomes
+    measured = np.array([float(jitter[s].success) for s in seeds])
+    groups = np.array([episode_slot(libero, s)[0] for s in seeds])
+    rng = np.random.default_rng(seed)
+    task_means: list[tuple[float, float]] = []
+    draws_by_task = []
+    for task in sorted(set(groups.tolist())):
+        members = np.flatnonzero(groups == task)
+        task_means.append((float(measured[members].mean()), float(predicted[members].mean())))
+        difference = measured[members] - predicted[members]
+        picks = rng.integers(0, members.size, size=(draws, members.size))
+        draws_by_task.append(difference[picks].mean(axis=1))
+    boot = np.mean(draws_by_task, axis=0)
+    low, high = np.percentile(boot, [2.5, 97.5])
+    measured_rate = float(np.mean([m for m, _ in task_means]))
+    predicted_rate = float(np.mean([q for _, q in task_means]))
+    return JitterCheck(
+        pairs=len(seeds),
+        measured=measured_rate,
+        predicted=predicted_rate,
+        difference=measured_rate - predicted_rate,
+        interval=(float(low), float(high)),
+    )
 
 
 def dose_section(levels: Sequence[Level], libero: LiberoEnvConfig) -> list[str]:
@@ -722,6 +784,28 @@ def build(args: argparse.Namespace) -> list[str]:
                     "![Dosis-Wirkung](phase3_dosis_wirkung.png)",
                     "",
                 ]
+                jitter_profile = config.hardware_profiles.get("jitter_500_1500ms")
+                service = None if jitter_profile is None else jitter_profile.service.get("smolvla_libero")
+                if "jitter_500_1500ms" in runs and service is not None and service.kind == "uniform":
+                    fixed = {
+                        latency: episodes
+                        for label, (latency, episodes) in runs.items()
+                        if latency is not None and not label.startswith("jitter")
+                    }
+                    check = jitter_check(
+                        fixed, runs["jitter_500_1500ms"][1], service.low_ms, service.high_ms, libero
+                    )
+                    if check is not None:
+                        lines += [
+                            "**Plausibilitätsprüfung der Vorhersage** (Ergänzung, nicht präregistriert, ohne "
+                            "Gate): Die Jitter-Stufe (Latenz je Anfrage gleichverteilt in "
+                            f"[{service.low_ms:.0f}, {service.high_ms:.0f}] ms) ist die einzige "
+                            "Bedingung mit wechselnder Latenz. Aus den festen Stufen vorhergesagt "
+                            "wie in Stufe 2: "
+                            f"{pct(check.predicted)}, gemessen {pct(check.measured)}, Differenz "
+                            f"{pp(check.difference)} {interval_pp(check.interval)} ({check.pairs} Seeds).",
+                            "",
+                        ]
     fleet = load_fleet_config(args.fleet_config)
     capacity = load_capacity(Path(fleet.prediction.output if fleet.prediction else args.capacity))
     if capacity is not None:

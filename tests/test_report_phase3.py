@@ -169,6 +169,7 @@ def test_report_builds_every_section(tmp_path: Path) -> None:
     assert "(„put" in text  # the selected tasks are named (built-in LIBERO-Long instructions)
     assert "1.3 Kalt- gegen Warmstart" in text
     assert "mit Roboter-Rechner (Ergänzung)" in text  # supplement next to the pre-registered cost
+    assert "Plausibilitätsprüfung der Vorhersage" in text  # jitter level predicted from fixed levels
     assert (out / "phase3_dosis_wirkung.png").stat().st_size > 10_000
     assert (out / "phase3_kapazitaet_buero_wlan.png").stat().st_size > 10_000
     assert "a_n2" in text
@@ -224,3 +225,30 @@ def test_predicted_success_interpolates_the_curve() -> None:
 
     assert predicted_success([0.0, 1000.0, 2000.0], [0.8, 0.6, 0.2], 500.0) == pytest.approx(0.7)
     assert predicted_success([0.0, 1000.0, 2000.0], [0.8, 0.6, 0.2], 5000.0) == pytest.approx(0.2)
+
+
+def test_jitter_check_predicts_uniform_latency_from_fixed_levels() -> None:
+    from kortyn.config import LiberoEnvConfig
+    from kortyn.phase3_steps import Episode
+    from kortyn.report_phase3 import jitter_check
+
+    libero = LiberoEnvConfig(task_ids=[1, 2], episodes_per_task=10)
+    seeds = range(1000, 1020)
+
+    def run(success: bool) -> dict[int, Episode]:
+        return {
+            s: Episode(seed=s, success=success, steps=300, starved_ticks=0, time_to_success_s=None)
+            for s in seeds
+        }
+
+    # f = 1 up to 1000 ms, then linearly down to 0 at 2000 ms: mean over U[500, 1500] = 0.875
+    fixed = {0.0: run(True), 1000.0: run(True), 2000.0: run(False)}
+    check = jitter_check(fixed, run(True), 500.0, 1500.0, libero, draws=500)
+    assert check is not None
+    assert check.pairs == 20
+    assert check.predicted == pytest.approx(0.875, abs=1e-3)
+    assert check.measured == 1.0
+    assert check.difference == pytest.approx(0.125, abs=1e-3)
+    assert check.interval[0] <= check.difference <= check.interval[1]
+    assert jitter_check({0.0: run(True)}, run(True), 500.0, 1500.0, libero) is None  # one level: no curve
+    assert jitter_check(fixed, {}, 500.0, 1500.0, libero) is None  # no common seeds
