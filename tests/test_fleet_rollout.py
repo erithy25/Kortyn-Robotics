@@ -45,6 +45,17 @@ def test_assign_seeds_round_robin() -> None:
         assign_seeds(seeds, 0, 2)
 
 
+def rounded(value: object) -> object:
+    """Floats to 9 significant digits, recursively (PushT physics differs in the last bits between runs)."""
+    if isinstance(value, float):
+        return float(f"{value:.9g}")
+    if isinstance(value, dict):
+        return {key: rounded(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [rounded(item) for item in value]
+    return value
+
+
 def write_experiment(tmp_path: Path, checkpoint: Path) -> Path:
     path = tmp_path / "experiment.yaml"
     path.write_text(
@@ -134,14 +145,15 @@ def test_validation_rollouts_end_to_end(tmp_path: Path, pusht_tiny_checkpoint: P
     assert {r["robot"] for r in requests} == {0, 1}
 
     # the plans do not depend on the number of inference processes: identical rollouts with one worker
+    # (PushT physics, pymunk, is not bit-reproducible in the last float digits: compare 9 digits)
     run_case(one, case, tmp_path / "val1" / case.label)
     for name in ("episodes.jsonl", "requests.jsonl"):
         left = sorted(
-            json.dumps(deterministic_view(r), sort_keys=True)
+            json.dumps(rounded(deterministic_view(r)), sort_keys=True)
             for r in read_jsonl(tmp_path / "val2" / case.label / name)
         )
         right = sorted(
-            json.dumps(deterministic_view(r), sort_keys=True)
+            json.dumps(rounded(deterministic_view(r)), sort_keys=True)
             for r in read_jsonl(tmp_path / "val1" / case.label / name)
         )
         assert left == right, name

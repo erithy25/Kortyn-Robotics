@@ -314,6 +314,7 @@ def run_case(fleet: FleetSimConfig, case: ValidationCase, out_dir: Path) -> dict
                 ]
                 append_jsonl(out_dir / REQUESTS_FILE, requests)
                 episode += 1
+                release_memory()  # hard resets rebuild the simulator: return its freed heap pages
                 if counted:
                     progress.counted_done += 1
                     elapsed = time.perf_counter() - progress.started
