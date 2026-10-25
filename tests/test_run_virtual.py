@@ -147,6 +147,28 @@ def test_runs_are_reproducible_independent_of_worker_count_and_resumable(tmp_pat
     )
 
 
+@pytest.mark.timeout(600)
+def test_a_stop_file_ends_the_run_after_complete_seeds_and_the_run_resumes(tmp_path, pusht_tiny_checkpoint):
+    straight, stopped = tmp_path / "straight", tmp_path / "stopped"
+    config = write_config(tmp_path, pusht_tiny_checkpoint, straight)
+    common = ["--config", str(config), "--episodes", "5", "--workers", "1", "--run", "modell__gut"]
+    assert main([*common, "--log-level", "WARNING"]) == 0
+    stop = tmp_path / "stop"
+    stop.touch()
+    assert main([*common, "--results-dir", str(stopped), "--stop-file", str(stop)]) == 0
+    run_dir = stopped / "kalibriert" / "modell__gut"
+    episodes = list(read_jsonl(run_dir / "episodes.jsonl"))
+    seeds = sorted(e["seed"] for e in episodes)
+    # one worker: the seed in progress when the stop was noticed, and nothing half-written
+    assert seeds == [1000]
+    requests = list(read_jsonl(run_dir / "requests.jsonl"))
+    assert {r["seed"] for r in requests} == set(seeds)
+    # without the stop file the run resumes and ends exactly like the uninterrupted one
+    stop.unlink()
+    assert main([*common, "--results-dir", str(stopped)]) == 0
+    assert run_digest(run_dir) == run_digest(straight / "kalibriert" / "modell__gut")
+
+
 def test_plans_need_a_timing_and_replay_needs_a_realtime_scenario(tmp_path):
     config = load_config(DEFAULT_BASE_CONFIG)
     with pytest.raises(ConfigError, match="has no timing"):

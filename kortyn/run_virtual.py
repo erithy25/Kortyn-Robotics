@@ -278,7 +278,12 @@ def resolve_workers(requested: int, torch_threads: int) -> int:
 
 
 class VirtualSuiteRunner:
-    """Runs the pending episodes of one suite (Brain profile) in worker processes."""
+    """Runs the pending episodes of one suite (Brain profile) in worker processes.
+
+    ``stop_file``: once this file exists, no further seed is started; the seeds in progress finish and are
+    written completely, so the run can be resumed later without gaps (a graceful alternative to a signal,
+    which could interrupt writing a seed's records).
+    """
 
     def __init__(
         self,
@@ -290,6 +295,7 @@ class VirtualSuiteRunner:
         results_dir: Path,
         workers: int,
         torch_threads: int,
+        stop_file: Path | None = None,
     ) -> None:
         self.config = config
         self.config_path = config_path
@@ -300,6 +306,8 @@ class VirtualSuiteRunner:
         self.root = results_dir / profile
         self.workers = workers
         self.torch_threads = torch_threads
+        self.stop_file = stop_file
+        self.stopped = False
 
     def pending(self) -> dict[int, list[str]]:
         done = {plan.label: done_seeds(self.root / plan.label) for plan in self.plans}
@@ -340,26 +348,49 @@ class VirtualSuiteRunner:
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=workers, mp_context=context, initializer=_init_worker, initargs=(setup,)
         ) as pool:
-            futures = {
-                pool.submit(_run_seed, seed, labels, self.profile_name): seed
-                for seed, labels in tasks.items()
-            }
+            # Seeds are handed out on demand (never more in flight than workers), so a stop request takes
+            # effect after the seeds in progress.
+            queue = iter(tasks.items())
+            running: dict[concurrent.futures.Future[SeedResult], int] = {}
+
+            def submit_next() -> None:
+                item = next(queue, None)
+                if item is not None:
+                    seed, labels = item
+                    running[pool.submit(_run_seed, seed, labels, self.profile_name)] = seed
+
+            for _ in range(workers):
+                submit_next()
             try:
-                for future in concurrent.futures.as_completed(futures):
-                    result = future.result()
-                    if not meta_written:
-                        self._write_meta(
-                            result.brain_raw, [label for labels in tasks.values() for label in labels]
-                        )
-                        meta_written = True
-                    for label, episode, requests in result.outcomes:
-                        run_dir = self.root / label
-                        append_jsonl(run_dir / EPISODES_FILE, [episode])
-                        append_jsonl(run_dir / REQUESTS_FILE, requests)
-                    finished += len(result.outcomes)
-                    self._log(result, finished, total, started)
+                while running:
+                    done, _ = concurrent.futures.wait(running, return_when=concurrent.futures.FIRST_COMPLETED)
+                    for future in sorted(done, key=running.__getitem__):
+                        del running[future]
+                        result = future.result()
+                        if not meta_written:
+                            self._write_meta(
+                                result.brain_raw, [label for labels in tasks.values() for label in labels]
+                            )
+                            meta_written = True
+                        for label, episode, requests in result.outcomes:
+                            run_dir = self.root / label
+                            append_jsonl(run_dir / EPISODES_FILE, [episode])
+                            append_jsonl(run_dir / REQUESTS_FILE, requests)
+                        finished += len(result.outcomes)
+                        self._log(result, finished, total, started)
+                        if not self.stopped and self.stop_file is not None and self.stop_file.exists():
+                            self.stopped = True
+                            LOG.info(
+                                "[%s] stop requested (%s): %d seeds in progress are finished, %d not started",
+                                self.profile_name,
+                                self.stop_file,
+                                len(running),
+                                sum(1 for _ in queue),
+                            )
+                        if not self.stopped:
+                            submit_next()
             except BaseException:
-                for future in futures:
+                for future in running:
                     future.cancel()
                 raise
 
@@ -462,6 +493,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--threads", type=int, default=None, help="torch threads per worker")
     parser.add_argument("--fresh", action="store_true", help="delete existing results of the selected runs")
     parser.add_argument("--digest", nargs="+", default=None, help="print the digest of run directories")
+    parser.add_argument(
+        "--stop-file",
+        default=None,
+        help="stop gracefully once this file exists (seeds in progress are finished and written)",
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -498,6 +534,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     seeds = list(range(experiment.seed_start, experiment.seed_start + experiment.episodes))
     results_dir = Path(experiment.results_dir)
+    stop_file = Path(args.stop_file) if args.stop_file else None
     try:
         for profile in profiles:
             if not plans[profile]:
@@ -506,9 +543,13 @@ def main(argv: list[str] | None = None) -> int:
             if args.fresh:
                 for plan in plans[profile]:
                     shutil.rmtree(results_dir / profile / plan.label, ignore_errors=True)
-            VirtualSuiteRunner(
-                config, config_path, profile, plans[profile], seeds, results_dir, workers, threads
-            ).run()
+            runner = VirtualSuiteRunner(
+                config, config_path, profile, plans[profile], seeds, results_dir, workers, threads, stop_file
+            )
+            runner.run()
+            if runner.stopped:
+                LOG.info("stopped on request; finished episodes are kept and the run can be resumed")
+                return 0
     except (RunnerError, ConfigError) as exc:
         LOG.error("experiment aborted: %s", exc)
         return 1
