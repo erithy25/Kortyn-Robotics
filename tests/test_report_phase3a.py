@@ -203,7 +203,7 @@ def test_determinism_rows_compare_episodes_and_requests_of_two_executions(tmp_pa
     import json
 
     from kortyn.metrics import RequestRecord
-    from kortyn.report_phase3a import determinism_rows
+    from kortyn.report_phase3a import determinism_rows, determinism_table
 
     def request(seed, request_id, server_ms=300.0):
         return RequestRecord(
@@ -231,7 +231,16 @@ def test_determinism_rows_compare_episodes_and_requests_of_two_executions(tmp_pa
         dataclasses.replace(request(1001, 2), server_total_ms=301.0),
     ]
     write(tmp_path / "phase3a" / "determinism" / "kalibriert" / "modell__gut", second, changed)
-    assert determinism_rows(tmp_path) == [("kalibriert", "modell__gut", 2, 2, 3, 4)]
+    # third execution: seed 1001 differs in the last float bits of its coverage
+    third = [episode(1000, virtual=virtual), episode(1001, coverage=0.5 + 1e-15, virtual=virtual)]
+    write(tmp_path / "phase3a" / "determinism_b" / "kalibriert" / "modell__gut", third, changed)
+    first_pair, second_pair = determinism_rows(tmp_path)
+    assert (first_pair.profile, first_pair.run) == ("kalibriert", "modell__gut")
+    assert (first_pair.match.episodes, first_pair.match.identical, first_pair.match.diverged) == (2, 2, 0)
+    assert (first_pair.same_requests, first_pair.requests) == (3, 4)
+    assert (second_pair.match.identical, second_pair.match.same_outcome) == (1, 1)
+    assert (second_pair.same_requests, second_pair.requests) == (4, 4)
+    assert len(determinism_table([first_pair, second_pair])) == 4
     assert determinism_rows(tmp_path / "missing") == []
 
 

@@ -653,35 +653,80 @@ def replay_table(cases: Sequence[ValidationCase]) -> tuple[list[str], ReplayMatc
     return lines, total
 
 
-def determinism_rows(results: Path) -> list[tuple[str, str, int, int, int, int]]:
-    """Second execution of model runs (one worker instead of four, other order of the seeds) against the
-    validation runs: (profile, run, identical episodes, episodes, identical requests, requests)."""
-    root = results / "phase3a" / "determinism"
-    rows: list[tuple[str, str, int, int, int, int]] = []
-    if not root.is_dir():
-        return rows
-    for profile_dir in sorted(p for p in root.iterdir() if p.is_dir()):
-        for run_dir in sorted(p for p in profile_dir.iterdir() if p.is_dir()):
-            first = load_run(results / "phase3a" / "validation_model" / profile_dir.name / run_dir.name)
-            second = load_run(run_dir)
-            if first is None or second is None:
-                continue
-            equal, total = determinism_check(first, second)
-            seeds = set(first.episodes) & set(second.episodes)
+# Executions of the same model runs: (description, first results root, second results root) below results/.
+DETERMINISM_PAIRS = (
+    (
+        "1. gegen 2. Ausführung (4 statt 1 Worker; Code-Stand der Validierung gegen aktuellen)",
+        "phase3a/validation_model",
+        "phase3a/determinism",
+    ),
+    (
+        "2. gegen 3. Ausführung (1 statt 2 Worker, gleicher Code)",
+        "phase3a/determinism",
+        "phase3a/determinism_b",
+    ),
+)
 
-            def views(run: Run, seeds: set[int] = seeds) -> dict[tuple[int, int, int], str]:
-                return {
-                    (r.seed, r.attempt, r.request_id): json.dumps(r.to_json(), sort_keys=True)
-                    for r in run.requests
-                    if r.seed in seeds
-                }
 
-            a, b = views(first), views(second)
-            same_requests = sum(1 for key, value in a.items() if b.get(key) == value)
-            rows.append(
-                (profile_dir.name, run_dir.name, equal, total, same_requests, len(a.keys() | b.keys()))
-            )
+@dataclass(frozen=True)
+class DeterminismRow:
+    comparison: str
+    profile: str
+    run: str
+    match: ReplayMatch  # identical / identical but the last float bits of the coverage / diverged
+    same_requests: int
+    requests: int
+
+
+def determinism_rows(results: Path) -> list[DeterminismRow]:
+    """Repeated executions of model runs (other worker count, other order of the seeds, fresh processes)."""
+    rows: list[DeterminismRow] = []
+    for comparison, first_root, second_root in DETERMINISM_PAIRS:
+        root = results / second_root
+        if not root.is_dir():
+            continue
+        for profile_dir in sorted(p for p in root.iterdir() if p.is_dir()):
+            for run_dir in sorted(p for p in profile_dir.iterdir() if p.is_dir()):
+                first = load_run(results / first_root / profile_dir.name / run_dir.name)
+                second = load_run(run_dir)
+                if first is None or second is None:
+                    continue
+                seeds = set(first.episodes) & set(second.episodes)
+
+                def views(run: Run, seeds: set[int] = seeds) -> dict[tuple[int, int, int], str]:
+                    return {
+                        (r.seed, r.attempt, r.request_id): json.dumps(r.to_json(), sort_keys=True)
+                        for r in run.requests
+                        if r.seed in seeds
+                    }
+
+                a, b = views(first), views(second)
+                rows.append(
+                    DeterminismRow(
+                        comparison,
+                        profile_dir.name,
+                        run_dir.name,
+                        replay_match(first, second),
+                        sum(1 for key, value in a.items() if b.get(key) == value),
+                        len(a.keys() | b.keys()),
+                    )
+                )
     return rows
+
+
+def determinism_table(rows: Sequence[DeterminismRow]) -> list[str]:
+    lines = [
+        "| Vergleich | Profil | Lauf | Episoden | bitgleich | gleich bis auf letzte Float-Bits | abweichend "
+        "| Anfragen identisch |",
+        "|---|---|---|---:|---:|---:|---:|---:|",
+    ]
+    for row in rows:
+        m = row.match
+        lines.append(
+            f"| {row.comparison} | {row.profile} | {row.run} | {m.episodes} | {m.identical} | {m.same_outcome} "
+            f"| {m.diverged} | {row.same_requests} / {row.requests} |"
+        )
+    return lines
 
 
 def service_drift(results: Path, profile: str, block: int = 10) -> list[str]:
@@ -1440,15 +1485,11 @@ def write_report(results: Path, reports: Path) -> Path:
         lines += [
             "### Determinismus",
             "",
-            "Zweite Ausführung derselben Läufe mit einem statt vier Worker-Prozessen (andere Reihenfolge der "
-            "Seeds, frische Prozesse): Inhalt der Records ohne Maschinen-Diagnosen (Rechenzeit, Cache-Treffer).",
+            "Wiederholte Ausführungen derselben Läufe (andere Worker-Zahl, andere Reihenfolge der Seeds, frische "
+            "Prozesse). Episoden: bitgleich = Erfolg, Länge, alle Takt-Serien, Abdeckung und Reward identisch; "
+            "„letzte Float-Bits“ = alles identisch bis auf |Δ Abdeckung| < 1e-9. Anfragen: alle Felder.",
             "",
-            "| Profil | Lauf | identische Episoden | identische Anfragen |",
-            "|---|---|---:|---:|",
-            *[
-                f"| {profile} | {run} | {equal} / {total} | {same} / {requests} |"
-                for profile, run, equal, total, same, requests in determinism
-            ],
+            *determinism_table(determinism),
             "",
         ]
     lines += [
