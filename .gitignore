@@ -1,5 +1,6 @@
 # Python / tooling
 .venv/
+.venv-libero/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -20,7 +21,6 @@ results_smoke/
 reports_smoke/
 results_pilot/
 reports_pilot/
-
 # OS / editor
 .DS_Store
 .idea/

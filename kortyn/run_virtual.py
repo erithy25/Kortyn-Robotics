@@ -30,7 +30,7 @@ import time
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from kortyn.config import (
     AgentConfig,
@@ -76,6 +76,7 @@ class VirtualRunPlan:
     replay_run: str | None
     sync_actions_per_chunk: int | None = None
     image_transport: ImageTransportConfig | None = None
+    start_mode: Literal["warm", "cold"] | None = None
 
     @property
     def network(self) -> NetworkConfig:
@@ -88,6 +89,8 @@ class VirtualRunPlan:
             config = replace(config, sync_actions_per_chunk=self.sync_actions_per_chunk)
         if self.image_transport is not None:
             config = replace(config, image_transport=self.image_transport)
+        if self.start_mode is not None:
+            config = replace(config, start_mode=self.start_mode)
         return config
 
 
@@ -124,6 +127,7 @@ def select_virtual_plans(config: KortynConfig, profile: str, runs: list[str] | N
                 replay_run=(spec.replay_run or spec.scenario) if timing.latency == "replay" else None,
                 sync_actions_per_chunk=spec.sync_actions_per_chunk,
                 image_transport=spec.image_transport,
+                start_mode=spec.start_mode,
             )
         )
     return plans
@@ -149,6 +153,8 @@ def virtual_run_entry(config: KortynConfig, profile: str, plan: VirtualRunPlan) 
         entry["sync_actions_per_chunk"] = plan.sync_actions_per_chunk
     if plan.image_transport is not None:
         entry["image_transport"] = draccus.encode(plan.image_transport)
+    if plan.start_mode is not None:
+        entry["start_mode"] = plan.start_mode
     if plan.strategy_name is not None:
         entry["strategy"] = plan.strategy_name
         entry["strategy_settings"] = (plan.strategy or StrategyConfig()).to_dict()

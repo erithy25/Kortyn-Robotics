@@ -414,7 +414,6 @@ class AgentCore:
         self.dt = 1.0 / env.fps
         # Phase 3a: camera features may travel compressed; a language instruction comes from the env.
         self._image_keys = frozenset(key for key, (kind, _) in spec.features.items() if kind == "VISUAL")
-        self._task = str(getattr(env, "task_description", "") or "")
         self._check_compatibility()
 
     # ------------------------------------------------------------------ setup
@@ -454,13 +453,19 @@ class AgentCore:
             max_actions=self.config.actions_per_chunk,
             observation=encode_observation(stacked, self.config.image_transport, self._image_keys),
         )
-        if self._task:
-            request.task = self._task
+        task = self._task
+        if task:
+            request.task = task
         if guide is not None:
             request.guide_start_timestep = guide.start_step
             request.guide_actions.CopyFrom(encode_array(guide.actions))
             request.guide_weights.extend(float(w) for w in guide.weights)
         return request
+
+    @property
+    def _task(self) -> str:
+        """Language instruction of the current episode (phase 3: LIBERO switches tasks between episodes)."""
+        return str(getattr(self.env, "task_description", "") or "")
 
     def _take_request_id(self) -> int:
         request_id = self._next_request_id
