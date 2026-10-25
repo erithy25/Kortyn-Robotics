@@ -151,6 +151,10 @@ def test_report_builds_every_section(tmp_path: Path) -> None:
             str(fleet),
             "--validation",
             str(evaluation),
+            "--capacity-scan",
+            str(tmp_path / "capacity.json"),  # the grid result stands in for the scan
+            "--capacity-p10",
+            str(tmp_path / "no_p10.json"),
             "--economics",
             str(ECONOMICS),
             "--out-dir",
@@ -178,6 +182,7 @@ def test_report_builds_every_section(tmp_path: Path) -> None:
     assert (out / "phase3_dosis_wirkung.png").stat().st_size > 10_000
     assert (out / "phase3_kapazitaet_buero_wlan.png").stat().st_size > 10_000
     assert "a_n2" in text
+    assert "Nach Kriterium 1 allein" in text  # scan section: queue-only capacity next to both criteria
     assert "470 / 880 ms" in text  # diagnosis: rollout latencies next to stage 1
 
 
@@ -196,6 +201,10 @@ def test_report_skips_missing_inputs(tmp_path: Path) -> None:
             str(fleet),
             "--validation",
             str(tmp_path / "missing.json"),
+            "--capacity-scan",
+            str(tmp_path / "no_scan.json"),
+            "--capacity-p10",
+            str(tmp_path / "no_p10.json"),
             "--out-dir",
             str(out),
             "--log-level",

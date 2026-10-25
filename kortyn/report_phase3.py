@@ -430,6 +430,8 @@ def capacity_lookup(data: Mapping[str, Any], fleet: FleetSimConfig) -> dict[tupl
     first = next(iter(fleet.batching))
     table: dict[tuple[str, str, str, str], int] = {}
     for entry in data["configurations"]:
+        if entry["strategy"] not in fleet.strategies:  # results of another fleet config
+            continue
         key = (entry["network"], entry["gpu"], entry["batching"], entry["strategy"])
         table[key] = int(entry["capacity"])
         if not fleet.strategies[entry["strategy"]].batches and entry["batching"] == first:
@@ -443,6 +445,8 @@ def queue_only_lookup(data: Mapping[str, Any], fleet: FleetSimConfig) -> dict[tu
     first = next(iter(fleet.batching))
     table: dict[tuple[str, str, str, str], int] = {}
     for entry in data["configurations"]:
+        if entry["strategy"] not in fleet.strategies:  # results of another fleet config
+            continue
         capacity = 0
         for size in sorted(entry["sizes"], key=lambda s: int(s["robots"])):
             robots = int(size["robots"])
@@ -1050,9 +1054,15 @@ def build(args: argparse.Namespace) -> list[str]:
                 ]
         scan = load_capacity(Path(args.capacity_scan))
         if scan is not None:
-            scan_table = capacity_lookup(scan, fleet)
+            scan_full = sorted({int(entry["capacity"]) for entry in scan["configurations"]})
+            scan_queue = queue_only_lookup(scan, fleet)
             lines += [
                 "### Ergänzung: jede Flottengröße 1–128 (Büro-WLAN, 3 Wiederholungen)",
+                "",
+                "Kapazität nach beiden Kriterien: "
+                + ", ".join(str(c) for c in scan_full)
+                + " (wie im Raster). Nach Kriterium 1 allein (Budget-Verletzungen, jeder Roboter "
+                "aufgenommen; nicht präregistriert als Kapazität):",
                 "",
                 *[
                     line
@@ -1060,7 +1070,7 @@ def build(args: argparse.Namespace) -> list[str]:
                     for line in (
                         f"**Batching {BATCHING_NAMES[profile]}:**",
                         "",
-                        *capacity_table(scan_table, fleet, "buero_wlan", profile),
+                        *capacity_table(scan_queue, fleet, "buero_wlan", profile),
                         "",
                     )
                 ],
