@@ -194,6 +194,11 @@ class StateSnapshot:
         live = self._env.sim.data._data
         mujoco.mj_copyData(current, model, live)
         mujoco.mj_copyData(live, model, sampled)
+        # robosuite renders into whatever GL context is current and makes its own current only when it creates
+        # it: with several simulators in one process (fleet validation) the last one created would be drawn.
+        context = getattr(self._env.sim, "_render_context_offscreen", None)
+        if context is not None:
+            context.gl_ctx.make_current()
         try:
             return np.asarray(sensor({}))
         finally:

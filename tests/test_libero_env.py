@@ -252,3 +252,25 @@ def test_rejects_wrong_rate_and_episode_length() -> None:
         LiberoEnv(config)
     with pytest.raises(EnvError, match="out of range"):
         LiberoEnv(libero_env_config(task_ids=[10]))
+
+
+@needs_libero
+@pytest.mark.timeout(600)
+def test_several_envs_in_one_process_render_their_own_scene() -> None:
+    """Fleet validation: each robot's camera shows its own simulator, whichever GL context is current."""
+    from kortyn.libero_env import LiberoEnv
+
+    config = libero_env_config()
+    first, second = LiberoEnv(config), LiberoEnv(config)
+    try:
+        observation_b = second.reset(seed=1001)  # not rendered yet
+        image_a = first.reset(seed=1000)["observation.images.camera1"]  # first's GL context is now current
+        image_b = observation_b["observation.images.camera1"]  # must make second's context current itself
+        second.close()
+        image_b_alone = first.reset(seed=1001)["observation.images.camera1"]
+        np.testing.assert_array_equal(image_b, image_b_alone)
+        image_a_alone = first.reset(seed=1000)["observation.images.camera1"]
+        np.testing.assert_array_equal(image_a, image_a_alone)
+        assert not np.array_equal(image_a, image_b)  # init states 0 and 1 differ
+    finally:
+        first.close()
