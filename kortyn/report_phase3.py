@@ -249,21 +249,28 @@ def figure_dose(levels: Sequence[Level], libero: LiberoEnvConfig, budget_ms: flo
     ax.axvline(budget_ms, color=MUTED, linewidth=1.0, linestyle=(0, (4, 3)), zorder=1)
     ax.text(budget_ms + 25, 0.03, "Budget 1 250 ms", color=INK_2, fontsize=8, va="bottom")
     handles: list[Any] = []
+    end_labels: list[tuple[float, str]] = []
     for index, task in enumerate(libero.task_ids):
         y = np.array([lv.per_task[task][0] if task in lv.per_task else math.nan for lv in fixed])
         color = TASK_COLORS[index % len(TASK_COLORS)]
         ax.plot(x, y, color=color, linewidth=2.0, marker="o", markersize=5, zorder=3)
+        if not math.isnan(float(y[-1])):
+            end_labels.append((float(y[-1]), f"Aufgabe {task}"))
+        handles.append(
+            Line2D([0], [0], color=color, linewidth=2.0, marker="o", markersize=5, label=f"Aufgabe {task}")
+        )
+    placed = -1.0
+    for value, text in sorted(end_labels):  # end labels stacked upwards where the curves end together
+        position = max(value, placed + 0.06)
+        placed = position
         ax.annotate(
-            f"Aufgabe {task}",
-            (x[-1], y[-1]),
+            text,
+            (x[-1], position),
             xytext=(6, 0),
             textcoords="offset points",
             color=INK_2,
             fontsize=8,
             va="center",
-        )
-        handles.append(
-            Line2D([0], [0], color=color, linewidth=2.0, marker="o", markersize=5, label=f"Aufgabe {task}")
         )
     pooled = np.array([lv.rate for lv in fixed])
     low = np.array([lv.interval[0] for lv in fixed])
