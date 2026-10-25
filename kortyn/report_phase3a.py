@@ -40,6 +40,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.lines import Line2D
+from matplotlib.ticker import FixedLocator, FuncFormatter, NullFormatter
 
 from kortyn.metrics import (
     EpisodeRecord,
@@ -1243,13 +1244,13 @@ def figure_validation(cases: Sequence[ValidationCase], path: Path) -> None:
     rows = [c for c in cases if any(c.deltas(source) for source, _ in SOURCES)]
     if not rows:
         return
-    fig, axes, layout = make_figure(1, 2, 3.6, 0.32 * len(rows) + 0.6, left_in=2.6, header_in=1.25)
+    fig, axes, layout = make_figure(1, 2, 3.6, 0.32 * len(rows) + 0.6, left_in=2.6, header_in=1.6)
     top = header(
         fig,
         layout,
         "Simulationszeit gegen Echtzeit (gepaarte Differenz, 95-%-KI)",
-        "Je Profil und Szenario: Simulationszeit minus Echtzeit auf denselben 50 Seeds. Liegt das Intervall "
-        "über der Null, stimmen beide Messungen innerhalb der Unsicherheit überein.",
+        "Je Profil und Szenario: Simulationszeit minus Echtzeit auf denselben 50 Seeds. Enthält das Intervall "
+        "die Null, stimmen beide Messungen innerhalb der Unsicherheit überein.",
     )
     sources = (
         ("Modell (gepoolt)", "model", CATEGORICAL[0], "o"),
@@ -1286,12 +1287,13 @@ def figure_latency_cdf(cases: Sequence[ValidationCase], path: Path) -> None:
     profiles = [p for p in PROFILES if any(c.profile == p and c.model is not None for c in cases)]
     if not profiles:
         return
-    fig, axes, layout = make_figure(1, len(profiles), 3.8, 2.8, header_in=1.3)
+    fig, axes, layout = make_figure(1, len(profiles), 3.8, 2.8, header_in=1.45)
     top = header(
         fig,
         layout,
-        "Ende-zu-Ende-Latenz: Echtzeit (durchgezogen) gegen Latenzmodell (gestrichelt)",
-        "Empirische Verteilungsfunktion der Latenz je Anfrage (Beobachtung bis Plan beim Roboter).",
+        "Ende-zu-Ende-Latenz: Echtzeit gegen Latenzmodell",
+        "Empirische Verteilungsfunktion der Latenz je Anfrage (Beobachtung bis Plan beim Roboter); "
+        "durchgezogen = Echtzeit (Phase 1), gestrichelt = Simulationszeit (Modell, gepoolt).",
     )
     for ax, profile in zip(axes[0], profiles, strict=True):
         for case in cases:
@@ -1307,8 +1309,11 @@ def figure_latency_cdf(cases: Sequence[ValidationCase], path: Path) -> None:
                         values, np.arange(1, values.size + 1) / values.size, style, color=color, linewidth=1.8
                     )
         ax.set_title(profile, loc="left")
-        ax.set_xlabel("Latenz (ms)")
+        ax.set_xlabel("Latenz (ms, logarithmisch)")
         ax.set_xscale("log")
+        ax.xaxis.set_major_locator(FixedLocator([200, 300, 400, 600, 800, 1000, 1500, 2000]))
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:.0f}"))
+        ax.xaxis.set_minor_formatter(NullFormatter())
         percent_axis(ax)
     handles = [
         Line2D([], [], color=SEVERITY[s], linewidth=2, label=SCENARIO_LABELS[s]) for s in NETWORK_SCENARIOS
@@ -1321,7 +1326,7 @@ def figure_latency_cdf(cases: Sequence[ValidationCase], path: Path) -> None:
 def figure_power(models: Sequence[NoiseModel], path: Path) -> None:
     if not models:
         return
-    fig, axes, layout = make_figure(1, 2, 3.6, 2.6, header_in=1.3)
+    fig, axes, layout = make_figure(1, 2, 3.6, 2.6, header_in=1.45)
     top = header(
         fig,
         layout,
