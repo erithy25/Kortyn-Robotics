@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 
 import numpy as np
 import pytest
@@ -10,7 +11,7 @@ import pytest
 from kortyn.config import EnvConfig, MetaWorldEnvConfig
 from kortyn.sim_env import EnvError, make_env
 
-os.environ.setdefault("MUJOCO_GL", "egl")
+os.environ.setdefault("MUJOCO_GL", "cgl" if sys.platform == "darwin" else "egl")
 metaworld_env = pytest.importorskip(
     "lerobot.envs.metaworld", reason="Meta-World (lerobot[metaworld]) missing"
 )

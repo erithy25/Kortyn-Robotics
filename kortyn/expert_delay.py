@@ -18,7 +18,6 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
 import sys
 from collections import deque
 from datetime import UTC, datetime
@@ -108,7 +107,9 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(
         level=args.log_level.upper(), format="%(asctime)s %(levelname)s %(message)s", stream=sys.stdout
     )
-    os.environ.setdefault("MUJOCO_GL", "egl")
+    from kortyn.metaworld_env import configure_rendering
+
+    configure_rendering()
     try:
         delays = [int(d) for d in args.delays.split(",") if d]
         tasks = [t for t in args.tasks.split(",") if t]

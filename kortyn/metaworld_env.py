@@ -14,6 +14,7 @@ asking for the image of an older observation raises :class:`~kortyn.sim_env.EnvE
 from __future__ import annotations
 
 import os
+import sys
 from typing import Any
 
 import numpy as np
@@ -25,6 +26,16 @@ from kortyn.typing_utils import Array, FloatArray
 RAW_IMAGE_KEY = "pixels"
 RAW_STATE_KEY = "agent_pos"
 STATE_DIM = 4  # end-effector xyz + gripper opening (LeRobot: raw_obs[:4])
+
+
+def default_mujoco_gl() -> str:
+    """Offscreen OpenGL backend for MuJoCo without a display: EGL on Linux, CGL on macOS."""
+    return "cgl" if sys.platform == "darwin" else "egl"
+
+
+def configure_rendering() -> None:
+    """Select the headless rendering backend unless ``MUJOCO_GL`` is set (call before importing MuJoCo)."""
+    os.environ.setdefault("MUJOCO_GL", default_mujoco_gl())
 
 
 class LazyObservation(dict[str, Array]):
@@ -58,7 +69,7 @@ class MetaWorldEnv:
     def __init__(self, config: EnvConfig) -> None:
         if config.kind != "metaworld" or config.metaworld is None:
             raise EnvError("MetaWorldEnv needs env.kind 'metaworld' with an env.metaworld section")
-        os.environ.setdefault("MUJOCO_GL", "egl")  # headless rendering
+        configure_rendering()
         try:
             from lerobot.envs.metaworld import TASK_DESCRIPTIONS, MetaworldEnv
         except ImportError as exc:

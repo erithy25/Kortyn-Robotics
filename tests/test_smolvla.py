@@ -7,6 +7,7 @@ these tests are skipped.
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -14,7 +15,7 @@ import pytest
 
 from kortyn.config import BrainProfile, EnvConfig, MetaWorldEnvConfig
 
-os.environ.setdefault("MUJOCO_GL", "egl")
+os.environ.setdefault("MUJOCO_GL", "cgl" if sys.platform == "darwin" else "egl")
 CHECKPOINT = Path(__file__).resolve().parents[1] / "checkpoints" / "smolvla_metaworld"
 pytestmark = pytest.mark.skipif(
     not (CHECKPOINT / "model.safetensors").is_file(), reason="SmolVLA checkpoint not downloaded"

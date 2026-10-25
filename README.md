@@ -223,6 +223,23 @@ for n in 4 6 12; do uv run python -m kortyn.run_experiment --config kortyn/exper
 
 # 5. Reports: reports/phase1.md und reports/phase2.md (--phase 1|2 für nur einen)
 uv run python -m kortyn.report
+
+# 6. Phase 3a: Validierung des Simulationszeit-Modus gegen Phase 1 (braucht die Phase-1-Ergebnisse)
+uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_model.yaml
+uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_replay.yaml
+uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_model.yaml --profile kalibriert \
+    --run modell__gut --run modell__sehr_schlecht --episodes 10 --workers 1 --results-dir results/phase3a/determinism
+# Aufgabenwahl (Totzeit-Toleranz der Meta-World-Experten) und SmolVLA (Checkpoint ≈ 0,9 GB beim ersten Lauf).
+# MuJoCo rendert ohne Display: Standard EGL (Linux) bzw. CGL (macOS), überschreibbar mit MUJOCO_GL.
+uv run python -m kortyn.expert_delay
+for task in drawer_close push coffee_push; do
+  uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/smolvla_${task}.yaml
+done
+uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/smolvla_transport.yaml
+uv run python -m kortyn.lerobot_reference --config kortyn/experiments/phase3a/smolvla_coffee_push.yaml \
+    --profile smolvla --episodes 50
+uv run python -m kortyn.bench_inference --config kortyn/experiments/phase3a/smolvla_push.yaml
+uv run python -m kortyn.report_phase3a      # reports/phase3a_data.md + reports/phase3a_*.png
 ```
 
 Laufzeiten auf der Messmaschine (4-vCPU-Xeon, keine GPU): Kalibrierung ≈ 10 min, alle Läufe ≈ 4 h 40 min (650
@@ -262,7 +279,15 @@ Kortyn Brain :50051  ◄─ TCP/HTTP2 ─  netem_proxy :50052  ◄─  Kortyn Ag
 | `kortyn/calibrate.py` | Wählt die DDIM-Schrittzahl, bei der „gut“ nicht verhungert | `python -m kortyn.calibrate` |
 | `kortyn/lerobot_reference.py` | Offizielles `lerobot-eval` als Referenz | `python -m kortyn.lerobot_reference --profile ddim10` |
 | `kortyn/checkpoint.py` | Download (gepinnte Revision) + Migration ins Processor-Format | – |
-| `kortyn/proto/kortyn_brain.proto` | Wire-Protokoll (Protobuf, kein Pickle) | – |
+| `kortyn/proto/kortyn_brain.proto` | Wire-Protokoll (Protobuf, kein Pickle); Phase 3a: Sprachanweisung, komprimierte Bilder | – |
+| `kortyn/virtual_time.py` | Phase 3a: Discrete-Event-Simulation (virtuelle Uhr), Latenzmodelle (Netz = Proxy-Modell, Brain-Warteschlange mit austauschbarem Scheduler, Servicezeit je Hardware-Profil), Replay geloggter Latenzen | – |
+| `kortyn/virtual_agent.py` | Phase 3a: derselbe Agent auf der virtuellen Uhr; Policy rechnet echt im Prozess (`LocalBrain`) | – |
+| `kortyn/run_virtual.py` | Phase 3a: Simulationszeit-Läufe, parallel und bitgleich reproduzierbar, fortsetzbar (`--stop-file`) | `python -m kortyn.run_virtual --config …` |
+| `kortyn/metaworld_env.py` | Phase 3a: Meta-World wie LeRobots Evaluation, Bilder nur bei Bedarf gerendert | – |
+| `kortyn/expert_delay.py` | Phase 3a: Totzeit-Toleranz der skriptierten Meta-World-Experten (Aufgabenwahl) | `python -m kortyn.expert_delay` |
+| `kortyn/bench_inference.py` | Phase 3a: echte CPU-Inferenzzeit der Policy | `python -m kortyn.bench_inference --config …` |
+| `kortyn/env_determinism.py` | Phase 3a: Ist die PushT-Physik bitgenau reproduzierbar? | `python -m kortyn.env_determinism` |
+| `kortyn/report_phase3a.py` | `reports/phase3a_data.md` + Abbildungen: Validierung, Rauschen/Power, SmolVLA | `python -m kortyn.report_phase3a` |
 
 ### Warum ein eigener Brain-Server statt LeRobots Async Inference?
 
@@ -374,11 +399,36 @@ experiment:
         - {scenario: schlecht, strategy: baseline}          # baseline = exakt Phase 1
 ```
 
+**Phase-3a-Simulationszeit** (`python -m kortyn.run_virtual`): Läufe mit `timing:` statt Echtzeit. Ein Timing
+beschreibt, wie Latenz entsteht: `latency: model` setzt sie aus Client-Overhead, dem Proxy-Netzmodell des
+Szenarios, Transport-Overhead, einer Brain-Warteschlange (`brain_servers`, `scheduler`) und der Servicezeit eines
+Hardware-Profils zusammen; `latency: replay` spielt die geloggten Latenzen eines Phase-1-Laufs ab. Verteilungen:
+`constant`, `uniform`, `normal`, `lognormal` oder `empirical` (aus geloggten Läufen, optional `per_seed`).
+
+```yaml
+hardware_profiles:
+  rtx4090:
+    service:
+      smolvla: {kind: lognormal, mean_ms: 99.2, std_ms: 5.0}
+timings:
+  schnell:
+    latency: model
+    hardware: rtx4090
+    client_overhead: {kind: constant, value_ms: 1.0}
+    transport_overhead: {kind: constant, value_ms: 5.0}
+experiment:
+  suites:
+    - profile: smolvla
+      runs:
+        - {scenario: schlecht, timing: schnell, strategy: halten}   # Ergebnis: <results_dir>/smolvla/schnell__halten__schlecht/
+```
+
 ## Entwicklung
 
 ```bash
-uv run pytest                 # ~200 Tests: Proxy, Metriken, Codec, Migration, Brain, Golden-Test, Echtzeit-Agent,
-                              #   Latenzschätzer, Anfrage-Strategien, Inpainting, Phase-2-Report
+uv run pytest                 # ~270 Tests: Proxy, Metriken, Codec, Migration, Brain, Golden-Tests, Echtzeit-Agent,
+                              #   Latenzschätzer, Anfrage-Strategien, Inpainting, virtuelle Uhr, Latenzmodelle,
+                              #   Replay, Determinismus, Meta-World, SmolVLA (mit lokalem Checkpoint), Reports
 uv run ruff check . && uv run ruff format --check .
 uv run mypy kortyn            # strict
 # Protokoll geändert? Python-Module neu erzeugen:
