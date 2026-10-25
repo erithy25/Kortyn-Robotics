@@ -280,3 +280,24 @@ def test_published_comparison_over_all_seeds_and_the_default_evaluation_seeds():
     assert cells[5].startswith("✗")  # 60/100 vs 27/30: the interval excludes 0
     assert cells[6] == "22/30 (73 %)"
     assert cells[7].startswith("✓")  # 22/30 vs 27/30: consistent
+
+
+def test_lerobot_eval_rows_compare_the_official_evaluation_on_the_same_seeds(tmp_path):
+    import json
+
+    from kortyn.report_phase3a import TaskData, lerobot_eval_rows
+
+    sync50 = run([episode(s, success=s % 3 != 0) for s in range(1000, 1010)])
+    # LeRobot also solves seed 1002, which Kortyn's Sync-50 fails
+    summary = {"success_by_seed": {str(s): s % 3 != 0 or s == 1002 for s in range(1000, 1010)}}
+    target = tmp_path / "phase3a" / "smolvla" / "coffee_push" / "lerobot_eval" / "smolvla"
+    target.mkdir(parents=True)
+    (target / "summary.json").write_text(json.dumps(summary))
+    lines = lerobot_eval_rows(tmp_path, [TaskData("coffee-push-v3", {"referenz_sync50": sync50}, {})])
+    assert len(lines) == 3
+    cells = [c.strip() for c in lines[2].strip("|").split("|")]
+    assert cells[:6] == ["coffee-push-v3", "1000–1009", "80 % (8/10)", "70 % (7/10)", "9/10", "1 / 0"]
+    assert (
+        lerobot_eval_rows(tmp_path / "none", [TaskData("coffee-push-v3", {"referenz_sync50": sync50}, {})])
+        == []
+    )

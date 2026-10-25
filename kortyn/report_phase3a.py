@@ -1015,6 +1015,38 @@ def published_comparison(tasks: Sequence[TaskData], first_seed: int = 1000) -> l
     return lines
 
 
+def lerobot_eval_rows(results: Path, tasks: Sequence[TaskData]) -> list[str]:
+    """LeRobot's official evaluation on this machine (``kortyn.lerobot_reference``) against Kortyn's Sync-50
+    on the same seeds: does Kortyn's pipeline reproduce LeRobot's own number?"""
+    lines = [
+        "| Aufgabe | Seeds | lerobot-eval (diese Maschine) | Kortyn Sync-50 (gleiche Seeds) | gleicher Ausgang "
+        "| nur lerobot-eval / nur Kortyn | McNemar p |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for data in tasks:
+        sync50 = data.runs.get(SYNC_PUBLISHED)
+        root = results / "phase3a" / "smolvla" / TASK_DIRS[data.task] / "lerobot_eval"
+        if sync50 is None or not root.is_dir():
+            continue
+        for path in sorted(root.glob("*/summary.json")):
+            summary = json.loads(path.read_text(encoding="utf-8"))
+            theirs = {int(seed): bool(ok) for seed, ok in summary.get("success_by_seed", {}).items()}
+            seeds = sorted(s for s in theirs if s in sync50.episodes)
+            if not seeds:
+                continue
+            ours = {s: sync50.episodes[s].success for s in seeds}
+            only_theirs = sum(1 for s in seeds if theirs[s] and not ours[s])
+            only_ours = sum(1 for s in seeds if ours[s] and not theirs[s])
+            n = len(seeds)
+            lines.append(
+                f"| {data.task} | {seeds[0]}–{seeds[-1]} | {fmt_pct(sum(theirs[s] for s in seeds) / n)} "
+                f"({sum(theirs[s] for s in seeds)}/{n}) | {fmt_pct(sum(ours.values()) / n)} ({sum(ours.values())}/{n}) "
+                f"| {n - only_theirs - only_ours}/{n} | {only_theirs} / {only_ours} "
+                f"| {p_text(mcnemar_exact(only_theirs, only_ours))} |"
+            )
+    return lines if len(lines) > 2 else []
+
+
 def mark_interval(interval: Interval) -> str:
     return "✓" if interval.contains(0.0) else "✗"
 
@@ -1512,6 +1544,15 @@ def write_report(results: Path, reports: Path) -> Path:
         lines += ["## Verzögerungstoleranz der Meta-World-Experten", "", *delay, ""]
     if tasks:
         lines += ["## SmolVLA", "", *published_comparison(tasks), ""]
+        official = lerobot_eval_rows(results, tasks)
+        if official:
+            lines += [
+                "Gegenprobe mit LeRobots offizieller Evaluation (`lerobot-eval`, synchron, 50 Aktionen je Plan, "
+                "ein CPU-Thread) auf derselben Maschine und denselben Seeds:",
+                "",
+                *official,
+                "",
+            ]
         for data in tasks:
             lines += [f"### {data.task}", "", *smolvla_table(data), ""]
         lines += ["![SmolVLA](phase3a_smolvla.png)", ""]
