@@ -216,7 +216,7 @@ skaliert also nur über Prozesse, und deren Zahl begrenzt der Arbeitsspeicher. D
 |---|---|---|---|---|
 | 1 | Pilot ohne `sync10` | ≈ 1,4 h | Gemessener Erfolg bei 10 Aktionen je Plan. Der Report nennt stattdessen den Literaturwert; die Warteschlangen-Kapazität für 10 Aktionen je Plan bleibt erhalten, ohne Erfolgsvorhersage | **umgesetzt** |
 | 2 | Dosis-Wirkung ohne 250 ms (6 Stufen + Jitter, Vorgabe ≥ 5) | ≈ 0,5 h | Ein Stützpunkt im flachen Bereich unter dem Budget | **umgesetzt** (siehe Abweichungen) |
-| 3 | Validierung mit ≈ 60 statt ≈ 100 Episoden je Fall | ≈ 0,9 h | Teststärke der Validierung (breitere KI) | Reserve |
+| 3 | Validierung mit ≈ 60 statt ≈ 100 Episoden je Fall | ≈ 0,9 h | Teststärke der Validierung (breitere KI) | **umgesetzt** (siehe Abweichungen) |
 
 Kürzungen 2 und 3 setze ich nur ein, wenn der Zeitplan um mehr als eine Stunde rutscht. Sie werden dann unten
 als Abweichung mit Zeitpunkt ausgewiesen, bevor die betroffenen Läufe starten.
@@ -248,6 +248,7 @@ Alle Einträge sind vor der Auswertung der jeweils betroffenen Ergebnisse geschr
 | 13:49 | 0.5 Vorhersage, Ergänzung | Plausibilitätsprüfung ohne Gate: Die Jitter-Stufe (Latenz je Anfrage gleichverteilt in [500, 1 500] ms) wird aus den festen Stufen genauso vorhergesagt wie ein Flotten-Roboter in Stufe 2 (Mittel der interpolierten Kurve über die Latenzen) und der Messung gegenübergestellt (Differenz mit 95-%-KI, Bootstrap über die Seeds je Aufgabe) | Die Jitter-Stufe ist die einzige Einzelroboter-Bedingung mit wechselnder Latenz und prüft damit die Kernannahme von Stufe 2 schon vor der Validierung | Keine auf Kapazität oder Validierungskriterium; geschrieben vor jedem Ergebnis der Dosis-Wirkung |
 | 13:49 | Durchführung | Die Validierung kann mehr Inferenz-Prozesse nutzen als die eingeplanten zwei (`--workers`, protokolliert in `meta.json`) | Gemessen: Eine LIBERO-Umgebung belegt in den laufenden Workern ≈ 1,7 GB statt der früher gemessenen 2,3 GB; damit passen bei 4 Robotern 3 Inferenz-Prozesse in den Speicher | Nur Laufzeit: Das Ergebnis einer Anfrage hängt nicht vom rechnenden Prozess ab (Test) |
 | 13:52 | 0.5 Validierung, Ergänzung | Diagnose ohne Gate neben dem präregistrierten Kriterium: dieselbe Vorhersageregel mit den in den Rollouts gemessenen Latenzen jeder Episode statt der Latenzen aus Stufe 1, und Median/95. Perzentil der Latenz aus beiden Quellen | Trennt im Fehlerfall Fehler des Warteschlangenmodells (Stufe 1) von Fehlern der Dosis-Wirkungs-Regel | Keine auf das Kriterium; geschrieben vor jedem Validierungslauf |
+| 20:03 | 0.5 Validierung, Umfang | **Kürzung 3 umgesetzt:** je Fall 60 statt ≈ 100 gezählte Episoden (`validation.episodes: 60`), drei Inferenz-Prozesse | Zeitplan um mehr als eine Stunde gerutscht (Regel im Abschnitt „Kürzungen“): Die Dosis-Wirkung endete um 20:02 statt ≈ 19:05 (≈ 74 statt ≈ 55 s je Episode und Worker); mit 100 Episoden je Fall läge das Ende bei ≈ 00:00 statt ≈ 22:45 | Breiteres KI der Validierung (etwa ±13 statt ±10 pp), also geringere Teststärke. Fälle (a und e mit 2 und 4 Robotern, nach der präregistrierten Regel gewählt) und Kriterium bleiben unverändert |
 
 ## Festlegung der Brain-Profile (vor der ersten Warteschlangen-Simulation)
 

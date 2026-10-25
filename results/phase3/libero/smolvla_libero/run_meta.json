@@ -194,6 +194,895 @@
         "height": null,
         "width": null
       }
+    },
+    "fest_0ms": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_0ms",
+      "timing_settings": {
+        "description": "feste Latenz 0 ms",
+        "latency": "model",
+        "hardware": "fest_0ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "fest_500ms": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_500ms",
+      "timing_settings": {
+        "description": "feste Latenz 500 ms",
+        "latency": "model",
+        "hardware": "fest_500ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 500.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "fest_1000ms": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_1000ms",
+      "timing_settings": {
+        "description": "feste Latenz 1000 ms",
+        "latency": "model",
+        "hardware": "fest_1000ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 1000.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "fest_1250ms": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_1250ms",
+      "timing_settings": {
+        "description": "feste Latenz 1250 ms (= Budget)",
+        "latency": "model",
+        "hardware": "fest_1250ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 1250.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "fest_1500ms": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_1500ms",
+      "timing_settings": {
+        "description": "feste Latenz 1500 ms",
+        "latency": "model",
+        "hardware": "fest_1500ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 1500.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "fest_2000ms": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_2000ms",
+      "timing_settings": {
+        "description": "feste Latenz 2000 ms",
+        "latency": "model",
+        "hardware": "fest_2000ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 2000.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "jitter_500_1500ms": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "jitter_500_1500ms",
+      "timing_settings": {
+        "description": "Jitter 500\u20131500 ms",
+        "latency": "model",
+        "hardware": "jitter_500_1500ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "uniform",
+        "value_ms": 0.0,
+        "low_ms": 500.0,
+        "high_ms": 1500.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "warm_1000ms": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_1000ms",
+      "timing_settings": {
+        "description": "feste Latenz 1000 ms",
+        "latency": "model",
+        "hardware": "fest_1000ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 1000.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "start_mode": "warm",
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
     }
   },
   "agent": {
@@ -222,7 +1111,7 @@
     "cpu_count": 4,
     "python": "3.12.3"
   },
-  "git_commit": "f1882a354761d5a90bd6326a428f568642963ede-dirty",
+  "git_commit": "6d60fff52110ce39ffe1710ecf9c7e0eb069646f-dirty",
   "started_utc": "2026-10-25T13:23:22+00:00",
   "sessions": [
     {
@@ -248,6 +1137,44 @@
       "runs": [
         "sync25",
         "sync25_q90"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-25T14:46:39+00:00",
+      "git_commit": "6d60fff52110ce39ffe1710ecf9c7e0eb069646f",
+      "runs": [
+        "fest_0ms"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-25T15:32:29+00:00",
+      "git_commit": "6d60fff52110ce39ffe1710ecf9c7e0eb069646f-dirty",
+      "runs": [
+        "fest_1000ms",
+        "fest_1250ms",
+        "fest_1500ms",
+        "fest_2000ms",
+        "fest_500ms",
+        "jitter_500_1500ms",
+        "warm_1000ms"
       ],
       "cpu_pinning": null,
       "host": {

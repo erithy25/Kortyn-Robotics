@@ -74,7 +74,7 @@ validation:
   network: buero_wlan
   profile: smolvla_libero
   results_dir: results/phase3/validation
-  episodes: 100
+  episodes: 60                  # cut 3 (reports/phase3.md, deviations): 60 instead of about 100 per case
   workers: 2
   confidence: 0.9875
   bootstrap: 10000
