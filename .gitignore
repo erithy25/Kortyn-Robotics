@@ -19,6 +19,7 @@ results/lerobot_eval/*/lerobot_eval.log
 results/lerobot_eval/*/lerobot_output/videos/
 results/**/lerobot_eval.log
 results/**/lerobot_output/videos/
+results/phase3/fleet/scan.jsonl
 results_smoke/
 reports_smoke/
 results_pilot/

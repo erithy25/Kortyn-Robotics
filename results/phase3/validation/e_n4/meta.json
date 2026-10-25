@@ -1,0 +1,30 @@
+{
+ "case": "e_n4",
+ "strategy": "e",
+ "robots": 4,
+ "admitted": 4,
+ "gpu": "validierung",
+ "batching": "realistisch",
+ "network": "buero_wlan",
+ "template_run": "fest_0ms",
+ "episodes_counted": 60,
+ "simulated_s": 424.91879301612204,
+ "wall_s": 1938.3800542169993,
+ "inferences": 1299,
+ "cache_hits": 0,
+ "wait_s": 1036.1659534339633,
+ "batches": 874,
+ "batch_sizes": {
+  "1": 526,
+  "2": 271,
+  "3": 77
+ },
+ "busy_share": 0.9297091649755247,
+ "starts": [
+  3.2684773251608004,
+  6.867793016122174,
+  8.0148050744403,
+  9.891278487263515
+ ],
+ "inference_workers": 3
+}
