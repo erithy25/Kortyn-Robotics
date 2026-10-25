@@ -196,8 +196,14 @@ def _check_consistency(fleet: FleetSimConfig, experiment: Any) -> None:
         raise ConfigError("experiment and fleet agent differ: " + ", ".join(problems))
 
 
-def run_case(fleet: FleetSimConfig, case: ValidationCase, out_dir: Path) -> dict[str, Any]:
-    """Run one validation case and write its episodes and requests to ``out_dir``."""
+def run_case(
+    fleet: FleetSimConfig, case: ValidationCase, out_dir: Path, workers: int | None = None
+) -> dict[str, Any]:
+    """Run one validation case and write its episodes and requests to ``out_dir``.
+
+    ``workers`` overrides ``validation.workers`` (inference processes; the result of a request does not depend
+    on the process that computes it).
+    """
     from kortyn.run_virtual import (
         _PRELOADED,
         preload_policy,
@@ -222,7 +228,8 @@ def run_case(fleet: FleetSimConfig, case: ValidationCase, out_dir: Path) -> dict
 
     preload_policy(experiment, validation.profile, 1, device)  # before forking the inference workers
     spec = LocalBrain(_PRELOADED[validation.profile]).spec
-    compute = PoolCompute(validation.profile, validation.workers)
+    inference_workers = validation.workers if workers is None else workers
+    compute = PoolCompute(validation.profile, inference_workers)
     try:
         agent_config = plan.agent_config(experiment.agent)
         samplers = timing_samplers(experiment, plan.timing, validation.profile)
@@ -270,7 +277,7 @@ def run_case(fleet: FleetSimConfig, case: ValidationCase, out_dir: Path) -> dict
             len(robots),
             case.robots,
             progress.total_counted,
-            validation.workers,
+            inference_workers,
         )
 
         def robot(index: int, agent: Any) -> Generator[Command, Any, None]:
@@ -368,6 +375,7 @@ def run_case(fleet: FleetSimConfig, case: ValidationCase, out_dir: Path) -> dict
             "batch_sizes": counters.batch_sizes,
             "busy_share": counters.busy_ms / (1000.0 * sim.now) if sim.now > 0 else 0.0,
             "starts": starts,
+            "inference_workers": inference_workers,
         }
         (out_dir / META_FILE).write_text(json.dumps(meta, indent=1), encoding="utf-8")
         return meta
@@ -529,6 +537,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--select", action="store_true", help="print the four pre-registered validation cases"
     )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=None,
+        help="inference worker processes (default: validation.workers; does not change results)",
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -567,7 +581,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.strategy is None or args.robots is None:
             parser.error("--strategy and --robots are required (or --evaluate)")
         case = ValidationCase(args.strategy, args.robots)
-        run_case(fleet, case, Path(validation.results_dir) / case.label)
+        run_case(fleet, case, Path(validation.results_dir) / case.label, workers=args.workers)
     except (ConfigError, PredictionError) as exc:
         LOG.error("%s", exc)
         return 2

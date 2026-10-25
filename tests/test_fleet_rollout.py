@@ -129,7 +129,6 @@ def test_validation_rollouts_end_to_end(tmp_path: Path, pusht_tiny_checkpoint: P
     experiment = write_experiment(tmp_path, pusht_tiny_checkpoint)
     assert run_virtual_main(["--config", str(experiment), "--log-level", "WARNING"]) == 0
     two = fleet_config(tmp_path, experiment, workers=2, results=str(tmp_path / "val2"))
-    one = fleet_config(tmp_path, experiment, workers=1, results=str(tmp_path / "val1"))
     run_grid(two, grid(two), Path(two.results_path), workers=1)
     case = ValidationCase("a", 2)
 
@@ -137,6 +136,7 @@ def test_validation_rollouts_end_to_end(tmp_path: Path, pusht_tiny_checkpoint: P
     assert meta["admitted"] == 2
     assert meta["episodes_counted"] == 4
     assert meta["inferences"] > 0
+    assert meta["inference_workers"] == 2
     episodes = list(read_jsonl(tmp_path / "val2" / case.label / "episodes.jsonl"))
     counted = [e for e in episodes if e["counted"]]
     assert sorted((e["robot"], e["seed"]) for e in counted) == [(0, 1000), (0, 1002), (1, 1001), (1, 1003)]
@@ -146,7 +146,7 @@ def test_validation_rollouts_end_to_end(tmp_path: Path, pusht_tiny_checkpoint: P
 
     # the plans do not depend on the number of inference processes: identical rollouts with one worker
     # (PushT physics, pymunk, is not bit-reproducible in the last float digits: compare 9 digits)
-    run_case(one, case, tmp_path / "val1" / case.label)
+    assert run_case(two, case, tmp_path / "val1" / case.label, workers=1)["inference_workers"] == 1
     for name in ("episodes.jsonl", "requests.jsonl"):
         left = sorted(
             json.dumps(rounded(deterministic_view(r)), sort_keys=True)
