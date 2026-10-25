@@ -57,7 +57,6 @@ prediction:
   profile: smolvla_libero
   levels:
     - {latency_ms: 0, run: fest_0ms}
-    - {latency_ms: 250, run: fest_250ms}
     - {latency_ms: 500, run: fest_500ms}
     - {latency_ms: 1000, run: fest_1000ms}
     - {latency_ms: 1250, run: fest_1250ms}

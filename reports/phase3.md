@@ -215,7 +215,7 @@ skaliert also nur über Prozesse, und deren Zahl begrenzt der Arbeitsspeicher. D
 | | Kürzung | Ersparnis | Was verloren geht | Status |
 |---|---|---|---|---|
 | 1 | Pilot ohne `sync10` | ≈ 1,4 h | Gemessener Erfolg bei 10 Aktionen je Plan. Der Report nennt stattdessen den Literaturwert; die Warteschlangen-Kapazität für 10 Aktionen je Plan bleibt erhalten, ohne Erfolgsvorhersage | **umgesetzt** |
-| 2 | Dosis-Wirkung ohne 250 ms (6 Stufen + Jitter, Vorgabe ≥ 5) | ≈ 0,5 h | Ein Stützpunkt im flachen Bereich unter dem Budget | Reserve |
+| 2 | Dosis-Wirkung ohne 250 ms (6 Stufen + Jitter, Vorgabe ≥ 5) | ≈ 0,5 h | Ein Stützpunkt im flachen Bereich unter dem Budget | **umgesetzt** (siehe Abweichungen) |
 | 3 | Validierung mit ≈ 60 statt ≈ 100 Episoden je Fall | ≈ 0,9 h | Teststärke der Validierung (breitere KI) | Reserve |
 
 Kürzungen 2 und 3 setze ich nur ein, wenn der Zeitplan um mehr als eine Stunde rutscht. Sie werden dann unten
@@ -241,7 +241,8 @@ Alle Einträge sind vor der Auswertung der jeweils betroffenen Ergebnisse geschr
 | 11:47 | Transparenz | Vor der Festlegung der Profile lief ein Geschwindigkeitstest des Simulators (9 Läufe mit Platzhalterwerten s₁ = 160 ms, β = 0,25, Strategien a, b, d). Er diente nur der Laufzeitplanung und floss nicht in die Profile ein | Vollständigkeit | Keine |
 | 11:47 | Durchführung | Zeitangaben dieses Abschnitts sind die Commit-Zeiten (vorher geschätzte Uhrzeiten korrigiert) | Genauigkeit | Keine |
 | 11:51 | 0.6 Ergänzung 1–128 | Der Scan über alle Flottengrößen 1–128 läuft nur im Standardnetz Büro-WLAN, mit 3 Wiederholungen je Größe, ohne das Validierungsprofil, und bricht je Konfiguration ab, sobald Kriterium (1) bei 3 aufeinanderfolgenden Größen verletzt ist. Das Raster 1–32 mit 10 Wiederholungen bleibt unverändert | Laufzeit: ohne Abbruch wären es > 16 000 Läufe | Ergänzung ohne Einfluss auf die Kapazität im Raster |
-| 11:58 | 0.1 Kapazität bei 10 Aktionen je Plan | Nur Kriterium (1), Büro-WLAN, 3 Wiederholungen je Rastergröße; Episodenlängen der 0-ms-Stufe bei 25 Aktionen je Plan | Ohne `sync10` gibt es keine Dosis-Wirkungskurve für diesen Takt; die Episodenlängen sind eine Näherung | Sensitivität, ohne Einfluss auf die Hauptergebnisse |
+| 11:52 | 0.1 Kapazität bei 10 Aktionen je Plan | Nur Kriterium (1), Büro-WLAN, 3 Wiederholungen je Rastergröße; Episodenlängen der 0-ms-Stufe bei 25 Aktionen je Plan | Ohne `sync10` gibt es keine Dosis-Wirkungskurve für diesen Takt; die Episodenlängen sind eine Näherung | Sensitivität, ohne Einfluss auf die Hauptergebnisse |
+| 11:54 | 0.3 Dosis-Wirkung | Kürzung 2 umgesetzt: Stufen 0, 500, 1 000, 1 250, 1 500, 2 000 ms und Jitter (6 feste Stufen statt 7; Vorgabe ≥ 5); die Vorhersage interpoliert zwischen 0 und 500 ms linear. Holm-Korrektur über 6 statt 7 Vergleiche | Neue Laufzeitrechnung mit den gemessenen 2,3 GB je LIBERO-Umgebung: ≈ 13,8 h statt ≈ 12 h für Phase 3 (höchstens 3 Worker, Validierung nur sequenziell) | Ein Stützpunkt weniger im Bereich unter dem Budget |
 
 ## Festlegung der Brain-Profile (vor der ersten Warteschlangen-Simulation)
 
