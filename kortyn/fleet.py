@@ -29,8 +29,8 @@ import math
 import os
 import sys
 import time
-from collections.abc import Generator, Iterable, Sequence
-from dataclasses import asdict, dataclass, field
+from collections.abc import Generator, Iterable, Mapping, Sequence
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -787,6 +787,91 @@ def run_grid(config: FleetSimConfig, keys: Sequence[RunKey], out_path: Path, wor
     return len(pending)
 
 
+MISS_SHARE_LIMIT = 0.01  # capacity criterion (1), also the stop rule of the scan
+
+
+@dataclass(frozen=True)
+class ScanSettings:
+    """Fleet sizes 1, 2, 3, ... per configuration, until criterion (1) fails ``stop_after`` times in a row."""
+
+    max_size: int = 128
+    replications: int = 3
+    stop_after: int = 3
+
+    def __post_init__(self) -> None:
+        if self.max_size < 1 or self.replications < 1 or self.stop_after < 1:
+            raise ConfigError("scan needs max_size, replications and stop_after >= 1")
+
+
+def _scan_config(
+    base: RunKey, settings: ScanSettings, stored: Mapping[RunKey, tuple[int, int]]
+) -> list[dict[str, Any]]:
+    """One configuration's scan (``base.robots`` and ``base.replication`` are ignored); runs in a worker.
+
+    ``stored``: (requests, misses) of runs already in the results file (a resumed scan counts them).
+    """
+    if _WORKER_CONFIG is None:
+        raise RuntimeError("fleet worker not initialized")
+    results: list[dict[str, Any]] = []
+    failures = 0
+    for robots in range(1, settings.max_size + 1):
+        requests = misses = 0
+        for replication in range(settings.replications):
+            key = replace(base, robots=robots, replication=replication)
+            if key in stored:
+                requests += stored[key][0]
+                misses += stored[key][1]
+                continue
+            record = run_fleet(_WORKER_CONFIG, key, _WORKER_LENGTHS).to_json()
+            results.append(record)
+            requests += int(record["requests"])
+            misses += int(record["misses"])
+        if requests == 0:
+            continue
+        failures = failures + 1 if misses / requests > MISS_SHARE_LIMIT else 0
+        if failures >= settings.stop_after:
+            break
+    return results
+
+
+def run_scan(
+    config: FleetSimConfig, bases: Sequence[RunKey], settings: ScanSettings, out_path: Path, workers: int
+) -> int:
+    """Scan every configuration of ``bases`` in parallel (one configuration per task); append the runs."""
+    stored: dict[RunKey, tuple[int, int]] = {}
+    if out_path.exists():
+        for record in read_jsonl(out_path):
+            stored[RunKey(**record["key"])] = (int(record["requests"]), int(record["misses"]))
+    lengths = load_episode_lengths(config.episode_lengths)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    written = 0
+    with (
+        out_path.open("a", encoding="utf-8") as out,
+        concurrent.futures.ProcessPoolExecutor(
+            max_workers=workers, initializer=_init_worker, initargs=(config, lengths)
+        ) as pool,
+    ):
+        futures = {pool.submit(_scan_config, base, settings, stored): base for base in bases}
+        for future in concurrent.futures.as_completed(futures):
+            base = futures[future]
+            records = future.result()
+            for record in records:
+                out.write(json.dumps(record, separators=(",", ":")) + "\n")
+            out.flush()
+            written += len(records)
+            sizes = [int(r["key"]["robots"]) for r in records]
+            LOG.info(
+                "scan %s/%s/%s/%s: %d runs, sizes up to %s",
+                base.network,
+                base.gpu,
+                base.batching,
+                base.strategy,
+                len(records),
+                max(sizes) if sizes else "-",
+            )
+    return written
+
+
 def _names(text: str | None) -> list[str] | None:
     return None if text is None else [part.strip() for part in text.split(",") if part.strip()]
 
@@ -800,6 +885,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--gpus", default=None, help="comma-separated subset of the config's GPU profiles")
     parser.add_argument("--batching", default=None, help="comma-separated subset of the batching profiles")
     parser.add_argument("--out", default=None, help="results file (default: from config)")
+    parser.add_argument(
+        "--scan", action="store_true", help="every fleet size 1..--scan-max per configuration"
+    )
+    parser.add_argument("--scan-max", type=int, default=128)
+    parser.add_argument("--scan-replications", type=int, default=3)
+    parser.add_argument(
+        "--scan-stop-after", type=int, default=3, help="consecutive sizes failing criterion (1)"
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -812,7 +905,14 @@ def main(argv: list[str] | None = None) -> int:
         sizes = None if args.sizes is None else [int(s) for s in args.sizes.split(",") if s.strip()]
         keys = grid(config, sizes, _names(args.networks), _names(args.gpus), _names(args.batching))
         workers = args.workers if args.workers is not None else (config.workers or os.cpu_count() or 1)
-        run_grid(config, keys, Path(args.out or config.results_path), max(1, workers))
+        if args.scan:
+            if args.out is None:
+                raise ConfigError("--scan needs --out (a results file of its own)")
+            bases = list(dict.fromkeys(replace(key, robots=1, replication=0) for key in keys))
+            settings = ScanSettings(args.scan_max, args.scan_replications, args.scan_stop_after)
+            run_scan(config, bases, settings, Path(args.out), max(1, workers))
+        else:
+            run_grid(config, keys, Path(args.out or config.results_path), max(1, workers))
     except ConfigError as exc:
         LOG.error("%s", exc)
         return 2

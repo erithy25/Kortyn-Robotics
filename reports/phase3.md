@@ -240,6 +240,7 @@ Alle Einträge sind vor der Auswertung der jeweils betroffenen Ergebnisse geschr
 | 11:43 | 0.5 GPU-Profile | Zusätzliches Profil „RTX 4090 kompiliert“ (`torch.compile`) als Sensitivität | Eager-PyTorch ist bei Batch 1 vom Kernel-Start-Overhead dominiert; kompiliert sinkt s₁ auf etwa ein Viertel. Zeigt, wie stark die Kapazität von der Software abhängt | Ein weiteres Modell-Profil, keine geänderte Schwelle |
 | 11:47 | Transparenz | Vor der Festlegung der Profile lief ein Geschwindigkeitstest des Simulators (9 Läufe mit Platzhalterwerten s₁ = 160 ms, β = 0,25, Strategien a, b, d). Er diente nur der Laufzeitplanung und floss nicht in die Profile ein | Vollständigkeit | Keine |
 | 11:47 | Durchführung | Zeitangaben dieses Abschnitts sind die Commit-Zeiten (vorher geschätzte Uhrzeiten korrigiert) | Genauigkeit | Keine |
+| 11:53 | 0.6 Ergänzung 1–128 | Der Scan über alle Flottengrößen 1–128 läuft nur im Standardnetz Büro-WLAN, mit 3 Wiederholungen je Größe, ohne das Validierungsprofil, und bricht je Konfiguration ab, sobald Kriterium (1) bei 3 aufeinanderfolgenden Größen verletzt ist. Das Raster 1–32 mit 10 Wiederholungen bleibt unverändert | Laufzeit: ohne Abbruch wären es > 16 000 Läufe | Ergänzung ohne Einfluss auf die Kapazität im Raster |
 
 ## Festlegung der Brain-Profile (vor der ersten Warteschlangen-Simulation)
 

@@ -281,3 +281,26 @@ def test_phase3_fleet_config_loads() -> None:
     assert config.validation.gpu == "validierung"
     assert config.prediction is not None
     assert config.prediction.levels[0].latency_ms == 0.0
+
+
+def test_scan_stops_after_consecutive_overload(tmp_path: Path) -> None:
+    from kortyn.fleet import ScanSettings, run_scan
+
+    config = small_config(
+        tmp_path, gpus={"slow": GpuConfig(s1_ms=400.0)}, horizon_s=60.0, window_start_s=10.0
+    )
+    out = tmp_path / "scan.jsonl"
+    base = RunKey("buero_wlan", "slow", "keiner", "a", 1, 0)
+    written = run_scan(
+        config, [base], ScanSettings(max_size=12, replications=1, stop_after=2), out, workers=1
+    )
+    sizes = sorted(json.loads(line)["key"]["robots"] for line in out.read_text().splitlines())
+    assert written == len(sizes)
+    # FIFO with 0.4 s per plan every 1.25 s: overloaded from 4 robots on; two failing sizes in a row stop it
+    assert sizes[0] == 1
+    assert max(sizes) < 12
+    assert (
+        run_scan(config, [base], ScanSettings(max_size=12, replications=1, stop_after=2), out, workers=1) == 0
+    )
+    with pytest.raises(ConfigError):
+        ScanSettings(max_size=0)
