@@ -721,7 +721,13 @@ def figure_miss_share(
     ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:.0f}"))
     ax.set_xlabel("Flottengröße (Roboter)")
     ax.set_ylabel("Anfragen über Budget")
-    top = header(fig, layout, title, "Werte unter 0,01 % sind am unteren Rand dargestellt.")
+    top = header(
+        fig,
+        layout,
+        title,
+        f"Batching {BATCHING_NAMES.get(batching, batching)}, {NETWORK_NAMES.get(network, network)}. "
+        "Werte unter 0,01 % sind am unteren Rand dargestellt.",
+    )
     header_legend(fig, layout, handles, ncol=3, top_in=top)
     fig.savefig(path, dpi=DPI)
     plt.close(fig)
@@ -974,7 +980,7 @@ def build(args: argparse.Namespace) -> list[str]:
         lines += ["## Schritt 4: Kapazität", ""]
         for network in fleet.networks:
             lines += [
-                f"### Netz {network}, Batching realistisch",
+                f"### {NETWORK_NAMES.get(network, network)}, Batching realistisch",
                 "",
                 *capacity_table(table, fleet, network, "realistisch"),
                 "",
@@ -1002,7 +1008,7 @@ def build(args: argparse.Namespace) -> list[str]:
                     gpu,
                     "realistisch",
                     out / name,
-                    f"Budget-Verletzungen: {gpu_label(fleet, gpu)}, Batching realistisch, Büro-WLAN",
+                    f"Budget-Verletzungen: {gpu_label(fleet, gpu)}",
                 )
                 lines += [f"![Budget-Verletzungen {gpu}]({name})", ""]
         queue_only = queue_only_lookup(capacity, fleet)
@@ -1015,7 +1021,7 @@ def build(args: argparse.Namespace) -> list[str]:
         ]
         for network in fleet.networks:
             lines += [
-                f"**Netz {network}, Batching realistisch:**",
+                f"**{NETWORK_NAMES.get(network, network)}, Batching realistisch:**",
                 "",
                 *capacity_table(queue_only, fleet, network, "realistisch"),
                 "",
