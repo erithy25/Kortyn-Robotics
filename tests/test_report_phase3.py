@@ -166,6 +166,7 @@ def test_report_builds_every_section(tmp_path: Path) -> None:
     ):
         assert heading in text, heading
     assert "Regel 1.4: JPEG q90" in text
+    assert "(„put" in text  # the selected tasks are named (built-in LIBERO-Long instructions)
     assert "1.3 Kalt- gegen Warmstart" in text
     assert "mit Roboter-Rechner (Ergänzung)" in text  # supplement next to the pre-registered cost
     assert (out / "phase3_dosis_wirkung.png").stat().st_size > 10_000

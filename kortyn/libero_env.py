@@ -44,6 +44,19 @@ ASSETS_REPO_ID = "lerobot/libero-assets"
 ASSET_SUBDIRS = ("articulated_objects", "stable_scanned_objects", "turbosquid_objects", "stable_hope_objects")
 GRIPPER_OPEN = -1.0  # LIBERO's gripper command for "open" (LeRobot's settling no-op uses it as well)
 ACTION_DIM = 7  # end-effector delta position (3) + delta rotation (3) + gripper (1)
+# LIBERO-Long (``libero_10``) instructions in LIBERO's task order: reports name tasks without LIBERO
+LIBERO_10_TASKS = (
+    "put both the alphabet soup and the tomato sauce in the basket",
+    "put both the cream cheese box and the butter in the basket",
+    "turn on the stove and put the moka pot on it",
+    "put the black bowl in the bottom drawer of the cabinet and close it",
+    "put the white mug on the left plate and put the yellow and white mug on the right plate",
+    "pick up the book and place it in the back compartment of the caddy",
+    "put the white mug on the plate and put the chocolate pudding to the right of the plate",
+    "put both the alphabet soup and the cream cheese box in the basket",
+    "put both moka pots on the stove",
+    "put the yellow and white mug in the microwave and close it",
+)
 # Simulators kept alive per env object. One LIBERO simulator with its render context holds ~1.1-1.5 GB;
 # consecutive episodes of a run mostly share a task, so rebuilding on a task switch is rare.
 MAX_CACHED_TASKS = 1
@@ -118,6 +131,18 @@ def prepare_libero(settings: LiberoEnvConfig) -> None:
     configure_rendering()
     ensure_libero_config()
     ensure_libero_assets(settings.assets_revision)
+
+
+def task_language(suite: str, task_id: int) -> str:
+    """Instruction of a LIBERO task: built in for ``libero_10``, else from LIBERO if installed, else ""."""
+    if suite == "libero_10" and 0 <= task_id < len(LIBERO_10_TASKS):
+        return LIBERO_10_TASKS[task_id]
+    try:
+        from lerobot.envs.libero import _get_suite
+
+        return str(_get_suite(suite).get_task(task_id).language)
+    except (ImportError, AttributeError, IndexError, KeyError, ValueError):  # no LIBERO, unknown suite/task
+        return ""
 
 
 def episode_slot(settings: LiberoEnvConfig, seed: int) -> tuple[int, int, int]:

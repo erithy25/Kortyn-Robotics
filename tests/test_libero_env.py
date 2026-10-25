@@ -13,10 +13,12 @@ import yaml
 from kortyn.config import ConfigError, EnvConfig, LiberoEnvConfig
 from kortyn.libero_env import (
     ASSET_SUBDIRS,
+    LIBERO_10_TASKS,
     ensure_libero_assets,
     ensure_libero_config,
     episode_slot,
     libero_default_paths,
+    task_language,
 )
 from kortyn.sim_env import EnvError
 
@@ -88,6 +90,21 @@ def test_default_paths_are_libero_defaults(tmp_path: Path) -> None:
     assert paths["init_states"].endswith("/./init_files")
     assert paths["datasets"].endswith("/../datasets")
     assert paths["assets"].endswith("/./assets")
+
+
+def test_task_language_built_in_for_libero_long() -> None:
+    assert task_language("libero_10", 8) == "put both moka pots on the stove"
+    assert task_language("libero_10", 0) == LIBERO_10_TASKS[0]
+    assert task_language("libero_10", 10) == ""  # no such task: the report shows the id only
+    assert task_language("no_such_suite", 0) == ""
+
+
+@needs_libero
+def test_built_in_task_names_match_libero() -> None:
+    from lerobot.envs.libero import _get_suite
+
+    suite = _get_suite("libero_10")
+    assert tuple(suite.get_task(i).language for i in range(len(LIBERO_10_TASKS))) == LIBERO_10_TASKS
 
 
 @needs_libero

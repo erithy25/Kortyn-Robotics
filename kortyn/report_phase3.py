@@ -46,6 +46,7 @@ from kortyn.economics import (
     onboard_cost,
 )
 from kortyn.fleet import FleetSimConfig, load_fleet_config
+from kortyn.libero_env import episode_slot, task_language
 from kortyn.phase3_steps import (
     Episode,
     Level,
@@ -175,7 +176,6 @@ def pilot_section(pilot: PilotData, task_names: Mapping[int, str]) -> list[str]:
         "| Aufgabe | sync25 | sync50 | lerobot-eval | Median-Länge erfolgreicher Episoden (sync25) |",
         "|---|---:|---:|---:|---:|",
     ]
-    from kortyn.libero_env import episode_slot
 
     def per_task(values: Mapping[int, bool] | None, task: int) -> str:
         if values is None:
@@ -189,7 +189,7 @@ def pilot_section(pilot: PilotData, task_names: Mapping[int, str]) -> list[str]:
         name = task_names.get(task, "")
         median = stats[task].median_success_steps
         lines.append(
-            f"| {task} {name} | {per_task(sync25, task)} | {per_task(sync50, task)} | "
+            f"| {task}{f': {name}' if name else ''} | {per_task(sync25, task)} | {per_task(sync50, task)} | "
             f"{per_task(pilot.lerobot, task)} | {'–' if median is None else f'{median:.0f} Takte'} |"
         )
 
@@ -206,7 +206,10 @@ def pilot_section(pilot: PilotData, task_names: Mapping[int, str]) -> list[str]:
         selection = select_tasks(list(stats.values()))
         lines.append(
             f"**Aufgabenwahl (Regel 1.2):** Band {selection.band[0]}–{selection.band[1]} Erfolge; gewählt: "
-            + ", ".join(f"Aufgabe {t} ({task_names.get(t, '')})" for t in selection.selected)
+            + ", ".join(
+                f"Aufgabe {t} („{task_names[t]}“)" if task_names.get(t) else f"Aufgabe {t}"
+                for t in selection.selected
+            )
             + "."
         )
     except StepError as exc:
@@ -645,16 +648,9 @@ def build(args: argparse.Namespace) -> list[str]:
     ]
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    task_names: dict[int, str] = {}
     pilot = load_pilot(Path(args.pilot_config))
     if pilot is not None:
-        try:
-            from lerobot.envs.libero import _get_suite  # only names; optional
-
-            suite = _get_suite(pilot.libero.suite)
-            task_names = {t: f"({suite.get_task(t).language})" for t in pilot.libero.task_ids}
-        except Exception:
-            task_names = {}
+        task_names = {t: task_language(pilot.libero.suite, t) for t in pilot.libero.task_ids}
         lines += ["## Schritt 1", "", *pilot_section(pilot, task_names), ""]
     main_config_path = Path(args.main_config)
     if main_config_path.exists():
@@ -676,7 +672,9 @@ def build(args: argparse.Namespace) -> list[str]:
             decision = (
                 "wird Standard" if jpeg_becomes_standard(comparison) else "bleibt aus, roh bleibt Standard"
             )
-            notes.append(f"Regel 1.4: JPEG q90 {decision}.")
+            notes.append(
+                f"Regel 1.4: JPEG q90 {decision} ({comparison.pairs} von 100 Episodenpaaren ausgewertet)."
+            )
         if warm and cold:
             rows.append(
                 comparison_row(
