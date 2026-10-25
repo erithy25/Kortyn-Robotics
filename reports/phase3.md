@@ -256,7 +256,7 @@ als Abweichung mit Zeitpunkt ausgewiesen, bevor die betroffenen Läufe starten.
 | Stufe 1, Scan 1–128 | parallel | 16:22–21:51 |
 | Stufe 2 und Fallauswahl | Minuten | 20:02–20:03 |
 | Validierung, 4 Fälle × 60 Episoden (Kürzung 3) | ≈ 2 h | 20:03–22:40 |
-| **Gesamt bis Report** | ≈ 13 h | **09:42–23:15, ≈ 13,5 h (Kürzungen 1–3 umgesetzt)** |
+| **Gesamt bis Report** | ≈ 13 h | **09:42–22:50, ≈ 13,1 h (Kürzungen 1–3 umgesetzt)** |
 
 ## Festlegung der Brain-Profile (vor der ersten Warteschlangen-Simulation)
 

@@ -418,7 +418,7 @@ uv run python -m kortyn.report_phase3       # reports/phase3_data.md + reports/p
 Laufzeiten auf der Messmaschine (4-vCPU-Xeon, keine GPU): Kalibrierung ≈ 10 min, alle Läufe ≈ 4 h 40 min (650
 Episoden: `kalibriert` 400, `ddim10` 250), LeRobot-Referenz DDPM-100 ≈ 1 h; Phase 2: Stufe 1 ≈ 2 h 50 min,
 Stufe 2 ≈ 4 h 25 min, Sync-Ablation ≈ 35 min; Phase 3a: Validierung ≈ 6 h, SmolVLA ≈ 4,7 h mit 4 Workern
-(Aufschlüsselung in [`reports/phase3a.md`](reports/phase3a.md), Abschnitt 9); Phase 3 ≈ 13,5 h mit 1–3 Workern
+(Aufschlüsselung in [`reports/phase3a.md`](reports/phase3a.md), Abschnitt 9); Phase 3 ≈ 13 h mit 1–3 Workern
 (Pilot und `lerobot-eval` ≈ 3,7 h, Dosis-Wirkung ≈ 5,3 h, Validierung ≈ 2,6 h; Verlauf in
 [`reports/phase3.md`](reports/phase3.md), Abschnitt „Tatsächlicher Verlauf“). Mit einer NVIDIA-GPU ist die
 Inferenz schneller; die Echtzeit-Episoden dauern trotzdem ihre 10–30 s Simulationszeit.
