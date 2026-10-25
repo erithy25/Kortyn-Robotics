@@ -410,6 +410,10 @@ class BrainJob:
     t_start: float | None = None
     t_done: float | None = None
     result: ComputeResult | None = None
+    # Phase 3: when the robot's action queue runs dry (its start-of-starvation tick); deadline schedulers
+    # order by it. None = unknown (phase 1-3a agents do not report it, FIFO ignores it).
+    due: float | None = None
+    batch_size: int = 1  # requests served together with this one (1 = no batching)
 
 
 class Scheduler(Protocol):
@@ -475,6 +479,24 @@ def load_delta(before: dict[str, float], after: dict[str, float]) -> dict[str, f
         "queue_wait_ms": after["queue_wait_ms"] - before["queue_wait_ms"],
         "window_ms": after["uptime_ms"] - before["uptime_ms"],
     }
+
+
+class Brain(Protocol):
+    """What a channel needs from a Brain in virtual time (:class:`VirtualBrain`, phase 3's batching Brain).
+
+    The members are read-only so that a Brain may keep richer counters (a subclass of ``BrainCounters``).
+    """
+
+    @property
+    def counters(self) -> BrainCounters: ...
+
+    @property
+    def compute_ms(self) -> float: ...
+
+    @property
+    def cache_hits(self) -> int: ...
+
+    def submit(self, job: BrainJob) -> None: ...
 
 
 class VirtualBrain:
@@ -557,8 +579,16 @@ class Channel(Protocol):
         ...
 
     def send(
-        self, request: pb.InferRequest, t_obs: float, t_send: float, timeout_s: float, deliver: Deliver
-    ) -> None: ...
+        self,
+        request: pb.InferRequest,
+        t_obs: float,
+        t_send: float,
+        timeout_s: float,
+        deliver: Deliver,
+        due: float | None = None,
+    ) -> None:
+        """Send a request; ``due`` = when the robot's queue runs dry (for deadline schedulers)."""
+        ...
 
     def episode_start(self, warmup_delivery: float) -> float:
         """Episode clock start t0, given the time the warm-up plan arrived."""
@@ -617,7 +647,7 @@ class ModelChannel:
     def __init__(
         self,
         sim: Simulation,
-        brain: VirtualBrain,
+        brain: Brain,
         link: VirtualLink,
         timing: ModelTiming,
         episode_seed: int,
@@ -656,7 +686,13 @@ class ModelChannel:
         return delivery
 
     def send(
-        self, request: pb.InferRequest, t_obs: float, t_send: float, timeout_s: float, deliver: Deliver
+        self,
+        request: pb.InferRequest,
+        t_obs: float,
+        t_send: float,
+        timeout_s: float,
+        deliver: Deliver,
+        due: float | None = None,
     ) -> None:
         obs_step = int(request.obs_timestep)
         outstanding = _Outstanding(deliver)
@@ -671,6 +707,7 @@ class ModelChannel:
             service_s=self._draw_s(self._timing.service, "service", obs_step),
             deadline=deadline,
             on_done=partial(self._on_done, outstanding),
+            due=due,
         )
         self._sim.at(arrival, Priority.BRAIN, partial(self._brain.submit, job))
         self._sim.at(
@@ -844,7 +881,13 @@ class ReplayChannel:
         }
 
     def send(
-        self, request: pb.InferRequest, t_obs: float, t_send: float, timeout_s: float, deliver: Deliver
+        self,
+        request: pb.InferRequest,
+        t_obs: float,
+        t_send: float,
+        timeout_s: float,
+        deliver: Deliver,
+        due: float | None = None,
     ) -> None:
         logged, exact = self._logged(request)
         self._served += 1

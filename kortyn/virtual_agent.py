@@ -46,6 +46,7 @@ from kortyn.metrics import RequestRecord, TickSeries
 from kortyn.proto import kortyn_brain_pb2 as pb
 from kortyn.typing_utils import FloatArray
 from kortyn.virtual_time import (
+    Brain,
     Channel,
     Command,
     Compute,
@@ -284,6 +285,24 @@ class VirtualTimeAgent(AgentCore):
         }
         return outcome
 
+    def episode_process(
+        self,
+        ctx: EpisodeContext,
+        strategy: StrategyConfig,
+        sim: Simulation,
+        channel: Channel,
+        tick_timing: TickTiming,
+        brain: Brain | None,
+    ) -> Generator[Command, Any, EpisodeOutcome]:
+        """One real-time episode as a process of a simulation shared with other robots (phase 3 fleets).
+
+        The episode clock starts when the process starts; ``channel`` connects this robot to ``brain``.
+        """
+        if ctx.mode != "realtime":
+            raise ValueError(f"fleet episodes run in real time, got mode {ctx.mode!r}")
+        self._next_request_id = 1
+        return self._realtime(ctx, strategy, sim, channel, tick_timing, brain)
+
     def _realtime(
         self,
         ctx: EpisodeContext,
@@ -291,7 +310,7 @@ class VirtualTimeAgent(AgentCore):
         sim: Simulation,
         channel: Channel,
         tick_timing: TickTiming,
-        brain: VirtualBrain | None,
+        brain: Brain | None,
     ) -> Generator[Command, Any, EpisodeOutcome]:
         cfg = self.config
         env = self.env
@@ -320,9 +339,11 @@ class VirtualTimeAgent(AgentCore):
                 inbox.append(delivery)
             arrived[delivery.request_id].trigger(delivery)
 
-        def send(request: pb.InferRequest, t_obs: float, t_send: float, timeout_s: float) -> None:
+        def send(
+            request: pb.InferRequest, t_obs: float, t_send: float, timeout_s: float, due: float | None = None
+        ) -> None:
             arrived[int(request.request_id)] = Signal(sim)
-            channel.send(request, t_obs, t_send, timeout_s, deliver)
+            channel.send(request, t_obs, t_send, timeout_s, deliver, due=due)
 
         if cfg.start_mode == "warm":
             request = self._build_request(history, 0, ctx.seed)
@@ -492,7 +513,9 @@ class VirtualTimeAgent(AgentCore):
                 records[record.request_id] = record
                 released[record.request_id] = tick_start
                 last_requested_step = k
-                send(request, tick_start, t_send, cfg.request_timeout_s)
+                # The queue covers steps k+1 .. k+r: from tick k+r+1 on the robot starves (phase-3 deadline).
+                due = t0 + (k + actions.available(k + 1) + 1) * dt
+                send(request, tick_start, t_send, cfg.request_timeout_s, due=due)
                 in_flight = record.request_id
 
             # 4. advance the simulation by exactly one control step
