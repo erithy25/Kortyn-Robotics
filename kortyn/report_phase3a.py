@@ -966,7 +966,7 @@ def realized_power(tasks: Sequence[TaskData]) -> list[str]:
         rows = [
             noise
             for label, run in data.runs.items()
-            if label_parts(label)[0] in (*GPU_TIMINGS, "grenzfall")
+            if label_parts(label)[0] in GPU_TIMINGS  # the M1 boundary case fails by construction
             and (noise := pair_noise(label, reference, run)) is not None
         ]
         if not rows:
@@ -1583,9 +1583,10 @@ def write_report(results: Path, reports: Path) -> Path:
             lines += [
                 "### Realisierte Power (Rauschen der SmolVLA-Vergleiche)",
                 "",
-                "Je Aufgabe über alle Echtzeit-Bedingungen gemittelt: Anteil der Seeds mit verschiedenem Ausgang "
-                "gegenüber Sync-25 und Streuung der Reward-Differenzen; daraus der kleinste Effekt, den die "
-                "gemessene Seed-Zahl mit 80 % Power (α = 5 %, zweiseitig) erkennt.",
+                "Je Aufgabe über die zwölf GPU-Bedingungen gemittelt (ohne den M1-Grenzfall, der konstruktionsbedingt "
+                "scheitert): Anteil der Seeds mit verschiedenem Ausgang gegenüber Sync-25 und Streuung der "
+                "Reward-Differenzen; daraus der kleinste Effekt, den die gemessene Seed-Zahl mit 80 % Power "
+                "(α = 5 %, zweiseitig) erkennt.",
                 "",
                 *power,
                 "",
