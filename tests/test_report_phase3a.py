@@ -321,3 +321,53 @@ def test_transport_table_compares_on_the_seeds_all_variants_share():
     assert rows[0].split("|")[4].strip().startswith("100 %")  # the reference on the common seeds
     assert rows[1].split("|")[4].strip().startswith("50 %")
     assert rows[1].split("|")[5].strip().startswith("-50 pp")
+
+
+def test_pooled_effects_split_by_latency_budget_and_compare_tasks():
+    from kortyn.report_phase3a import (
+        EffectFamily,
+        effect_summary_table,
+        latency_budget_ms,
+        latency_effects,
+        pooled_difference,
+        pooled_effects,
+    )
+
+    assert latency_budget_ms({"agent": {"refill_threshold": 6}}, 10.0) == 700.0
+    assert latency_budget_ms({"agent": {"refill_threshold": 24}}, 80.0) == 312.5
+    seeds = range(1000, 1040)
+    reference = run([episode(s, success=True) for s in seeds])
+    fast = run([episode(s, success=True) for s in seeds])  # within the budget: no loss
+    slow = run([episode(s, success=s % 2 == 0) for s in seeds])  # above the budget: -50 pp
+    boundary = run([episode(s, success=False) for s in seeds])  # excluded from the pooled effects
+
+    def family(name, slow_run):
+        return EffectFamily(
+            name,
+            reference,
+            {"schnell__gut": fast, "langsam__gut": slow_run, "grenzfall__gut": boundary},
+            312.5,
+            {"schnell__gut": 105.0, "langsam__gut": 320.0, "grenzfall__gut": 730.0},
+        )
+
+    static = family("drawer-close-v3", fast)
+    dynamic = family("coffee-push-v3", slow)
+    effects = {(e.family, e.regime): e for e in pooled_effects([static, dynamic])}
+    assert effects[("coffee-push-v3", "alle Bedingungen")].delta.value == pytest.approx(-0.25)
+    assert effects[("coffee-push-v3", "alle Bedingungen")].conditions == 2  # boundary case excluded
+    assert effects[("coffee-push-v3", "Latenz im Budget")].delta.value == pytest.approx(0.0)
+    assert effects[("coffee-push-v3", "Latenz über Budget")].delta.value == pytest.approx(-0.5)
+    assert effects[("drawer-close-v3", "Latenz über Budget")].delta.value == pytest.approx(0.0)
+    difference = pooled_difference(
+        effects[("drawer-close-v3", "Latenz über Budget")], effects[("coffee-push-v3", "Latenz über Budget")]
+    )
+    assert difference.value == pytest.approx(-0.5)
+    assert difference.high < 0
+    table = effect_summary_table(list(effects.values()))
+    assert any(
+        line.startswith("| coffee-push-v3 − drawer-close-v3 | Latenz über Budget | ✗") for line in table
+    )
+    points = {p.condition: p for p in latency_effects([dynamic])}
+    assert points["langsam__gut"].latency_budgets == pytest.approx(320.0 / 312.5)
+    assert points["langsam__gut"].delta == pytest.approx(-0.5)
+    assert points["grenzfall__gut"].relative_success == 0.0

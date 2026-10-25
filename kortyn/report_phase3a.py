@@ -1061,12 +1061,13 @@ class EffectPoint:
     latency_ms: float  # median end-to-end latency
     relative_success: float  # success / success of the matched sync reference
     success: float
-    period_ms: float  # time between two plans when the latency fits (refill period of the agent)
+    budget_ms: float  # latency the action queue bridges without starving (refill threshold + 1 ticks)
+    delta: float = math.nan  # paired success difference to the matched sync reference
 
     @property
-    def latency_periods(self) -> float:
-        """Latency in units of the planning period: how stale a plan is compared with how long it lasts."""
-        return self.latency_ms / self.period_ms
+    def latency_budgets(self) -> float:
+        """Latency in units of the latency budget: above 1 the robot runs out of actions in every cycle."""
+        return self.latency_ms / self.budget_ms
 
 
 def plan_period_ms(meta: dict[str, Any], fps: float) -> float:
@@ -1074,6 +1075,13 @@ def plan_period_ms(meta: dict[str, Any], fps: float) -> float:
     agent = meta.get("agent", {})
     ticks = int(agent.get("actions_per_chunk", 15)) - int(agent.get("refill_threshold", 6)) - 1
     return 1000.0 * ticks / fps
+
+
+def latency_budget_ms(meta: dict[str, Any], fps: float) -> float:
+    """Latency the queue bridges without starving: a request leaves with ``refill_threshold`` actions left,
+    so a plan that arrives within ``refill_threshold + 1`` ticks is in time (PushT 700 ms, SmolVLA 312.5 ms)."""
+    agent = meta.get("agent", {})
+    return 1000.0 * (int(agent.get("refill_threshold", 6)) + 1) / fps
 
 
 def read_meta(directory: Path) -> dict[str, Any]:
@@ -1084,44 +1092,193 @@ def read_meta(directory: Path) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
-def latency_effects(results: Path, tasks: Sequence[TaskData]) -> list[EffectPoint]:
-    points: list[EffectPoint] = []
+@dataclass
+class EffectFamily:
+    """One policy/task with its matched sync reference and its real-time conditions (same seeds)."""
+
+    name: str
+    reference: Run
+    conditions: dict[str, Run]
+    budget_ms: float
+    latency_ms: dict[str, float]  # median end-to-end latency per condition
+
+
+def median_e2e_ms(run: Run) -> float:
+    values = [float(r.e2e_ms) for r in run.requests_of(("realtime",)) if r.e2e_ms is not None]
+    return float(np.median(values)) if values else math.nan
+
+
+def effect_families(results: Path, tasks: Sequence[TaskData]) -> list[EffectFamily]:
+    """PushT in simulation time (both Brain profiles, latency model) and the SmolVLA tasks."""
+    families: list[EffectFamily] = []
     model = results / "phase3a" / "validation_model"
     for profile in PROFILES:
         sync = load_run(model / profile / "modell__referenz_sync")
         if sync is None:
             continue
-        base = pooled("success", sync.ordered())
-        period = plan_period_ms(read_meta(model / profile), sync.ordered()[0].fps)
-        for scenario in NETWORK_SCENARIOS:
-            run = load_run(model / profile / f"modell__{scenario}")
-            if run is None or base <= 0:
-                continue
-            e2e = [float(r.e2e_ms) for r in run.requests_of(("realtime",)) if r.e2e_ms is not None]
-            success = pooled("success", run.ordered())
-            points.append(
-                EffectPoint(
-                    f"PushT {profile}", scenario, float(np.median(e2e)), success / base, success, period
-                )
-            )
+        conditions = {
+            scenario: run
+            for scenario in NETWORK_SCENARIOS
+            if (run := load_run(model / profile / f"modell__{scenario}")) is not None
+        }
+        budget = latency_budget_ms(read_meta(model / profile), sync.ordered()[0].fps)
+        latencies = {label: median_e2e_ms(run) for label, run in conditions.items()}
+        families.append(EffectFamily(f"PushT {profile}", sync, conditions, budget, latencies))
     for data in tasks:
         sync = data.runs.get(SYNC_MATCHED)
         if sync is None:
             continue
-        base = pooled("success", sync.ordered())
-        period = plan_period_ms(data.meta, sync.ordered()[0].fps)
-        for label, run in data.runs.items():
-            timing, _scenario = label_parts(label)
-            if timing not in (*GPU_TIMINGS, "grenzfall") or base <= 0:
-                continue
-            e2e = [float(r.e2e_ms) for r in run.requests_of(("realtime",)) if r.e2e_ms is not None]
-            if not e2e:
+        conditions = {
+            label: run
+            for label, run in data.runs.items()
+            if label_parts(label)[0] in (*GPU_TIMINGS, "grenzfall")
+        }
+        budget = latency_budget_ms(data.meta, sync.ordered()[0].fps)
+        latencies = {label: median_e2e_ms(run) for label, run in conditions.items()}
+        families.append(EffectFamily(data.task, sync, conditions, budget, latencies))
+    return families
+
+
+def mean_paired_difference(reference: Run, run: Run) -> float:
+    seeds = sorted(set(reference.episodes) & set(run.episodes))
+    if not seeds:
+        return math.nan
+    return float(
+        np.mean([float(run.episodes[s].success) - float(reference.episodes[s].success) for s in seeds])
+    )
+
+
+def latency_effects(families: Sequence[EffectFamily]) -> list[EffectPoint]:
+    points: list[EffectPoint] = []
+    for family in families:
+        base = pooled("success", family.reference.ordered())
+        if base <= 0:
+            continue
+        for label, run in family.conditions.items():
+            if not math.isfinite(family.latency_ms[label]):
                 continue
             success = pooled("success", run.ordered())
             points.append(
-                EffectPoint(data.task, label, float(np.median(e2e)), success / base, success, period)
+                EffectPoint(
+                    family.name,
+                    label,
+                    family.latency_ms[label],
+                    success / base,
+                    success,
+                    family.budget_ms,
+                    mean_paired_difference(family.reference, run),
+                )
             )
     return points
+
+
+@dataclass(frozen=True)
+class PooledEffect:
+    """Mean paired success difference to the sync reference over a set of conditions of one family."""
+
+    family: str
+    regime: str
+    conditions: int
+    seeds: int
+    reference_success: float
+    delta: Interval  # percentile bootstrap over seeds (all conditions of a seed resampled together)
+    per_seed: tuple[float, ...]
+
+
+REGIMES: tuple[tuple[str, Callable[[float], bool]], ...] = (
+    ("alle Bedingungen", lambda ratio: True),
+    ("Latenz im Budget", lambda ratio: ratio <= 1.0),
+    ("Latenz über Budget", lambda ratio: ratio > 1.0),
+)
+
+
+def pooled_effect(
+    family: EffectFamily, regime: str, labels: Sequence[str], n_boot: int = N_BOOT, seed: int = 0
+) -> PooledEffect | None:
+    runs = [family.conditions[label] for label in labels]
+    if not runs:
+        return None
+    seeds = sorted(set(family.reference.episodes).intersection(*(set(r.episodes) for r in runs)))
+    if not seeds:
+        return None
+    per_seed = np.array(
+        [
+            np.mean(
+                [float(r.episodes[s].success) - float(family.reference.episodes[s].success) for r in runs]
+            )
+            for s in seeds
+        ]
+    )
+    rng = np.random.default_rng(seed)
+    boots = [float(per_seed[rng.integers(0, len(seeds), len(seeds))].mean()) for _ in range(n_boot)]
+    interval = Interval(
+        float(per_seed.mean()), float(np.percentile(boots, 2.5)), float(np.percentile(boots, 97.5))
+    )
+    reference = pooled("success", family.reference.ordered(seeds))
+    return PooledEffect(
+        family.name, regime, len(runs), len(seeds), reference, interval, tuple(map(float, per_seed))
+    )
+
+
+def pooled_effects(families: Sequence[EffectFamily]) -> list[PooledEffect]:
+    """Per family and regime (latency within / above the budget of the queue), the boundary case excluded."""
+    effects: list[PooledEffect] = []
+    for family in families:
+        labels = [label for label in family.conditions if not label.startswith("grenzfall")]
+        for regime, inside in REGIMES:
+            chosen = [label for label in labels if inside(family.latency_ms[label] / family.budget_ms)]
+            if (effect := pooled_effect(family, regime, chosen)) is not None:
+                effects.append(effect)
+    return effects
+
+
+def pooled_difference(a: PooledEffect, b: PooledEffect, n_boot: int = N_BOOT, seed: int = 0) -> Interval:
+    """(pooled drop of b) - (pooled drop of a) for two different tasks: independent bootstrap of the seeds."""
+    xa, xb = np.array(a.per_seed), np.array(b.per_seed)
+    rng = np.random.default_rng(seed)
+    boots = [
+        float(xb[rng.integers(0, len(xb), len(xb))].mean() - xa[rng.integers(0, len(xa), len(xa))].mean())
+        for _ in range(n_boot)
+    ]
+    return Interval(
+        float(xb.mean() - xa.mean()), float(np.percentile(boots, 2.5)), float(np.percentile(boots, 97.5))
+    )
+
+
+def effect_summary_table(effects: Sequence[PooledEffect]) -> list[str]:
+    lines = [
+        "| Aufgabe | Bedingungen | Anzahl | Seeds | Sync-Referenz | Ø Δ Erfolg gegen Sync [95-%-KI] |",
+        "|---|---|---:|---:|---:|---:|",
+    ]
+    for effect in effects:
+        lines.append(
+            f"| {effect.family} | {effect.regime} | {effect.conditions} | {effect.seeds} | "
+            f"{fmt_pct(effect.reference_success)} | {mark_interval(effect.delta)} {fmt_interval(effect.delta, 'pp')} |"
+        )
+    by_key = {(e.family, e.regime): e for e in effects}
+    pairs = (
+        ("drawer-close-v3", "coffee-push-v3"),
+        ("drawer-close-v3", "push-v3"),
+        ("push-v3", "coffee-push-v3"),
+    )
+    differences: list[str] = []
+    for regime, _ in REGIMES:
+        for first, second in pairs:
+            a, b = by_key.get((first, regime)), by_key.get((second, regime))
+            if a is None or b is None:
+                continue
+            interval = pooled_difference(a, b)
+            differences.append(
+                f"| {second} − {first} | {regime} | {mark_interval(interval)} {fmt_interval(interval, 'pp')} |"
+            )
+    if differences:
+        lines += [
+            "",
+            "| Unterschied der Verluste (zweite minus erste Aufgabe) | Bedingungen | Δ [95-%-KI] |",
+            "|---|---|---:|",
+            *differences,
+        ]
+    return lines
 
 
 def delta_difference(
@@ -1225,18 +1382,6 @@ def transport_table(tasks: Sequence[TaskData]) -> list[str]:
             )
         lines.append("")
     return lines
-
-
-def latency_slope(points: Sequence[EffectPoint], family: str, max_latency_ms: float) -> float | None:
-    """Least-squares slope of the relative success per 100 ms of median latency (latencies <= max)."""
-    chosen = [p for p in points if p.family == family and p.latency_ms <= max_latency_ms]
-    if len(chosen) < 3:
-        return None
-    x = np.array([p.latency_ms for p in chosen]) / 100.0
-    y = np.array([p.relative_success for p in chosen])
-    if np.ptp(x) == 0:
-        return None
-    return float(np.polyfit(x, y, 1)[0])
 
 
 # --------------------------------------------------------------------------------------------- figures
@@ -1408,8 +1553,8 @@ def figure_latency_effect(points: Sequence[EffectPoint], path: Path) -> None:
         layout,
         "Schadet Latenz SmolVLA mehr als PushT?",
         "Erfolgsquote relativ zur passenden synchronen Referenz gegen die mediane Ende-zu-Ende-Latenz, links in "
-        "ms, rechts in Planperioden (PushT: 8 Ticks bei 10 Hz = 800 ms, SmolVLA: 25 Ticks bei 80 Hz = 313 ms). "
-        "Jeder Punkt ist eine Bedingung (Netz-Szenario × Brain-Rechenzeit).",
+        "ms, rechts relativ zum Latenzbudget der Queue (PushT 700 ms, SmolVLA 312,5 ms; über 1 verhungert der "
+        "Roboter in jedem Zyklus). Jeder Punkt ist eine Bedingung (Netz-Szenario × Brain-Rechenzeit).",
     )
     palette = {
         "PushT kalibriert": REFERENCE_GRAY,
@@ -1421,8 +1566,8 @@ def figure_latency_effect(points: Sequence[EffectPoint], path: Path) -> None:
     markers = {"PushT kalibriert": "s", "PushT ddim10": "D"}
     for ax, attribute, xlabel in zip(
         axes[0],
-        ("latency_ms", "latency_periods"),
-        ("Mediane Ende-zu-Ende-Latenz (ms)", "Latenz in Planperioden"),
+        ("latency_ms", "latency_budgets"),
+        ("Mediane Ende-zu-Ende-Latenz (ms, logarithmisch)", "Latenz / Latenzbudget (logarithmisch)"),
         strict=True,
     ):
         for family in families:
@@ -1438,6 +1583,8 @@ def figure_latency_effect(points: Sequence[EffectPoint], path: Path) -> None:
                 label=family,
             )
         ax.axhline(1.0, color=MUTED, linewidth=1.0, linestyle=":")
+        if attribute == "latency_budgets":
+            ax.axvline(1.0, color=MUTED, linewidth=1.0, linestyle="--")
         ax.set_xscale("log")
         ax.set_xlabel(xlabel)
         percent_axis(ax)
@@ -1477,7 +1624,8 @@ def write_report(results: Path, reports: Path) -> Path:
     verdicts = {source: verdict(cases, source) for source, _ in SOURCES}
     noise, models = noise_rows(results)
     tasks = load_smolvla(results)
-    points = latency_effects(results, tasks)
+    families = effect_families(results, tasks)
+    points = latency_effects(families)
     figure_validation(cases, figures / "phase3a_validation.png")
     figure_latency_cdf(cases, figures / "phase3a_latency.png")
     figure_power(models, figures / "phase3a_power.png")
@@ -1600,12 +1748,21 @@ def write_report(results: Path, reports: Path) -> Path:
             "",
             "![Latenzwirkung](phase3a_latency_effect.png)",
             "",
+            "Mittlerer gepaarter Erfolgsverlust gegen die eigene Sync-Referenz, gemittelt über die Bedingungen einer "
+            "Aufgabe (ohne den M1-Grenzfall); Bootstrap über Seeds. Budget = Latenz, die die Queue ohne Starvation "
+            "überbrückt (PushT 700 ms, SmolVLA 312,5 ms); maßgeblich ist die mediane Latenz der Bedingung.",
+            "",
+            *effect_summary_table(pooled_effects(families)),
+            "",
+            "| Aufgabe | Bedingung | Mediane Latenz | Latenz / Budget | Erfolg | relativ zur Sync-Referenz | Δ Erfolg |",
+            "|---|---|---:|---:|---:|---:|---:|",
+            *[
+                f"| {p.family} | {p.condition} | {p.latency_ms:.0f} ms | {p.latency_budgets:.2f} | {fmt_pct(p.success)} "
+                f"| {fmt_pct(p.relative_success)} | {100 * p.delta:+.0f} pp |"
+                for p in sorted(points, key=lambda p: (p.family, p.latency_ms))
+            ],
+            "",
         ]
-        for family in dict.fromkeys(p.family for p in points):
-            slope = latency_slope(points, family, max_latency_ms=1000.0)
-            if slope is not None:
-                lines.append(f"- {family}: {100 * slope:+.1f} pp relativer Erfolg pro 100 ms (Latenz ≤ 1 s)")
-        lines.append("")
     reports.mkdir(parents=True, exist_ok=True)
     path = reports / "phase3a_data.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
