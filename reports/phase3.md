@@ -186,3 +186,51 @@ Ergänzend, ohne Einfluss auf die Kapazität im Raster: dieselbe Rechnung für j
 3. Dosis-Wirkungs-Kurven liegen vor.
 4. Die Validierung besteht, oder ich habe gestoppt und erklärt.
 5. `reports/phase3.md`, README und die Benchmark-Anleitung sind fertig.
+
+## Laufzeitschätzung und Kürzungen
+
+_Stand 25.10.2026, 11:15 UTC, nach dem Start des Piloten und vor allen Hauptläufen._
+
+**Gemessene Kosten:** Eine Inferenz von SmolVLA auf der LIBERO-Eingabe kostet auf einem CPU-Kern 3,7 s,
+einschließlich Simulator. Ein zweiter Torch-Thread beschleunigt sie nicht (4,0 s je Anfrage). Die Rechenzeit
+skaliert also nur über Prozesse, und deren Zahl begrenzt der Arbeitsspeicher. Das Limit liegt bei 13,4 GB
+(cgroup), nicht bei den 16 GB der Maschine.
+
+| Block | Episoden | Anfragen (≈) | CPU-h |
+|---|---:|---:|---:|
+| Pilot `sync25` + `sync50` (Rest) | 186 | 2 450 | 2,5 |
+| Hauptstichprobe `sync25` roh + JPEG q90 | 200 | 3 400 | 3,5 |
+| Warmstart bei 1 000 ms | 100 | 1 600 | 1,6 |
+| Dosis-Wirkung, 8 Bedingungen | 800 | 12 800 | 13,0 |
+| Validierung, 4 Fälle | 400 | 6 800 | 6,9 |
+| **Summe Kortyn-Rollouts** | **1 686** | **27 050** | **27,5** |
+| `lerobot-eval` (Rest, parallel, ein Prozess) | ≈ 88 | – | ≈ 3,8 |
+
+**Wandzeit:** Bis `lerobot-eval` fertig ist (≈ 13:45 UTC), laufen 2 Kortyn-Worker, danach 3–4. Das ergibt
+≈ 8–9,5 h ab jetzt, also ≈ 11–12,5 h für Phase 3 insgesamt (Start 09:42 UTC). Der Pilot mit `sync10` käme mit
+≈ 4,2 CPU-h (≈ 1,4 h) dazu. Damit läge die Gesamtzeit über 12 h.
+
+**Kürzungen:**
+
+| | Kürzung | Ersparnis | Was verloren geht | Status |
+|---|---|---|---|---|
+| 1 | Pilot ohne `sync10` | ≈ 1,4 h | Gemessener Erfolg bei 10 Aktionen je Plan. Der Report nennt stattdessen den Literaturwert; die Warteschlangen-Kapazität für 10 Aktionen je Plan bleibt erhalten, ohne Erfolgsvorhersage | **umgesetzt** |
+| 2 | Dosis-Wirkung ohne 250 ms (6 Stufen + Jitter, Vorgabe ≥ 5) | ≈ 0,5 h | Ein Stützpunkt im flachen Bereich unter dem Budget | Reserve |
+| 3 | Validierung mit ≈ 60 statt ≈ 100 Episoden je Fall | ≈ 0,9 h | Teststärke der Validierung (breitere KI) | Reserve |
+
+Kürzungen 2 und 3 setze ich nur ein, wenn der Zeitplan um mehr als eine Stunde rutscht. Sie werden dann unten
+als Abweichung mit Zeitpunkt ausgewiesen, bevor die betroffenen Läufe starten.
+
+## Abweichungen und Präzisierungen der Präregistrierung
+
+Alle Einträge sind vor der Auswertung der jeweils betroffenen Ergebnisse geschrieben und committet.
+
+| Zeit (UTC) | Punkt | Abweichung oder Präzisierung | Grund | Auswirkung |
+|---|---|---|---|---|
+| 11:15 | 1.1 Pilot | `sync10` entfällt (Kürzung 1) | Laufzeit; `sync10` entscheidet nichts | Kein Gate betroffen |
+| 11:15 | Durchführung | Parallelität 2–4 Worker statt 4. Das Modell wird im Hauptprozess geladen und per Fork an die Worker vererbt (`--share-model`); jeder Worker gibt freien Heap nach dem Laden und nach jedem Seed zurück | Speicherlimit 13,4 GB; drei Abbrüche durch den OOM-Killer | Keine auf Ergebnisse: Fork-Worker liefern bit-gleiche Episoden wie Spawn-Worker (Test mit PushT, Stichprobe LIBERO Seed 1000 `sync50`: 1/1 Episoden-, 11/11 Anfrage-Records identisch) |
+| 11:15 | Durchführung | Alle Kortyn-Rollouts mit genau einem Torch-Thread je Prozess | Fließkomma-Ergebnisse hängen von der Threadzahl ab (Seed 1001 `sync50` endet mit 2 Threads anders als mit 1) | Gepaarte Vergleiche bleiben sauber gepaart |
+| 11:15 | 0.5 Strategie d | „Größter Batch, der keine erreichbare Deadline reißt und die nächste wartende Anfrage nicht verdrängt“ ist umgesetzt als gierige Vorausschau: Gewählt wird der größte EDF-Präfix, nach dem die übrigen wartenden Anfragen in EDF-Reihenfolge (jeweils größter passender Batch, p90-Servicezeit, ohne neue Ankünfte) keine Deadline reißen, die jetzt noch erreichbar ist. Passt keine Größe (Überlast), nimmt der Scheduler den größten Präfix, dessen eigene erreichbare Mitglieder rechtzeitig fertig werden | Präzisierung vor der ersten Warteschlangen-Simulation: Die wörtliche Regel prüft nur die nächste Anfrage und bedient unter Überlast weniger Roboter rechtzeitig als möglich | Gilt für d und e |
+| 11:15 | 0.6 Kapazität, Strategie e | Ein abgewiesener Roboter gilt als nicht bedient (vorhergesagter Erfolg 0). Kapazität von e ist damit die größte Flotte, die vollständig aufgenommen wird und (1) und (2) erfüllt. Die Zahl der aufgenommenen Roboter wird zusätzlich berichtet | Die Definition ließ offen, wie abgewiesene Roboter zählen | Nur Strategie e |
+| 11:15 | 0.5 Validierung | KI der mittleren gepaarten Differenz: Perzentil-Bootstrap über die Episoden eines Falls, 10 000 Ziehungen, Niveau 98,75 % | Die Methode war offen | – |
+| 11:15 | 0.5 Episodenlängen | Episodenlängen der Warteschlangen-Simulation: alle Episoden der 0-ms-Stufe beider Aufgaben, gleich gewichtet gezogen | Präzisierung | – |
