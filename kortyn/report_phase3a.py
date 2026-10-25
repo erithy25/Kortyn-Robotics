@@ -1593,6 +1593,14 @@ def figure_latency_effect(points: Sequence[EffectPoint], path: Path) -> None:
         if attribute == "latency_budgets":
             ax.axvline(1.0, color=MUTED, linewidth=1.0, linestyle="--")
         ax.set_xscale("log")
+        ticks = (
+            [100, 200, 300, 500, 700, 1000, 1500]
+            if attribute == "latency_ms"
+            else [0.3, 0.5, 0.7, 1, 1.5, 2, 3]
+        )
+        ax.xaxis.set_major_locator(FixedLocator(ticks))
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:g}".replace(".", ",")))
+        ax.xaxis.set_minor_formatter(NullFormatter())
         ax.set_xlabel(xlabel)
         percent_axis(ax)
     axes[0][0].set_ylabel("Erfolg relativ zur Sync-Referenz")
