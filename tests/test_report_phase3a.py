@@ -370,6 +370,8 @@ def test_pooled_effects_split_by_latency_budget_and_compare_tasks():
     points = {p.condition: p for p in latency_effects([dynamic])}
     assert points["langsam__gut"].latency_budgets == pytest.approx(320.0 / 312.5)
     assert points["langsam__gut"].delta == pytest.approx(-0.5)
+    assert points["langsam__gut"].starvation == 0.0
+    assert points["langsam__gut"].plan_age_s == pytest.approx(0.25)  # ages 100..400 ms of the test episodes
     assert points["grenzfall__gut"].relative_success == 0.0
     from kortyn.report_phase3a import condition_name
 

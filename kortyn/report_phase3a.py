@@ -1063,6 +1063,8 @@ class EffectPoint:
     success: float
     budget_ms: float  # latency the action queue bridges without starving (refill threshold + 1 ticks)
     delta: float = math.nan  # paired success difference to the matched sync reference
+    plan_age_s: float = math.nan  # mean age of the executed actions (observation -> execution)
+    starvation: float = math.nan  # share of ticks without an action
 
     @property
     def latency_budgets(self) -> float:
@@ -1174,6 +1176,8 @@ def latency_effects(families: Sequence[EffectFamily]) -> list[EffectPoint]:
                     success,
                     family.budget_ms,
                     mean_paired_difference(family.reference, run),
+                    pooled("plan_age", run.ordered(seeds)),
+                    pooled("starvation", run.ordered(seeds)),
                 )
             )
     return points
@@ -1769,10 +1773,12 @@ def write_report(results: Path, reports: Path) -> Path:
             "",
             *effect_summary_table(pooled_effects(families)),
             "",
-            "| Aufgabe | Bedingung | Mediane Latenz | Latenz / Budget | Erfolg | relativ zur Sync-Referenz | Δ Erfolg |",
-            "|---|---|---:|---:|---:|---:|---:|",
+            "| Aufgabe | Bedingung | Mediane Latenz | Latenz / Budget | Ø Planalter | Starvation | Erfolg "
+            "| relativ zur Sync-Referenz | Δ Erfolg |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|",
             *[
-                f"| {p.family} | {condition_name(p.condition)} | {p.latency_ms:.0f} ms | {p.latency_budgets:.2f} | {fmt_pct(p.success)} "
+                f"| {p.family} | {condition_name(p.condition)} | {p.latency_ms:.0f} ms | {p.latency_budgets:.2f} "
+                f"| {p.plan_age_s:.2f} s | {fmt_pct(p.starvation, 1)} | {fmt_pct(p.success)} "
                 f"| {fmt_pct(p.relative_success)} | {100 * p.delta:+.0f} pp |"
                 for p in sorted(points, key=lambda p: (p.family, p.latency_ms))
             ],
