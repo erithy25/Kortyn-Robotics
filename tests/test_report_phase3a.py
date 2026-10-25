@@ -254,3 +254,20 @@ def test_realized_power_pools_the_noise_of_all_real_time_conditions():
     assert cells[:4] == ["push-v3", "2", "100", "30 % [20 %–40 %]"]
     assert cells[5] == f"{100 * mde_paired_binary(100, 0.3):.0f} %"
     assert realized_power([TaskData("push-v3", {"referenz_sync25": reference}, {})]) == []
+
+
+def test_published_comparison_over_all_seeds_and_the_default_evaluation_seeds():
+    from kortyn.report_phase3a import TaskData, published_comparison
+
+    # 60 % over 100 seeds, 22/30 on the seeds a default LeRobot evaluation of 30 episodes uses
+    successes = set(range(1000, 1022)) | set(range(1030, 1068))
+    sync50 = run([episode(s, success=s in successes) for s in range(1000, 1100)])
+    lines = published_comparison([TaskData("coffee-push-v3", {"referenz_sync50": sync50}, {})])
+    assert "Seeds 1000–1029" in lines[0]
+    cells = [c.strip() for c in lines[2].strip("|").split("|")]
+    assert cells[0] == "coffee-push-v3"
+    assert cells[2].startswith("60 %")
+    assert cells[3] == "–"  # no Sync-25 run
+    assert cells[5].startswith("✗")  # 60/100 vs 27/30: the interval excludes 0
+    assert cells[6] == "22/30 (73 %)"
+    assert cells[7].startswith("✓")  # 22/30 vs 27/30: consistent

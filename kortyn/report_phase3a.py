@@ -931,10 +931,14 @@ def realized_power(tasks: Sequence[TaskData]) -> list[str]:
     return lines if len(lines) > 2 else []
 
 
-def published_comparison(tasks: Sequence[TaskData]) -> list[str]:
+def published_comparison(tasks: Sequence[TaskData], first_seed: int = 1000) -> list[str]:
+    """Sync references against the published success of the checkpoint: over all seeds, and over the seeds
+    a LeRobot evaluation with its default seed and the published episode count would use."""
+    last_seed = first_seed + PUBLISHED_EPISODES - 1
     lines = [
-        "| Aufgabe | Gruppe | Kortyn Sync-50 (LeRobot-Protokoll) | Kortyn Sync-25 | publiziert (dieser Checkpoint) | Δ Sync-50 − publiziert [KI] |",
-        "|---|---|---:|---:|---:|---:|",
+        "| Aufgabe | Gruppe | Kortyn Sync-50 (LeRobot-Protokoll) | Kortyn Sync-25 | publiziert (dieser Checkpoint) "
+        f"| Δ Sync-50 − publiziert [KI] | Sync-50, Seeds {first_seed}–{last_seed} | Δ auf diesen Seeds [KI] |",
+        "|---|---|---:|---:|---:|---:|---:|---:|",
     ]
     for data in tasks:
         sync50, sync25 = data.runs.get(SYNC_PUBLISHED), data.runs.get(SYNC_MATCHED)
@@ -942,16 +946,21 @@ def published_comparison(tasks: Sequence[TaskData]) -> list[str]:
         cells: list[str] = []
         for run in (sync50, sync25):
             cells.append("–" if run is None else fmt_interval(estimate("success", run.ordered()), "pct"))
-        delta = "–"
+        delta = matched = matched_delta = "–"
         if sync50 is not None and published is not None:
+            reference = round(published * PUBLISHED_EPISODES)
             successes = sum(1 for e in sync50.episodes.values() if e.success)
-            diff = newcombe_difference(
-                successes, len(sync50.episodes), round(published * PUBLISHED_EPISODES), PUBLISHED_EPISODES
-            )
+            diff = newcombe_difference(successes, len(sync50.episodes), reference, PUBLISHED_EPISODES)
             delta = f"{mark_interval(diff)} {fmt_interval(diff, 'pp')}"
+            seeds = [s for s in range(first_seed, last_seed + 1) if s in sync50.episodes]
+            if len(seeds) == PUBLISHED_EPISODES:
+                hits = sum(1 for s in seeds if sync50.episodes[s].success)
+                matched = f"{hits}/{len(seeds)} ({fmt_pct(hits / len(seeds))})"
+                same = newcombe_difference(hits, len(seeds), reference, PUBLISHED_EPISODES)
+                matched_delta = f"{mark_interval(same)} {fmt_interval(same, 'pp')}"
         lines.append(
             f"| {data.task} | {TASK_GROUPS[data.task]} | {cells[0]} | {cells[1]} | "
-            f"{fmt_pct(published or math.nan)} (n = {PUBLISHED_EPISODES}) | {delta} |"
+            f"{fmt_pct(published or math.nan)} (n = {PUBLISHED_EPISODES}) | {delta} | {matched} | {matched_delta} |"
         )
     return lines
 
