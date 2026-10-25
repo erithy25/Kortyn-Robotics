@@ -188,6 +188,39 @@ class NetworkChoice:
 
 
 @dataclass
+class LevelRun:
+    """One fixed-latency condition of the dose-response experiment."""
+
+    latency_ms: float
+    run: str  # run label in the experiment's results directory
+
+    def __post_init__(self) -> None:
+        if self.latency_ms < 0:
+            raise ConfigError(f"dose-response level must be >= 0 ms, got {self.latency_ms}")
+
+
+@dataclass
+class PredictionConfig:
+    """Where the dose-response runs are and how the prediction is computed."""
+
+    experiment: str  # experiment YAML of steps 1-2 (results directory, LIBERO tasks and seeds)
+    profile: str = "smolvla_libero"
+    levels: list[LevelRun] = field(default_factory=list)
+    bootstrap: int = 10_000
+    seed: int = 4242
+    output: str = "results/phase3/fleet/capacity.json"
+
+    def __post_init__(self) -> None:
+        if len(self.levels) < 2:
+            raise ConfigError("prediction needs at least two dose-response levels")
+        latencies = [level.latency_ms for level in self.levels]
+        if len(set(latencies)) != len(latencies):
+            raise ConfigError("dose-response levels must have distinct latencies")
+        if self.bootstrap < 100:
+            raise ConfigError("prediction.bootstrap must be >= 100 draws")
+
+
+@dataclass
 class FleetSimConfig:
     """A grid of fleet simulations (stage 1 of phase 3)."""
 
@@ -208,6 +241,7 @@ class FleetSimConfig:
     seed: int = 3000
     results_path: str = "results/phase3/fleet/stage1.jsonl"
     workers: int = 0
+    prediction: PredictionConfig | None = None  # stage 2 (kortyn.fleet_predict)
 
     def __post_init__(self) -> None:
         for name, mapping in (

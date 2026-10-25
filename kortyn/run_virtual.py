@@ -394,6 +394,7 @@ class VirtualSuiteRunner:
             torch_threads=self.torch_threads,
             device=self.config.brain.device if self.config.brain.device != "auto" else "cpu",
         )
+        context: multiprocessing.context.BaseContext
         if self.share_model:
             # load once here, fork the workers: they share the weights copy-on-write (memory-bound hosts)
             preload_policy(self.config, self.profile_name, self.torch_threads, setup.device)

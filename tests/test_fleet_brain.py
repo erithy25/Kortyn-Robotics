@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import json
 import random
 from pathlib import Path
@@ -21,12 +22,13 @@ from kortyn.fleet_brain import (
     FifoBatchScheduler,
     FifoScheduler,
     SchedulerContext,
+    SchedulerName,
     TableBatchProfile,
     brain_deadline,
     make_batch_scheduler,
 )
 from kortyn.proto import kortyn_brain_pb2 as pb
-from kortyn.virtual_time import BrainJob, ComputeResult, Simulation
+from kortyn.virtual_time import BrainJob, ComputeResult, Priority, Simulation
 
 
 def job(arrival: float, due: float | None = None, deadline: float | None = None, name: int = 0) -> BrainJob:
@@ -252,7 +254,7 @@ class RecordingCompute:
 
 
 def run_brain(
-    scheduler_name: str, arrivals: list[tuple[float, float | None]], beta: float = 0.5
+    scheduler_name: SchedulerName, arrivals: list[tuple[float, float | None]], beta: float = 0.5
 ) -> list[BrainJob]:
     sim = Simulation()
     model = constant_model(s1_ms=100.0, beta=beta)
@@ -269,7 +271,7 @@ def run_brain(
         item = job(arrival, due=due, name=index)
         item.on_done = done.append
         jobs.append(item)
-        sim.at(arrival, 1, lambda item=item: brain.submit(item))  # type: ignore[misc]
+        sim.at(arrival, Priority.BRAIN, functools.partial(brain.submit, item))
     sim.run()
     assert len(done) == len(arrivals)
     return jobs
@@ -298,7 +300,7 @@ def test_brain_counts_batches_and_abandons_expired() -> None:
     expired = job(0.0, deadline=0.05, name=2)  # client gives up while the first is served
     for item in (first, expired):
         item.on_done = done.append
-        sim.at(0.0, 1, lambda item=item: brain.submit(item))  # type: ignore[misc]
+        sim.at(0.0, Priority.BRAIN, functools.partial(brain.submit, item))
     sim.run()
     assert done == [first]
     assert brain.counters.abandoned == 1
@@ -313,7 +315,7 @@ def test_brain_service_draws_are_reproducible() -> None:
         brain = BatchingBrain(sim, RecordingCompute(), FifoScheduler(), model, seed=seed)
         jobs = [job(0.0, name=i) for i in range(5)]
         for item in jobs:
-            sim.at(0.0, 1, lambda item=item: brain.submit(item))  # type: ignore[misc]
+            sim.at(0.0, Priority.BRAIN, functools.partial(brain.submit, item))
         sim.run()
         return [float(j.t_done or 0.0) for j in jobs]
 
