@@ -6,6 +6,8 @@ import json
 import random
 from pathlib import Path
 
+import pytest
+
 from kortyn.fleet import load_fleet_config
 from kortyn.report_phase3 import capacity_lookup, eur, interval_pp, main, p_text, pct
 
@@ -213,3 +215,10 @@ def test_formatting_helpers() -> None:
     assert p_text(0.25) == "0,250"
     assert eur(1234.5) == "1 234 €"
     assert eur(12.345, 2) == "12.35 €"
+
+
+def test_predicted_success_interpolates_the_curve() -> None:
+    from kortyn.report_phase3 import predicted_success
+
+    assert predicted_success([0.0, 1000.0, 2000.0], [0.8, 0.6, 0.2], 500.0) == pytest.approx(0.7)
+    assert predicted_success([0.0, 1000.0, 2000.0], [0.8, 0.6, 0.2], 5000.0) == pytest.approx(0.2)

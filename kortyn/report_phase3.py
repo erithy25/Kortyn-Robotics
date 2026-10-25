@@ -538,12 +538,18 @@ def validation_section(evaluations: Sequence[Mapping[str, Any]]) -> list[str]:
 
 
 # --------------------------------------------------------------------------------------------- economics
+def predicted_success(levels_ms: Sequence[float], curve: Sequence[float], latency_ms: float) -> float:
+    """``f(L)`` of the dose-response curve (linear between levels, constant beyond the last)."""
+    return float(np.interp(latency_ms, np.asarray(levels_ms, dtype=float), np.asarray(curve, dtype=float)))
+
+
 def economics_section(
     economics: EconomicsConfig,
     table: Mapping[tuple[str, str, str, str], int],
     busy: Mapping[tuple[str, str, str, str], float],
     network: str,
     batching: str,
+    curve: tuple[Sequence[float], Sequence[float]] | None = None,
 ) -> list[str]:
     lines = [
         f"Annahmen: Abschreibung über {economics.depreciation_months} Monate, Betrieb "
@@ -572,15 +578,16 @@ def economics_section(
             )
     lines += [
         "",
-        "| Rechner im Roboter | Preis | Leistung | Latenz je Plan | Kosten je Roboter und Monat "
-        "| Quelle Latenz |",
-        "|---|---:|---:|---:|---:|---|",
+        "| Rechner im Roboter | Preis | Leistung | Latenz je Plan | Erfolg f(L) "
+        "| Kosten je Roboter und Monat | Quelle Latenz |",
+        "|---|---:|---:|---:|---:|---:|---|",
     ]
     for option in economics.onboard:
         onboard = onboard_cost(economics, option)
+        success = "–" if curve is None else pct(predicted_success(curve[0], curve[1], option.latency_ms))
         lines.append(
             f"| {option.label} | {eur(option.price_eur)} | {option.power_w:.0f} W | "
-            f"{option.latency_ms:.0f} ms | "
+            f"{option.latency_ms:.0f} ms | {success} | "
             f"{eur(onboard.monthly_per_robot_eur, 2)} | {option.latency_source.source} ({option.runtime}) |"
         )
     if economics.onboard and economics.gpus:
@@ -760,7 +767,14 @@ def build(args: argparse.Namespace) -> list[str]:
             lines += [
                 "## Wirtschaftlichkeit",
                 "",
-                *economics_section(economics, table, busy, "buero_wlan", "realistisch"),
+                *economics_section(
+                    economics,
+                    table,
+                    busy,
+                    "buero_wlan",
+                    "realistisch",
+                    (capacity["levels_ms"], capacity["curve"]) if "curve" in capacity else None,
+                ),
                 "",
             ]
     evaluation_path = Path(args.validation)
