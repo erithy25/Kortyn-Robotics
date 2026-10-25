@@ -329,6 +329,34 @@ uv run python -m kortyn.lerobot_reference --config kortyn/experiments/phase3a/sm
     --profile smolvla --episodes 50
 uv run python -m kortyn.bench_inference --config kortyn/experiments/phase3a/smolvla_push.yaml
 uv run python -m kortyn.report_phase3a      # reports/phase3a_data.md + reports/phase3a_*.png
+
+# 7. Phase 3: LIBERO-Long und Flotten-Brain. LIBERO braucht MuJoCo < 3.9 und läuft deshalb in einer eigenen
+#    Umgebung (.venv-libero); Assets (gepinnte Revision) lädt die Umgebung beim ersten Start.
+export UV_PROJECT_ENVIRONMENT=.venv-libero
+uv sync --no-group metaworld --group libero
+L="uv run --no-group metaworld --group libero python -m"
+$L kortyn.run_virtual --config kortyn/experiments/phase3/libero_pilot.yaml --run sync25 --run sync50 \
+    --workers 2 --share-model                       # Pilot: 10 Aufgaben x 10 Init-States
+for ids in 0,1,2,3,4 5,6,7,8,9; do                  # LeRobots eigene Evaluation, dieselben Episoden
+  $L kortyn.lerobot_reference --config kortyn/experiments/phase3/libero_pilot.yaml --profile smolvla_libero \
+      --threads 1 --task-ids $ids --name smolvla_libero_tasks${ids//,/}
+done
+unset UV_PROJECT_ENVIRONMENT
+uv run python -m kortyn.phase3_steps select-tasks --pilot-config kortyn/experiments/phase3/libero_pilot.yaml
+export UV_PROJECT_ENVIRONMENT=.venv-libero          # Hauptstichprobe: JPEG, Kaltstart, Dosis-Wirkung
+$L kortyn.run_virtual --config kortyn/experiments/phase3/libero_main.yaml --workers 3 --share-model
+unset UV_PROJECT_ENVIRONMENT
+uv run python -m kortyn.fleet --config kortyn/experiments/phase3/fleet.yaml          # Stufe 1: Warteschlange
+uv run python -m kortyn.fleet --config kortyn/experiments/phase3/fleet.yaml --scan --networks buero_wlan \
+    --out results/phase3/fleet/scan.jsonl                                            # jede Größe 1..128
+uv run python -m kortyn.fleet --config kortyn/experiments/phase3/fleet_p10.yaml      # 10 Aktionen je Plan
+uv run python -m kortyn.fleet_predict --config kortyn/experiments/phase3/fleet.yaml  # Stufe 2: Kapazität
+uv run python -m kortyn.fleet_rollout --config kortyn/experiments/phase3/fleet.yaml --select   # 4 Fälle
+export UV_PROJECT_ENVIRONMENT=.venv-libero          # Stufe 3: echte Flotten-Rollouts je Fall
+$L kortyn.fleet_rollout --config kortyn/experiments/phase3/fleet.yaml --strategy a --robots 2
+unset UV_PROJECT_ENVIRONMENT
+uv run python -m kortyn.fleet_rollout --config kortyn/experiments/phase3/fleet.yaml --evaluate
+uv run python -m kortyn.report_phase3       # reports/phase3_data.md + reports/phase3_*.png
 ```
 
 Laufzeiten auf der Messmaschine (4-vCPU-Xeon, keine GPU): Kalibrierung ≈ 10 min, alle Läufe ≈ 4 h 40 min (650
