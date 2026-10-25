@@ -47,7 +47,8 @@
               "results/kalibriert/*",
               "results/ddim10/*"
             ],
-            "quantity": "send_offset_ms"
+            "quantity": "send_offset_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -66,7 +67,8 @@
               "results/kalibriert/gut_wiederholung",
               "results/ddim10/gut"
             ],
-            "quantity": "network_ms"
+            "quantity": "network_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -114,7 +116,8 @@
           "paths": [
             "results/kalibriert/*"
           ],
-          "quantity": "server_total_ms"
+          "quantity": "server_total_ms",
+          "per_seed": false
         },
         "scale": 1.0,
         "min_ms": 0.0,
@@ -149,7 +152,8 @@
               "results/kalibriert/*",
               "results/ddim10/*"
             ],
-            "quantity": "send_offset_ms"
+            "quantity": "send_offset_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -168,7 +172,8 @@
               "results/kalibriert/gut_wiederholung",
               "results/ddim10/gut"
             ],
-            "quantity": "network_ms"
+            "quantity": "network_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -216,7 +221,8 @@
           "paths": [
             "results/kalibriert/*"
           ],
-          "quantity": "server_total_ms"
+          "quantity": "server_total_ms",
+          "per_seed": false
         },
         "scale": 1.0,
         "min_ms": 0.0,
@@ -251,7 +257,8 @@
               "results/kalibriert/*",
               "results/ddim10/*"
             ],
-            "quantity": "send_offset_ms"
+            "quantity": "send_offset_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -270,7 +277,8 @@
               "results/kalibriert/gut_wiederholung",
               "results/ddim10/gut"
             ],
-            "quantity": "network_ms"
+            "quantity": "network_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -318,7 +326,8 @@
           "paths": [
             "results/kalibriert/*"
           ],
-          "quantity": "server_total_ms"
+          "quantity": "server_total_ms",
+          "per_seed": false
         },
         "scale": 1.0,
         "min_ms": 0.0,
@@ -356,7 +365,8 @@
               "results/kalibriert/*",
               "results/ddim10/*"
             ],
-            "quantity": "send_offset_ms"
+            "quantity": "send_offset_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -375,7 +385,8 @@
               "results/kalibriert/gut_wiederholung",
               "results/ddim10/gut"
             ],
-            "quantity": "network_ms"
+            "quantity": "network_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -423,7 +434,8 @@
           "paths": [
             "results/kalibriert/*"
           ],
-          "quantity": "server_total_ms"
+          "quantity": "server_total_ms",
+          "per_seed": false
         },
         "scale": 1.0,
         "min_ms": 0.0,
@@ -461,7 +473,8 @@
               "results/kalibriert/*",
               "results/ddim10/*"
             ],
-            "quantity": "send_offset_ms"
+            "quantity": "send_offset_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -480,7 +493,8 @@
               "results/kalibriert/gut_wiederholung",
               "results/ddim10/gut"
             ],
-            "quantity": "network_ms"
+            "quantity": "network_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -528,7 +542,8 @@
           "paths": [
             "results/kalibriert/*"
           ],
-          "quantity": "server_total_ms"
+          "quantity": "server_total_ms",
+          "per_seed": false
         },
         "scale": 1.0,
         "min_ms": 0.0,
@@ -563,7 +578,8 @@
               "results/kalibriert/*",
               "results/ddim10/*"
             ],
-            "quantity": "send_offset_ms"
+            "quantity": "send_offset_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -582,7 +598,8 @@
               "results/kalibriert/gut_wiederholung",
               "results/ddim10/gut"
             ],
-            "quantity": "network_ms"
+            "quantity": "network_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -630,7 +647,8 @@
           "paths": [
             "results/kalibriert/*"
           ],
-          "quantity": "server_total_ms"
+          "quantity": "server_total_ms",
+          "per_seed": false
         },
         "scale": 1.0,
         "min_ms": 0.0,
@@ -665,7 +683,8 @@
               "results/kalibriert/*",
               "results/ddim10/*"
             ],
-            "quantity": "send_offset_ms"
+            "quantity": "send_offset_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -684,7 +703,8 @@
               "results/kalibriert/gut_wiederholung",
               "results/ddim10/gut"
             ],
-            "quantity": "network_ms"
+            "quantity": "network_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -732,7 +752,8 @@
           "paths": [
             "results/kalibriert/*"
           ],
-          "quantity": "server_total_ms"
+          "quantity": "server_total_ms",
+          "per_seed": false
         },
         "scale": 1.0,
         "min_ms": 0.0,
@@ -767,7 +788,8 @@
               "results/kalibriert/*",
               "results/ddim10/*"
             ],
-            "quantity": "send_offset_ms"
+            "quantity": "send_offset_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -786,7 +808,8 @@
               "results/kalibriert/gut_wiederholung",
               "results/ddim10/gut"
             ],
-            "quantity": "network_ms"
+            "quantity": "network_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -834,7 +857,8 @@
           "paths": [
             "results/kalibriert/*"
           ],
-          "quantity": "server_total_ms"
+          "quantity": "server_total_ms",
+          "per_seed": false
         },
         "scale": 1.0,
         "min_ms": 0.0,
@@ -872,7 +896,8 @@
               "results/kalibriert/*",
               "results/ddim10/*"
             ],
-            "quantity": "send_offset_ms"
+            "quantity": "send_offset_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -891,7 +916,8 @@
               "results/kalibriert/gut_wiederholung",
               "results/ddim10/gut"
             ],
-            "quantity": "network_ms"
+            "quantity": "network_ms",
+            "per_seed": false
           },
           "scale": 1.0,
           "min_ms": 0.0,
@@ -939,7 +965,749 @@
           "paths": [
             "results/kalibriert/*"
           ],
-          "quantity": "server_total_ms"
+          "quantity": "server_total_ms",
+          "per_seed": false
+        },
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      }
+    },
+    "episode__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "episode_gut",
+      "timing_settings": {
+        "description": "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf gut)",
+        "latency": "model",
+        "hardware": "phase1_episode_gut",
+        "client_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/*",
+              "results/ddim10/*"
+            ],
+            "quantity": "send_offset_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/gut",
+              "results/kalibriert/gut_wiederholung",
+              "results/ddim10/gut"
+            ],
+            "quantity": "network_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "empirical",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": {
+          "paths": [
+            "results/kalibriert/gut"
+          ],
+          "quantity": "server_total_ms",
+          "per_seed": true
+        },
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      }
+    },
+    "episode__gut_wiederholung": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "episode_gut_wiederholung",
+      "timing_settings": {
+        "description": "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf gut_wiederholung)",
+        "latency": "model",
+        "hardware": "phase1_episode_gut_wiederholung",
+        "client_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/*",
+              "results/ddim10/*"
+            ],
+            "quantity": "send_offset_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/gut",
+              "results/kalibriert/gut_wiederholung",
+              "results/ddim10/gut"
+            ],
+            "quantity": "network_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "empirical",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": {
+          "paths": [
+            "results/kalibriert/gut_wiederholung"
+          ],
+          "quantity": "server_total_ms",
+          "per_seed": true
+        },
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      }
+    },
+    "episode__buero_wlan": {
+      "scenario": "buero_wlan",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 20.0,
+        "rtt_jitter_ms": 10.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "episode_buero_wlan",
+      "timing_settings": {
+        "description": "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf buero_wlan)",
+        "latency": "model",
+        "hardware": "phase1_episode_buero_wlan",
+        "client_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/*",
+              "results/ddim10/*"
+            ],
+            "quantity": "send_offset_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/gut",
+              "results/kalibriert/gut_wiederholung",
+              "results/ddim10/gut"
+            ],
+            "quantity": "network_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "empirical",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": {
+          "paths": [
+            "results/kalibriert/buero_wlan"
+          ],
+          "quantity": "server_total_ms",
+          "per_seed": true
+        },
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      }
+    },
+    "episode__schlecht": {
+      "scenario": "schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 80.0,
+        "rtt_jitter_ms": 40.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 300.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "timing": "episode_schlecht",
+      "timing_settings": {
+        "description": "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf schlecht)",
+        "latency": "model",
+        "hardware": "phase1_episode_schlecht",
+        "client_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/*",
+              "results/ddim10/*"
+            ],
+            "quantity": "send_offset_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/gut",
+              "results/kalibriert/gut_wiederholung",
+              "results/ddim10/gut"
+            ],
+            "quantity": "network_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "empirical",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": {
+          "paths": [
+            "results/kalibriert/schlecht"
+          ],
+          "quantity": "server_total_ms",
+          "per_seed": true
+        },
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      }
+    },
+    "episode__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "timing": "episode_sehr_schlecht",
+      "timing_settings": {
+        "description": "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf sehr_schlecht)",
+        "latency": "model",
+        "hardware": "phase1_episode_sehr_schlecht",
+        "client_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/*",
+              "results/ddim10/*"
+            ],
+            "quantity": "send_offset_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/gut",
+              "results/kalibriert/gut_wiederholung",
+              "results/ddim10/gut"
+            ],
+            "quantity": "network_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "empirical",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": {
+          "paths": [
+            "results/kalibriert/sehr_schlecht"
+          ],
+          "quantity": "server_total_ms",
+          "per_seed": true
+        },
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      }
+    },
+    "episode__schlecht_ohne_stall": {
+      "scenario": "schlecht_ohne_stall",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 80.0,
+        "rtt_jitter_ms": 40.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "episode_schlecht_ohne_stall",
+      "timing_settings": {
+        "description": "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf schlecht_ohne_stall)",
+        "latency": "model",
+        "hardware": "phase1_episode_schlecht_ohne_stall",
+        "client_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/*",
+              "results/ddim10/*"
+            ],
+            "quantity": "send_offset_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/gut",
+              "results/kalibriert/gut_wiederholung",
+              "results/ddim10/gut"
+            ],
+            "quantity": "network_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "empirical",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": {
+          "paths": [
+            "results/kalibriert/schlecht_ohne_stall"
+          ],
+          "quantity": "server_total_ms",
+          "per_seed": true
+        },
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      }
+    },
+    "episode__sehr_schlecht_ohne_stall": {
+      "scenario": "sehr_schlecht_ohne_stall",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "episode_sehr_schlecht_ohne_stall",
+      "timing_settings": {
+        "description": "wie modell, Servicezeit aus derselben Phase-1-Episode (Lauf sehr_schlecht_ohne_stall)",
+        "latency": "model",
+        "hardware": "phase1_episode_sehr_schlecht_ohne_stall",
+        "client_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/*",
+              "results/ddim10/*"
+            ],
+            "quantity": "send_offset_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "empirical",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": {
+            "paths": [
+              "results/kalibriert/gut",
+              "results/kalibriert/gut_wiederholung",
+              "results/ddim10/gut"
+            ],
+            "quantity": "network_ms",
+            "per_seed": false
+          },
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "empirical",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": {
+          "paths": [
+            "results/kalibriert/sehr_schlecht_ohne_stall"
+          ],
+          "quantity": "server_total_ms",
+          "per_seed": true
         },
         "scale": 1.0,
         "min_ms": 0.0,
@@ -972,7 +1740,7 @@
     "cpu_count": 4,
     "python": "3.12.3"
   },
-  "git_commit": "f76bc4ce0a653c618dbf5da7ac535decc3721044-dirty",
+  "git_commit": "fed210563da35523a8a3b72e17dec481b176ced7-dirty",
   "started_utc": "2026-10-24T21:27:09+00:00",
   "sessions": [
     {
@@ -988,6 +1756,28 @@
         "modell__sehr_schlecht_ohne_stall",
         "modell_r2__gut",
         "modell_r2__sehr_schlecht"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-25T01:09:41+00:00",
+      "git_commit": "fed210563da35523a8a3b72e17dec481b176ced7-dirty",
+      "runs": [
+        "episode__buero_wlan",
+        "episode__gut",
+        "episode__gut_wiederholung",
+        "episode__schlecht",
+        "episode__schlecht_ohne_stall",
+        "episode__sehr_schlecht",
+        "episode__sehr_schlecht_ohne_stall"
       ],
       "cpu_pinning": null,
       "host": {
