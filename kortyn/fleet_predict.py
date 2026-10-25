@@ -114,9 +114,7 @@ class DoseResponse:
             raise PredictionError(f"seed {seed} is not part of the dose-response runs") from exc
 
 
-def level_weights(
-    levels_ms: Floats, latencies_ms: Sequence[float], counts: Sequence[float]
-) -> Floats:
+def level_weights(levels_ms: Floats, latencies_ms: Sequence[float], counts: Sequence[float]) -> Floats:
     """Weights ``a`` (sum 1) with ``mean over requests of f(L) = a @ f`` for linear interpolation.
 
     Latencies below the first level use the first level, above the last level the last one (extrapolation).
@@ -145,11 +143,9 @@ def histogram_latencies(histogram: Mapping[Any, int]) -> tuple[list[float], list
 
 
 def load_dose_response(config: PredictionConfig) -> DoseResponse:
-    """Outcomes of the dose-response runs (final attempt per seed), tasks from the experiment's LIBERO env."""
+    """Outcomes of the dose-response runs (final attempt per seed); tasks from the LIBERO layout."""
     experiment = load_config(config.experiment)
-    libero = experiment.env.libero
-    if libero is None:
-        raise ConfigError(f"{config.experiment}: the dose-response experiment must be a LIBERO experiment")
+    libero = experiment.env.libero  # LIBERO: tasks from the episode layout; other envs: one task
     root = Path(experiment.experiment.results_dir) / config.profile
     ordered = sorted(config.levels, key=lambda level: level.latency_ms)
     per_level: list[dict[int, bool]] = []
@@ -168,7 +164,7 @@ def load_dose_response(config: PredictionConfig) -> DoseResponse:
     if missing:
         raise PredictionError(f"seeds {missing[:5]}... are missing in some dose-response levels")
     outcomes = np.array([[float(level[seed]) for seed in seeds] for level in per_level])
-    groups = tuple(episode_slot(libero, seed)[0] for seed in seeds)
+    groups = tuple(episode_slot(libero, seed)[0] if libero is not None else 0 for seed in seeds)
     return DoseResponse(
         levels_ms=np.array([level.latency_ms for level in ordered]),
         seeds=tuple(seeds),

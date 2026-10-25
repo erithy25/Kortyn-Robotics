@@ -32,8 +32,9 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, runtime_checkable
 
+from kortyn.proto import kortyn_brain_pb2 as pb
 from kortyn.virtual_time import (
     TIME_EPS_S,
     BrainCounters,
@@ -458,11 +459,23 @@ class BatchCounters(BrainCounters):
     batch_sizes: dict[int, int] = field(default_factory=dict)
 
 
+@runtime_checkable
+class PrefetchingCompute(Compute, Protocol):
+    """A compute that can start a request's inference early (in another process).
+
+    The result of a request does not depend on when or where it is computed, so the Brain starts it as soon
+    as the request arrives and collects it when its batch completes; the simulation stays deterministic.
+    """
+
+    def prefetch(self, request: pb.InferRequest) -> None: ...
+
+
 class BatchingBrain:
     """One GPU in virtual time: batches chosen by a scheduler, service time from a batch model.
 
     Requests whose client deadline (gRPC timeout) has passed before their batch starts are dropped, as
-    the real Brain does. ``on_batch`` (optional) sees every batch when it starts (diagnostics).
+    the real Brain does. ``on_batch`` (optional) sees every batch when it starts (diagnostics). With a
+    :class:`PrefetchingCompute`, inference starts on arrival and its result is collected on completion.
     """
 
     def __init__(
@@ -489,6 +502,7 @@ class BatchingBrain:
         self.counters = BatchCounters()
         self.compute_ms = 0.0
         self.cache_hits = 0
+        self._prefetcher = compute if isinstance(compute, PrefetchingCompute) else None
 
     @property
     def queue_length(self) -> int:
@@ -501,6 +515,8 @@ class BatchingBrain:
     def submit(self, job: BrainJob) -> None:
         """A request reaches the Brain (call at its arrival time)."""
         self.counters.requests += 1
+        if self._prefetcher is not None:
+            self._prefetcher.prefetch(job.request)
         self._scheduler.push(job, self._sim.now)
         self._dispatch()
 
@@ -537,20 +553,26 @@ class BatchingBrain:
         for job in batch:
             job.t_start = now
             job.batch_size = size
-            job.result = self._compute(job.request)
-            self.compute_ms += job.result.compute_ms
-            self.cache_hits += int(job.result.cache_hit)
+            if self._prefetcher is None:
+                self._collect(job)
             self.counters.queue_wait_ms += 1000.0 * (now - job.t_arrival)
         if self._on_batch is not None:
             self._on_batch(batch, service)
         self._busy = True
         self._sim.at(now + service, Priority.BRAIN, partial(self._complete, batch, service))
 
+    def _collect(self, job: BrainJob) -> None:
+        job.result = self._compute(job.request)
+        self.compute_ms += job.result.compute_ms
+        self.cache_hits += int(job.result.cache_hit)
+
     def _complete(self, batch: list[BrainJob], service_s: float) -> None:
         self._busy = False
         self.counters.inferences += len(batch)
         self.counters.busy_ms += 1000.0 * service_s
         for job in batch:
+            if self._prefetcher is not None:
+                self._collect(job)
             job.t_done = self._sim.now
             job.on_done(job)
         self._dispatch()

@@ -21,6 +21,7 @@ from kortyn.fleet_brain import (
     EdfScheduler,
     FifoBatchScheduler,
     FifoScheduler,
+    PrefetchingCompute,
     SchedulerContext,
     SchedulerName,
     TableBatchProfile,
@@ -251,6 +252,46 @@ class RecordingCompute:
     def __call__(self, request: pb.InferRequest) -> ComputeResult:
         self.calls += 1
         return ComputeResult(np.zeros((2, 2), dtype=np.float32))
+
+
+class PrefetchRecorder:
+    """A prefetching compute: records when inference starts (arrival) and when it is collected."""
+
+    def __init__(self, sim: Simulation) -> None:
+        self.sim = sim
+        self.prefetched: list[tuple[int, float]] = []
+        self.collected: list[tuple[int, float]] = []
+
+    def prefetch(self, request: pb.InferRequest) -> None:
+        self.prefetched.append((request.request_id, self.sim.now))
+
+    def __call__(self, request: pb.InferRequest) -> ComputeResult:
+        self.collected.append((request.request_id, self.sim.now))
+        return ComputeResult(np.full((2, 2), request.request_id, dtype=np.float32))
+
+
+def test_prefetching_compute_starts_on_arrival_and_is_collected_on_completion() -> None:
+    sim = Simulation()
+    compute = PrefetchRecorder(sim)
+    assert isinstance(compute, PrefetchingCompute)
+    brain = BatchingBrain(sim, compute, FifoScheduler(), constant_model(s1_ms=100.0), seed=1)
+    done: list[BrainJob] = []
+    jobs = [job(0.0, name=1), job(0.05, name=2)]
+    for item in jobs:
+        item.on_done = done.append
+        sim.at(item.t_arrival, Priority.BRAIN, functools.partial(brain.submit, item))
+    sim.run()
+    assert compute.prefetched == [(1, 0.0), (2, 0.05)]
+    assert [name for name, _ in compute.collected] == [1, 2]
+    assert [at for _, at in compute.collected] == pytest.approx([0.1, 0.2])
+    assert [j.t_done for j in jobs] == [pytest.approx(0.1), pytest.approx(0.2)]
+    result = done[1].result
+    assert result is not None
+    assert result.actions is not None
+    assert float(result.actions[0, 0]) == 2.0
+    # the timing is the same as without prefetching
+    plain = run_brain("fifo", [(0.0, None), (0.05, None)], beta=0.5)
+    assert [j.t_done for j in plain] == [j.t_done for j in jobs]
 
 
 def run_brain(

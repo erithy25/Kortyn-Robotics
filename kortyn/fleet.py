@@ -221,6 +221,30 @@ class PredictionConfig:
 
 
 @dataclass
+class ValidationConfig:
+    """Stage 3: real rollouts of whole fleets (``kortyn.fleet_rollout``) on one GPU, batching and network."""
+
+    experiment: str  # LIBERO experiment of the dose-response runs (env, policy, seeds)
+    template_run: str  # run label whose agent, strategy and image settings the robots use
+    gpu: str
+    batching: str
+    network: str
+    profile: str = "smolvla_libero"
+    results_dir: str = "results/phase3/validation"
+    episodes: int = 100  # counted episodes per case (each robot plays ceil(episodes / n))
+    workers: int = 2  # inference processes (forked, shared weights)
+    confidence: float = 0.9875  # Bonferroni over four cases: family-wise 95 %
+    bootstrap: int = 10_000
+    seed: int = 5150
+
+    def __post_init__(self) -> None:
+        if self.episodes < 1 or self.workers < 1 or self.bootstrap < 100:
+            raise ConfigError("validation needs episodes >= 1, workers >= 1 and bootstrap >= 100")
+        if not 0.5 < self.confidence < 1.0:
+            raise ConfigError(f"validation confidence must be in (0.5, 1), got {self.confidence}")
+
+
+@dataclass
 class FleetSimConfig:
     """A grid of fleet simulations (stage 1 of phase 3)."""
 
@@ -242,6 +266,7 @@ class FleetSimConfig:
     results_path: str = "results/phase3/fleet/stage1.jsonl"
     workers: int = 0
     prediction: PredictionConfig | None = None  # stage 2 (kortyn.fleet_predict)
+    validation: ValidationConfig | None = None  # stage 3 (kortyn.fleet_rollout)
 
     def __post_init__(self) -> None:
         for name, mapping in (
@@ -260,6 +285,14 @@ class FleetSimConfig:
             raise ConfigError("need 0 <= window_start_s < horizon_s")
         if self.service_cv < 0 or self.batch_limit < 1 or self.workers < 0:
             raise ConfigError("service_cv must be >= 0, batch_limit >= 1, workers >= 0")
+        if self.validation is not None:
+            for name, mapping, value in (
+                ("gpu", self.gpus, self.validation.gpu),
+                ("batching", self.batching, self.validation.batching),
+                ("network", self.networks, self.validation.network),
+            ):
+                if value not in mapping:
+                    raise ConfigError(f"validation.{name} {value!r} is not defined in the fleet config")
 
 
 def load_fleet_config(path: Path | str) -> FleetSimConfig:
