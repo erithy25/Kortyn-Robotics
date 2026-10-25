@@ -373,6 +373,54 @@ def evaluate(
     return results
 
 
+def evaluate_queue_only(
+    records: Iterable[RunRecord], sizes: Iterable[int] | None = None
+) -> list[CapacityResult]:
+    """Capacity by criterion (1) alone (no dose-response for this operating point); (2) counts as met.
+
+    Success fields are NaN; rejected robots (admission control) still make a size fail, as in the full rule.
+    """
+    grouped: dict[ConfigKey, dict[int, list[RunRecord]]] = defaultdict(lambda: defaultdict(list))
+    for record in records:
+        grouped[record.key][record.robots].append(record)
+    allowed = None if sizes is None else set(sizes)
+    nan = float("nan")
+    results: list[CapacityResult] = []
+    for key in sorted(grouped):
+        evaluated = []
+        for n in sorted(grouped[key]):
+            if allowed is not None and n not in allowed:
+                continue
+            runs = grouped[key][n]
+            requests = sum(run.requests for run in runs)
+            misses = sum(run.misses for run in runs)
+            share = misses / requests if requests else 1.0
+            all_admitted = all(run.admitted == run.robots for run in runs)
+            evaluated.append(
+                SizeResult(
+                    robots=n,
+                    replications=len(runs),
+                    requests=requests,
+                    misses=misses,
+                    miss_share=share,
+                    criterion_1=requests > 0 and share <= MISS_SHARE_LIMIT,
+                    admitted_mean=float(np.mean([run.admitted for run in runs])),
+                    mean_batch=float(np.mean([run.mean_batch for run in runs])),
+                    busy_share=float(np.mean([run.busy_share for run in runs])),
+                    fleet_mean=nan,
+                    worst=nan,
+                    worst_ci=(nan, nan),
+                    single=nan,
+                    difference=nan,
+                    difference_ci=(nan, nan),
+                    criterion_2=all_admitted,
+                    extrapolated_share=0.0,
+                )
+            )
+        results.append(CapacityResult(key=key, capacity=capacity_of(evaluated), sizes=evaluated))
+    return results
+
+
 # --------------------------------------------------------------------------------------------- validation
 def episode_prediction(dose: DoseResponse, seed: int, weights: Floats) -> float:
     """Prediction for one rollout episode: the seed's own outcomes ``y_s`` averaged with level weights."""
@@ -393,45 +441,53 @@ def paired_difference_interval(
 
 
 # --------------------------------------------------------------------------------------------- output
+def queue_only_json(results: Sequence[CapacityResult]) -> dict[str, Any]:
+    return {"queue_only": True, "configurations": _configurations_json(results)}
+
+
 def result_json(results: Sequence[CapacityResult], dose: DoseResponse) -> dict[str, Any]:
     return {
         "levels_ms": [float(x) for x in dose.levels_ms],
         "curve": [float(x) for x in dose.curve()],
         "seeds": len(dose.seeds),
         "tasks": dose.group_ids,
-        "configurations": [
-            {
-                "network": r.key[0],
-                "gpu": r.key[1],
-                "batching": r.key[2],
-                "strategy": r.key[3],
-                "capacity": r.capacity,
-                "sizes": [
-                    {
-                        "robots": s.robots,
-                        "replications": s.replications,
-                        "requests": s.requests,
-                        "misses": s.misses,
-                        "miss_share": s.miss_share,
-                        "criterion_1": s.criterion_1,
-                        "admitted_mean": s.admitted_mean,
-                        "mean_batch": s.mean_batch,
-                        "busy_share": s.busy_share,
-                        "fleet_mean": s.fleet_mean,
-                        "worst": s.worst,
-                        "worst_ci": list(s.worst_ci),
-                        "single": s.single,
-                        "difference": s.difference,
-                        "difference_ci": list(s.difference_ci),
-                        "criterion_2": s.criterion_2,
-                        "extrapolated_share": s.extrapolated_share,
-                    }
-                    for s in r.sizes
-                ],
-            }
-            for r in results
-        ],
+        "configurations": _configurations_json(results),
     }
+
+
+def _configurations_json(results: Sequence[CapacityResult]) -> list[dict[str, Any]]:
+    return [
+        {
+            "network": r.key[0],
+            "gpu": r.key[1],
+            "batching": r.key[2],
+            "strategy": r.key[3],
+            "capacity": r.capacity,
+            "sizes": [
+                {
+                    "robots": s.robots,
+                    "replications": s.replications,
+                    "requests": s.requests,
+                    "misses": s.misses,
+                    "miss_share": s.miss_share,
+                    "criterion_1": s.criterion_1,
+                    "admitted_mean": s.admitted_mean,
+                    "mean_batch": s.mean_batch,
+                    "busy_share": s.busy_share,
+                    "fleet_mean": s.fleet_mean,
+                    "worst": s.worst,
+                    "worst_ci": list(s.worst_ci),
+                    "single": s.single,
+                    "difference": s.difference,
+                    "difference_ci": list(s.difference_ci),
+                    "criterion_2": s.criterion_2,
+                    "extrapolated_share": s.extrapolated_share,
+                }
+                for s in r.sizes
+            ],
+        }
+        for r in results
+    ]
 
 
 def prediction_config(config: FleetSimConfig) -> PredictionConfig:
@@ -448,6 +504,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--sizes", default=None, help="comma-separated fleet sizes (default: all stored)")
     parser.add_argument("--out", default=None, help="output JSON (default: prediction.output)")
+    parser.add_argument(
+        "--queue-only",
+        action="store_true",
+        help="capacity by criterion (1) alone (operating points without a dose-response curve)",
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -457,19 +518,35 @@ def main(argv: list[str] | None = None) -> int:
     )
     try:
         config = load_fleet_config(args.config)
-        settings = prediction_config(config)
-        dose = load_dose_response(settings)
-        records = read_stage1(Path(args.stage1 or config.results_path), dose.levels_ms)
         sizes = None if args.sizes is None else [int(s) for s in args.sizes.split(",") if s.strip()]
-        results = evaluate(records, dose, settings.bootstrap, settings.seed, sizes)
+        stage1 = Path(args.stage1 or config.results_path)
+        if args.queue_only:
+            if args.out is None:
+                raise ConfigError("--queue-only needs --out")
+            records = read_stage1(stage1, np.array([0.0, 1.0]))
+            document = queue_only_json(evaluate_queue_only(records, sizes))
+            out = Path(args.out)
+        else:
+            settings = prediction_config(config)
+            dose = load_dose_response(settings)
+            records = read_stage1(stage1, dose.levels_ms)
+            results = evaluate(records, dose, settings.bootstrap, settings.seed, sizes)
+            document = result_json(results, dose)
+            out = Path(args.out or settings.output)
     except (ConfigError, PredictionError) as exc:
         LOG.error("%s", exc)
         return 2
-    out = Path(args.out or settings.output)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(result_json(results, dose), indent=1), encoding="utf-8")
-    for result in results:
-        LOG.info("%s: capacity %d", "/".join(result.key), result.capacity)
+    out.write_text(json.dumps(document, indent=1), encoding="utf-8")
+    for entry in document["configurations"]:
+        LOG.info(
+            "%s/%s/%s/%s: capacity %d",
+            entry["network"],
+            entry["gpu"],
+            entry["batching"],
+            entry["strategy"],
+            entry["capacity"],
+        )
     LOG.info("written %s", out)
     return 0
 

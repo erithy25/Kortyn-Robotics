@@ -306,3 +306,20 @@ def test_stage1_results_to_capacity_end_to_end(tmp_path: Path) -> None:
     written = json.loads(Path(prediction.output).read_text(encoding="utf-8"))
     assert written["configurations"][0]["capacity"] == 2
     assert written["tasks"] == [3, 7]
+
+
+def test_queue_only_capacity_uses_criterion_one_and_admission() -> None:
+    from kortyn.fleet_predict import evaluate_queue_only, queue_only_json
+
+    records = [
+        run([robot(300.0)] * 1),
+        run([robot(300.0)] * 2),
+        run([robot(300.0, misses=3)] * 4),  # 3 % misses: fails (1)
+    ]
+    results = evaluate_queue_only(records)
+    assert results[0].capacity == 2
+    rejected = run([robot(300.0), robot(0.0, admitted=False)])
+    assert evaluate_queue_only([records[0], rejected])[0].capacity == 1  # a rejected robot fails the size
+    document = queue_only_json(results)
+    assert document["queue_only"] is True
+    assert document["configurations"][0]["capacity"] == 2
