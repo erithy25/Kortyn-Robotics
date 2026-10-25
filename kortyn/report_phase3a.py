@@ -1148,16 +1148,23 @@ def mean_paired_difference(reference: Run, run: Run) -> float:
     )
 
 
+def condition_name(label: str) -> str:
+    """Readable condition: ``mittel__schlecht`` -> ``RTX 3090 (174 ms), schlecht``; PushT runs by scenario."""
+    if "__" not in label:
+        return SCENARIO_LABELS.get(label, label)
+    timing, scenario = label_parts(label)
+    return f"{GPU_LABELS.get(timing, timing)}, {SCENARIO_LABELS.get(scenario, scenario)}"
+
+
 def latency_effects(families: Sequence[EffectFamily]) -> list[EffectPoint]:
     points: list[EffectPoint] = []
     for family in families:
-        base = pooled("success", family.reference.ordered())
-        if base <= 0:
-            continue
         for label, run in family.conditions.items():
-            if not math.isfinite(family.latency_ms[label]):
+            seeds = sorted(set(family.reference.episodes) & set(run.episodes))
+            base = pooled("success", family.reference.ordered(seeds)) if seeds else math.nan
+            if not seeds or base <= 0 or not math.isfinite(family.latency_ms[label]):
                 continue
-            success = pooled("success", run.ordered())
+            success = pooled("success", run.ordered(seeds))
             points.append(
                 EffectPoint(
                     family.name,
@@ -1757,7 +1764,7 @@ def write_report(results: Path, reports: Path) -> Path:
             "| Aufgabe | Bedingung | Mediane Latenz | Latenz / Budget | Erfolg | relativ zur Sync-Referenz | Δ Erfolg |",
             "|---|---|---:|---:|---:|---:|---:|",
             *[
-                f"| {p.family} | {p.condition} | {p.latency_ms:.0f} ms | {p.latency_budgets:.2f} | {fmt_pct(p.success)} "
+                f"| {p.family} | {condition_name(p.condition)} | {p.latency_ms:.0f} ms | {p.latency_budgets:.2f} | {fmt_pct(p.success)} "
                 f"| {fmt_pct(p.relative_success)} | {100 * p.delta:+.0f} pp |"
                 for p in sorted(points, key=lambda p: (p.family, p.latency_ms))
             ],

@@ -371,3 +371,14 @@ def test_pooled_effects_split_by_latency_budget_and_compare_tasks():
     assert points["langsam__gut"].latency_budgets == pytest.approx(320.0 / 312.5)
     assert points["langsam__gut"].delta == pytest.approx(-0.5)
     assert points["grenzfall__gut"].relative_success == 0.0
+    from kortyn.report_phase3a import condition_name
+
+    assert condition_name("mittel__schlecht") == "RTX 3090 (174 ms), schlecht"
+    assert condition_name("buero_wlan") == "Büro-WLAN"
+    # a condition measured on fewer seeds is compared with the reference on exactly those seeds
+    partial = run([episode(s, success=True) for s in range(1000, 1010)])
+    half = run([episode(s, success=s >= 1010) for s in seeds])  # the reference fails on the first ten seeds
+    ten = latency_effects(
+        [EffectFamily("x", half, {"schnell__gut": partial}, 312.5, {"schnell__gut": 100.0})]
+    )
+    assert ten == []  # the reference has no success on those seeds: no relative value
