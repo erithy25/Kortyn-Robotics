@@ -1,0 +1,72 @@
+{
+ "band": [
+  3,
+  9
+ ],
+ "selected": [
+  8,
+  0
+ ],
+ "tasks": [
+  {
+   "task_id": 0,
+   "episodes": 10,
+   "successes": 4,
+   "median_success_steps": 265.0
+  },
+  {
+   "task_id": 1,
+   "episodes": 10,
+   "successes": 8,
+   "median_success_steps": 245.0
+  },
+  {
+   "task_id": 2,
+   "episodes": 10,
+   "successes": 8,
+   "median_success_steps": 239.5
+  },
+  {
+   "task_id": 3,
+   "episodes": 10,
+   "successes": 9,
+   "median_success_steps": 219.0
+  },
+  {
+   "task_id": 4,
+   "episodes": 10,
+   "successes": 4,
+   "median_success_steps": 230.5
+  },
+  {
+   "task_id": 5,
+   "episodes": 10,
+   "successes": 8,
+   "median_success_steps": 161.5
+  },
+  {
+   "task_id": 6,
+   "episodes": 10,
+   "successes": 5,
+   "median_success_steps": 263.0
+  },
+  {
+   "task_id": 7,
+   "episodes": 10,
+   "successes": 8,
+   "median_success_steps": 251.0
+  },
+  {
+   "task_id": 8,
+   "episodes": 10,
+   "successes": 6,
+   "median_success_steps": 418.0
+  },
+  {
+   "task_id": 9,
+   "episodes": 10,
+   "successes": 6,
+   "median_success_steps": 255.0
+  }
+ ]
+}

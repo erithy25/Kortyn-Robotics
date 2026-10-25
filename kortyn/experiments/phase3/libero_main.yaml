@@ -1,0 +1,18 @@
+# Phase 3, steps 1.3, 1.4 and 2 on the main sample: the two LIBERO-Long tasks the pre-registered rule
+# picked from the pilot (results/phase3/step1/task_selection.json: band 3-9
+# successes, longest successful episodes) x init states 0-49 = 100 episodes, seeds 1000-1099, paired over all
+# conditions. Cold start (phase-3 standard); without a plan the arm stands still (strategy "halten").
+extends: libero_base.yaml
+env:
+  libero:
+    task_ids: [8, 0]
+    episodes_per_task: 50
+experiment:
+  results_dir: results/phase3/libero
+  episodes: 100
+  suites:
+    - profile: smolvla_libero
+      runs:
+        # 1.4: JPEG q90 in the synchronous reference (25 actions per plan, as the real-time cadence)
+        - {scenario: referenz_sync, timing: fest_0ms, sync_actions_per_chunk: 25, label: sync25}
+        - {scenario: referenz_sync, timing: fest_0ms, sync_actions_per_chunk: 25, image_transport: {codec: jpeg, quality: 90}, label: sync25_q90}
