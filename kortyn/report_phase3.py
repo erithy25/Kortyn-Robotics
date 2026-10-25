@@ -715,6 +715,45 @@ def build(args: argparse.Namespace) -> list[str]:
                     *batching_table(table, fleet, network, gpu),
                     "",
                 ]
+        if "buero_wlan" in fleet.networks and "realistisch" in fleet.batching:
+            for gpu in [g for g in fleet.gpus if g != "validierung"]:
+                name = f"phase3_verletzungen_{gpu}.png"
+                figure_miss_share(
+                    capacity,
+                    fleet,
+                    "buero_wlan",
+                    gpu,
+                    "realistisch",
+                    out / name,
+                    f"Budget-Verletzungen: {gpu_label(fleet, gpu)}, Batching realistisch, Büro-WLAN",
+                )
+                lines += [f"![Budget-Verletzungen {gpu}]({name})", ""]
+        scan = load_capacity(Path(args.capacity_scan))
+        if scan is not None:
+            scan_table = capacity_lookup(scan, fleet)
+            lines += [
+                "### Ergänzung: jede Flottengröße 1–128 (Büro-WLAN, 3 Wiederholungen)",
+                "",
+                *[
+                    line
+                    for profile in [p for p in BATCHING_ORDER if p in fleet.batching]
+                    for line in (
+                        f"**Batching {BATCHING_NAMES[profile]}:**",
+                        "",
+                        *capacity_table(scan_table, fleet, "buero_wlan", profile),
+                        "",
+                    )
+                ],
+            ]
+        p10 = load_capacity(Path(args.capacity_p10))
+        if p10 is not None:
+            p10_table = capacity_lookup(p10, fleet)
+            lines += [
+                "### Sensitivität: 10 Aktionen je Plan (nur Kriterium 1, Büro-WLAN)",
+                "",
+                *capacity_table(p10_table, fleet, "buero_wlan", "realistisch"),
+                "",
+            ]
         economics_path = Path(args.economics)
         if economics_path.exists():
             economics = load_economics(economics_path)
@@ -737,6 +776,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--main-config", default="kortyn/experiments/phase3/libero_main.yaml")
     parser.add_argument("--fleet-config", default="kortyn/experiments/phase3/fleet.yaml")
     parser.add_argument("--capacity", default="results/phase3/fleet/capacity.json")
+    parser.add_argument("--capacity-scan", default="results/phase3/fleet/capacity_scan.json")
+    parser.add_argument("--capacity-p10", default="results/phase3/fleet/capacity_p10.json")
     parser.add_argument("--validation", default="results/phase3/validation/evaluation.json")
     parser.add_argument("--economics", default="kortyn/experiments/phase3/economics.yaml")
     parser.add_argument("--out-dir", default="reports")
