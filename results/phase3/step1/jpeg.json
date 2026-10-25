@@ -1,0 +1,14 @@
+{
+ "pairs": 100,
+ "rate_a": 0.53,
+ "rate_b": 0.45,
+ "only_a": 19,
+ "only_b": 11,
+ "difference": -0.08000000000000002,
+ "interval": [
+  -0.19,
+  0.03
+ ],
+ "p_value": 0.20048842206597328,
+ "jpeg_standard": false
+}

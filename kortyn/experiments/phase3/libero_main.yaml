@@ -16,3 +16,13 @@ experiment:
         # 1.4: JPEG q90 in the synchronous reference (25 actions per plan, as the real-time cadence)
         - {scenario: referenz_sync, timing: fest_0ms, sync_actions_per_chunk: 25, label: sync25}
         - {scenario: referenz_sync, timing: fest_0ms, sync_actions_per_chunk: 25, image_transport: {codec: jpeg, quality: 90}, label: sync25_q90}
+        # 2: dose-response (cold start, image transport after rule 1.4: raw)
+        - {scenario: gut, timing: fest_0ms, strategy: halten, label: fest_0ms}
+        - {scenario: gut, timing: fest_500ms, strategy: halten, label: fest_500ms}
+        - {scenario: gut, timing: fest_1000ms, strategy: halten, label: fest_1000ms}
+        - {scenario: gut, timing: fest_1250ms, strategy: halten, label: fest_1250ms}
+        - {scenario: gut, timing: fest_1500ms, strategy: halten, label: fest_1500ms}
+        - {scenario: gut, timing: fest_2000ms, strategy: halten, label: fest_2000ms}
+        - {scenario: gut, timing: jitter_500_1500ms, strategy: halten, label: jitter_500_1500ms}
+        # 1.3: warm start at 1 000 ms (compared with fest_1000ms)
+        - {scenario: gut, timing: fest_1000ms, strategy: halten, start_mode: warm, label: warm_1000ms}

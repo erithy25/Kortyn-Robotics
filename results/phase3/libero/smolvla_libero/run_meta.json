@@ -1,0 +1,263 @@
+{
+  "profile": "smolvla_libero",
+  "profile_settings": {
+    "noise_scheduler_type": "DDIM",
+    "num_inference_steps": 10,
+    "n_action_steps": null
+  },
+  "clock": "virtual",
+  "brain": {
+    "policy_type": "smolvla",
+    "checkpoint": "checkpoints/smolvla_libero",
+    "device": "cpu",
+    "sampler": "flow-10",
+    "n_obs_steps": 1,
+    "max_actions": 50,
+    "lerobot_version": "0.6.1",
+    "torch_version": "2.11.0+cpu",
+    "torch_threads": 1,
+    "warmup_inference_ms": 0.0
+  },
+  "runs": {
+    "sync25": {
+      "scenario": "referenz_sync",
+      "mode": "sync",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_0ms",
+      "timing_settings": {
+        "description": "feste Latenz 0 ms",
+        "latency": "model",
+        "hardware": "fest_0ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "sync_actions_per_chunk": 25
+    },
+    "sync25_q90": {
+      "scenario": "referenz_sync",
+      "mode": "sync",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_0ms",
+      "timing_settings": {
+        "description": "feste Latenz 0 ms",
+        "latency": "model",
+        "hardware": "fest_0ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "sync_actions_per_chunk": 25,
+      "image_transport": {
+        "codec": "jpeg",
+        "quality": 90,
+        "height": null,
+        "width": null
+      }
+    }
+  },
+  "agent": {
+    "actions_per_chunk": 50,
+    "refill_threshold": 24,
+    "start_mode": "cold",
+    "request_timeout_s": 10.0,
+    "sync_actions_per_chunk": 25
+  },
+  "env": {
+    "gym_id": "gym_pusht/PushT-v0",
+    "fps": 20.0,
+    "max_episode_steps": 520
+  },
+  "seeds": [
+    1000,
+    1099
+  ],
+  "workers": 3,
+  "torch_threads": 1,
+  "share_model": true,
+  "host": {
+    "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "cpu_count": 4,
+    "python": "3.12.3"
+  },
+  "git_commit": "f1882a354761d5a90bd6326a428f568642963ede-dirty",
+  "started_utc": "2026-10-25T13:23:22+00:00",
+  "sessions": [
+    {
+      "started_utc": "2026-10-25T13:23:22+00:00",
+      "git_commit": "ae5f1f66f005b1fdd32ab84ceb00a3a0ce382b5c",
+      "runs": [
+        "sync25",
+        "sync25_q90"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-25T13:30:59+00:00",
+      "git_commit": "f1882a354761d5a90bd6326a428f568642963ede-dirty",
+      "runs": [
+        "sync25",
+        "sync25_q90"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    }
+  ]
+}
