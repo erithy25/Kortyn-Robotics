@@ -1,0 +1,591 @@
+{
+  "profile": "kalibriert",
+  "profile_settings": {
+    "noise_scheduler_type": "DDIM",
+    "num_inference_steps": 4,
+    "n_action_steps": null
+  },
+  "clock": "virtual",
+  "brain": {
+    "policy_type": "diffusion",
+    "checkpoint": "checkpoints/diffusion_pusht_migrated",
+    "device": "cpu",
+    "sampler": "DDIM-4",
+    "n_obs_steps": 2,
+    "max_actions": 15,
+    "lerobot_version": "0.6.1",
+    "torch_version": "2.11.0+cpu",
+    "torch_threads": 3,
+    "warmup_inference_ms": 0.0
+  },
+  "runs": {
+    "replay__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "replay",
+      "timing_settings": {
+        "description": "Replay der in Phase 1 geloggten Ende-zu-Ende-Latenzen und Takt-Versp\u00e4tungen",
+        "latency": "replay",
+        "hardware": null,
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "replay_run": "gut"
+    },
+    "replay__gut_wiederholung": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "replay",
+      "timing_settings": {
+        "description": "Replay der in Phase 1 geloggten Ende-zu-Ende-Latenzen und Takt-Versp\u00e4tungen",
+        "latency": "replay",
+        "hardware": null,
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "replay_run": "gut_wiederholung"
+    },
+    "replay__buero_wlan": {
+      "scenario": "buero_wlan",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 20.0,
+        "rtt_jitter_ms": 10.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "replay",
+      "timing_settings": {
+        "description": "Replay der in Phase 1 geloggten Ende-zu-Ende-Latenzen und Takt-Versp\u00e4tungen",
+        "latency": "replay",
+        "hardware": null,
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "replay_run": "buero_wlan"
+    },
+    "replay__schlecht": {
+      "scenario": "schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 80.0,
+        "rtt_jitter_ms": 40.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 300.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "timing": "replay",
+      "timing_settings": {
+        "description": "Replay der in Phase 1 geloggten Ende-zu-Ende-Latenzen und Takt-Versp\u00e4tungen",
+        "latency": "replay",
+        "hardware": null,
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "replay_run": "schlecht"
+    },
+    "replay__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "timing": "replay",
+      "timing_settings": {
+        "description": "Replay der in Phase 1 geloggten Ende-zu-Ende-Latenzen und Takt-Versp\u00e4tungen",
+        "latency": "replay",
+        "hardware": null,
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "replay_run": "sehr_schlecht"
+    },
+    "replay__schlecht_ohne_stall": {
+      "scenario": "schlecht_ohne_stall",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 80.0,
+        "rtt_jitter_ms": 40.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "replay",
+      "timing_settings": {
+        "description": "Replay der in Phase 1 geloggten Ende-zu-Ende-Latenzen und Takt-Versp\u00e4tungen",
+        "latency": "replay",
+        "hardware": null,
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "replay_run": "schlecht_ohne_stall"
+    },
+    "replay__sehr_schlecht_ohne_stall": {
+      "scenario": "sehr_schlecht_ohne_stall",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "replay",
+      "timing_settings": {
+        "description": "Replay der in Phase 1 geloggten Ende-zu-Ende-Latenzen und Takt-Versp\u00e4tungen",
+        "latency": "replay",
+        "hardware": null,
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "replay_run": "sehr_schlecht_ohne_stall"
+    }
+  },
+  "agent": {
+    "actions_per_chunk": 15,
+    "refill_threshold": 6,
+    "start_mode": "warm",
+    "request_timeout_s": 5.0,
+    "sync_actions_per_chunk": 8
+  },
+  "env": {
+    "gym_id": "gym_pusht/PushT-v0",
+    "fps": 10.0,
+    "max_episode_steps": 300
+  },
+  "seeds": [
+    1000,
+    1049
+  ],
+  "workers": 1,
+  "torch_threads": 3,
+  "host": {
+    "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "cpu_count": 4,
+    "python": "3.12.3"
+  },
+  "git_commit": "13829137100493a9c93450f88c16c258f847fb43",
+  "started_utc": "2026-10-25T02:44:47+00:00",
+  "sessions": [
+    {
+      "started_utc": "2026-10-25T02:44:47+00:00",
+      "git_commit": "13829137100493a9c93450f88c16c258f847fb43",
+      "runs": [
+        "replay__buero_wlan",
+        "replay__gut",
+        "replay__gut_wiederholung",
+        "replay__schlecht",
+        "replay__schlecht_ohne_stall",
+        "replay__sehr_schlecht",
+        "replay__sehr_schlecht_ohne_stall"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    }
+  ]
+}
