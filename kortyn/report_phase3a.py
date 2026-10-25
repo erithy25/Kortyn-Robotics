@@ -665,6 +665,11 @@ DETERMINISM_PAIRS = (
         "phase3a/determinism",
         "phase3a/determinism_b",
     ),
+    (
+        "SmolVLA/Meta-World: 1 gegen 2 Worker (gleicher Code)",
+        "phase3a/smolvla_determinism_a",
+        "phase3a/smolvla_determinism_b",
+    ),
 )
 
 
