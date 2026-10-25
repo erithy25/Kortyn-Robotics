@@ -1,0 +1,36 @@
+# Kortyn phase 3a – validation of the simulation-time mode against phase 1: REPLAY.
+#
+# Every real-time run of phase 1 is played back in virtual time: each request gets exactly the end-to-end
+# latency it had in phase 1 (same seed, same observation step), every control tick starts exactly as late as
+# it did. The policy runs with 3 torch threads like the phase-1 Brain, so identical observations give
+# bit-identical plans: a correct simulation-time mode must then reproduce the phase-1 episodes exactly.
+# Run:  python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_replay.yaml
+extends: ../base.yaml
+
+timings:
+  replay:
+    description: "Replay der in Phase 1 geloggten Ende-zu-Ende-Latenzen und Takt-Verspätungen"
+    latency: replay
+    replay: {results_dir: results}
+
+experiment:
+  results_dir: results/phase3a/validation_replay
+  episodes: 50
+  workers: 1
+  torch_threads: 3              # = phase-1 Brain (bit-identical plans)
+  suites:
+    - profile: kalibriert
+      runs:
+        - {scenario: gut, timing: replay}
+        - {scenario: gut, timing: replay, replay_run: gut_wiederholung}
+        - {scenario: buero_wlan, timing: replay}
+        - {scenario: schlecht, timing: replay}
+        - {scenario: sehr_schlecht, timing: replay}
+        - {scenario: schlecht_ohne_stall, timing: replay}
+        - {scenario: sehr_schlecht_ohne_stall, timing: replay}
+    - profile: ddim10
+      runs:
+        - {scenario: gut, timing: replay}
+        - {scenario: buero_wlan, timing: replay}
+        - {scenario: schlecht, timing: replay}
+        - {scenario: sehr_schlecht, timing: replay}

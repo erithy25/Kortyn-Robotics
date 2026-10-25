@@ -22,6 +22,9 @@ Definitions (used consistently by agent, report and README):
                       For phase-1 records (repeat the last action, no limit) this equals starvation.
 * **Brain load**      requests per second, inference-thread utilization (inference time / episode time) and
                       mean queue wait, from the request records; the Brain's own counters cross-check them.
+
+In the simulation-time mode (phase 3a, ``kortyn/virtual_agent.py``) every time above is simulation time; the
+definitions are unchanged.
 """
 
 from __future__ import annotations
@@ -160,6 +163,13 @@ class EpisodeRecord:
     emergency_events: int = 0  # maximal runs of such ticks
     emergency_ticks_age: int = 0  # of which the plan existed but was older than the guard's limit
     brain_load: dict[str, float] | None = None  # Brain counter deltas over the episode (GetStats)
+    # Phase 3a: "wall" (real time, phases 1/2) or "virtual" (simulation-time mode); for virtual episodes the
+    # timing model and its diagnostics (replay matches, real compute time, inference cache hits).
+    clock: str = "wall"
+    virtual: dict[str, Any] | None = None
+    # Largest per-step reward of the episode (LeRobot's ``max_reward`` for envs without a coverage, e.g.
+    # Meta-World: reward scale 0-10). Not recorded by the real-time agent of phases 1/2.
+    max_step_reward: float | None = None
 
     @property
     def duration_s(self) -> float:

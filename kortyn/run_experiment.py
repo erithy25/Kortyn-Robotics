@@ -68,6 +68,11 @@ PUBLISHED_REFERENCE_FILE = "published_reference.json"
 # Settings that must be identical for every episode stored under one results/<profile>/ directory:
 # the runs of a profile are compared with each other, so a resumed or extended suite must not mix them.
 META_MATCHING_KEYS = ("profile", "profile_settings", "agent", "env")
+# Settings introduced after results were stored, with the value that reproduces the earlier behaviour: a
+# stored run entry without such a key matches a current entry that has the key with exactly this value.
+BACKWARD_COMPATIBLE_DEFAULTS: dict[str, Any] = {
+    "per_seed": False,  # phase 3a: empirical latency sources drawn per episode seed
+}
 BRAIN_IDENTITY_KEYS = (
     "policy_type",
     "checkpoint",
@@ -292,6 +297,25 @@ def _session_of(meta: dict[str, Any], runs: Sequence[str]) -> dict[str, Any]:
     }
 
 
+def same_settings(stored: Any, current: Any) -> bool:
+    """Equal settings, where a key added later is equal to its absence if it has its backward-compatible value
+    (:data:`BACKWARD_COMPATIBLE_DEFAULTS`)."""
+    if isinstance(stored, dict) and isinstance(current, dict):
+        for key in stored.keys() | current.keys():
+            if key not in stored and key in BACKWARD_COMPATIBLE_DEFAULTS:
+                if current[key] != BACKWARD_COMPATIBLE_DEFAULTS[key]:
+                    return False
+                continue
+            if key not in stored or key not in current or not same_settings(stored[key], current[key]):
+                return False
+        return True
+    if isinstance(stored, list) and isinstance(current, list):
+        return len(stored) == len(current) and all(
+            same_settings(a, b) for a, b in zip(stored, current, strict=True)
+        )
+    return bool(stored == current)
+
+
 def merge_run_meta(
     previous: dict[str, Any] | None,
     current: dict[str, Any],
@@ -324,7 +348,7 @@ def merge_run_meta(
     problems += [
         f"runs.{label}: {previous_runs[label]!r} -> {entry!r}"
         for label, entry in current["runs"].items()
-        if label in with_data and label in previous_runs and previous_runs[label] != entry
+        if label in with_data and label in previous_runs and not same_settings(previous_runs[label], entry)
     ]
     if problems:
         raise RunnerError(

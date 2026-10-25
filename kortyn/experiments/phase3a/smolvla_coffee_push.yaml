@@ -1,0 +1,6 @@
+# SmolVLA on Meta-World coffee-push-v3 (see smolvla_base.yaml).
+extends: smolvla_base.yaml
+env:
+  metaworld: {task: coffee-push-v3}
+experiment:
+  results_dir: results/phase3a/smolvla/coffee_push

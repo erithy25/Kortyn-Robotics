@@ -1,0 +1,120 @@
+# Kortyn phase 3a – SmolVLA (lerobot/smolvla_metaworld) on Meta-World in simulation time.
+# Shared settings of the per-task experiments (smolvla_<task>.yaml extend this file).
+#
+# The Brain runs SmolVLA in-process on the CPU (bf16 as loaded by LeRobot); WHEN a plan arrives is simulated
+# with published consumer-GPU inference times (10 flow-matching steps; spread 5 % assumed) plus the phase-1
+# network scenarios: schnell = RTX 4090, mittel = RTX 3090, langsam = Apple M4; grenzfall = Apple M1, whose
+# latency exceeds a whole chunk. Real CPU inference times are documented in the report.
+# Starvation (no plan left): the arm stands still (strategy "halten"). In phase 1 the agent repeated the last
+# action, which for PushT's absolute position targets means standing still; Meta-World's actions are
+# end-effector displacements, so repeating one would keep the arm moving instead.
+# Run:  python -m kortyn.run_virtual --config kortyn/experiments/phase3a/smolvla_push.yaml
+brain:
+  device: cpu
+  warmup_inferences: 1
+  checkpoint:
+    repo_id: lerobot/smolvla_metaworld
+    revision: 8d82bdf3487776404e5e863f585c9d5210b96d14
+    local_dir: checkpoints/smolvla_metaworld
+
+agent:
+  client_id: kortyn-agent-0
+  actions_per_chunk: 50         # SmolVLA chunk_size
+  refill_threshold: 24          # request when <= 24 actions remain: a new plan every 25 ticks (LeRobot async: 50 %)
+  request_timeout_s: 5.0
+  start_mode: warm
+  warmup_timeout_s: 60.0
+  sync_actions_per_chunk: 25    # matched sync reference: the observation steps of real time at zero latency
+  image_transport: {codec: raw} # LeRobot's evaluation input; compression is studied in smolvla_transport.yaml
+
+env:                            # mirrors LeRobot's MetaworldEnv (checked by tests/test_metaworld_env.py)
+  kind: metaworld
+  fps: 80.0
+  max_episode_steps: 500        # = Meta-World max_path_length
+  features_map:
+    pixels: observation.images.camera1
+    agent_pos: observation.state
+  hold_action_key: null         # actions are end-effector displacements: hold = zero action
+  metaworld: {task: push-v3, camera_name: corner2}
+
+strategies:
+  halten:
+    description: "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer hält)"
+    guard: {mode: hold}
+
+profiles:
+  smolvla:
+    num_inference_steps: 10     # flow-matching steps (checkpoint default)
+
+hardware_profiles:
+  rtx4090:
+    description: "RTX 4090, SmolVLA 450M fp32, 10 Schritte: 99,2 ms (LeRobot-Paper arXiv 2602.22818, Tab. 3)"
+    service:
+      smolvla: {kind: lognormal, mean_ms: 99.2, std_ms: 5.0}
+  rtx3090:
+    description: "RTX 3090, eager PyTorch, 512 px: 174,1 ms (vla.cpp, arXiv 2606.08094v2)"
+    service:
+      smolvla: {kind: lognormal, mean_ms: 174.1, std_ms: 8.7}
+  m4_gpu:
+    description: "Apple M4 GPU (Metal, vla.cpp): P90 330,6 ms (arXiv 2606.08094v2) -> Mittel 311 ms bei 5 % Streuung"
+    service:
+      smolvla: {kind: lognormal, mean_ms: 311.0, std_ms: 15.6}
+  m1_gpu:
+    description: "Apple M1 GPU (PyTorch MPS): 721,8 ms (LeRobot-Paper arXiv 2602.22818, Tab. 3)"
+    service:
+      smolvla: {kind: lognormal, mean_ms: 721.8, std_ms: 36.1}
+
+# Robot side: building the request 1 ms; gRPC/serialization of ~0.7 MB on the LAN host 5 ms; ideal ticks.
+timings:
+  schnell:
+    description: "GPU schnell (RTX 4090)"
+    latency: model
+    hardware: rtx4090
+    client_overhead: {kind: constant, value_ms: 1.0}
+    transport_overhead: {kind: constant, value_ms: 5.0}
+  mittel:
+    description: "GPU mittel (RTX 3090)"
+    latency: model
+    hardware: rtx3090
+    client_overhead: {kind: constant, value_ms: 1.0}
+    transport_overhead: {kind: constant, value_ms: 5.0}
+  langsam:
+    description: "GPU langsam (Apple M4, vla.cpp)"
+    latency: model
+    hardware: m4_gpu
+    client_overhead: {kind: constant, value_ms: 1.0}
+    transport_overhead: {kind: constant, value_ms: 5.0}
+  grenzfall:
+    description: "Grenzfall Apple M1 (PyTorch MPS): Latenz länger als ein Chunk (50 Ticks = 625 ms)"
+    latency: model
+    hardware: m1_gpu
+    client_overhead: {kind: constant, value_ms: 1.0}
+    transport_overhead: {kind: constant, value_ms: 5.0}
+
+experiment:
+  results_dir: results/phase3a/smolvla/push
+  seed_start: 1000              # = LeRobot's evaluation seeds (start 1000, +1 per episode)
+  episodes: 100
+  workers: 4
+  torch_threads: 1
+  suites:
+    - profile: smolvla
+      runs:
+        # references (the simulation waits for every plan; timing irrelevant for the outcome)
+        - {scenario: referenz_sync, timing: mittel, sync_actions_per_chunk: 50, label: referenz_sync50}
+        - {scenario: referenz_sync, timing: mittel, label: referenz_sync25}
+        # real time: four network scenarios x three GPU profiles
+        - {scenario: gut, timing: schnell, strategy: halten, label: schnell__gut}
+        - {scenario: buero_wlan, timing: schnell, strategy: halten, label: schnell__buero_wlan}
+        - {scenario: schlecht, timing: schnell, strategy: halten, label: schnell__schlecht}
+        - {scenario: sehr_schlecht, timing: schnell, strategy: halten, label: schnell__sehr_schlecht}
+        - {scenario: gut, timing: mittel, strategy: halten, label: mittel__gut}
+        - {scenario: buero_wlan, timing: mittel, strategy: halten, label: mittel__buero_wlan}
+        - {scenario: schlecht, timing: mittel, strategy: halten, label: mittel__schlecht}
+        - {scenario: sehr_schlecht, timing: mittel, strategy: halten, label: mittel__sehr_schlecht}
+        - {scenario: gut, timing: langsam, strategy: halten, label: langsam__gut}
+        - {scenario: buero_wlan, timing: langsam, strategy: halten, label: langsam__buero_wlan}
+        - {scenario: schlecht, timing: langsam, strategy: halten, label: langsam__schlecht}
+        - {scenario: sehr_schlecht, timing: langsam, strategy: halten, label: langsam__sehr_schlecht}
+        # boundary case: every plan arrives after its whole chunk has passed (network only makes it worse)
+        - {scenario: gut, timing: grenzfall, strategy: halten, label: grenzfall__gut}

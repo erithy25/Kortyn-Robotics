@@ -57,6 +57,27 @@ def _abort(context: grpc.ServicerContext, code: grpc.StatusCode, message: str) -
     raise RuntimeError("grpc ServicerContext.abort returned unexpectedly")  # pragma: no cover
 
 
+def policy_info_to_proto(info: PolicyInfo) -> pb.BrainInfo:
+    """``GetInfo`` answer for a loaded policy (also used by the in-process Brain of the virtual-time mode)."""
+    return pb.BrainInfo(
+        policy_type=info.policy_type,
+        checkpoint=info.checkpoint,
+        device=info.device,
+        n_obs_steps=info.n_obs_steps,
+        max_actions=info.max_actions,
+        action_dim=info.action_dim,
+        input_features=[
+            pb.FeatureSpec(key=f.key, kind=f.kind, shape=list(f.shape)) for f in info.input_features
+        ],
+        sampler=info.sampler,
+        lerobot_version=info.lerobot_version,
+        torch_version=info.torch_version,
+        warmup_inference_ms=info.warmup_inference_ms,
+        torch_threads=info.torch_threads,
+        supports_guidance=info.supports_guidance,
+    )
+
+
 class InferenceWorker:
     """Single thread that owns the policy. ``submit`` returns a future with the result."""
 
@@ -105,24 +126,7 @@ class BrainServicer(pb_grpc.KortynBrainServicer):  # type: ignore[misc]  # gener
         self._started = time.perf_counter()
 
     def GetInfo(self, request: pb.GetInfoRequest, context: grpc.ServicerContext) -> pb.BrainInfo:
-        info = self._info
-        return pb.BrainInfo(
-            policy_type=info.policy_type,
-            checkpoint=info.checkpoint,
-            device=info.device,
-            n_obs_steps=info.n_obs_steps,
-            max_actions=info.max_actions,
-            action_dim=info.action_dim,
-            input_features=[
-                pb.FeatureSpec(key=f.key, kind=f.kind, shape=list(f.shape)) for f in info.input_features
-            ],
-            sampler=info.sampler,
-            lerobot_version=info.lerobot_version,
-            torch_version=info.torch_version,
-            warmup_inference_ms=info.warmup_inference_ms,
-            torch_threads=info.torch_threads,
-            supports_guidance=info.supports_guidance,
-        )
+        return policy_info_to_proto(self._info)
 
     def GetStats(self, request: pb.GetStatsRequest, context: grpc.ServicerContext) -> pb.BrainStats:
         with self._lock:
@@ -180,7 +184,11 @@ class BrainServicer(pb_grpc.KortynBrainServicer):  # type: ignore[misc]  # gener
                     self._counters.abandoned += 1
                 return None
             result = runner.infer(
-                observation, seed=int(request.seed), max_actions=int(max_actions), guide=guide
+                observation,
+                seed=int(request.seed),
+                max_actions=int(max_actions),
+                guide=guide,
+                task=request.task or None,
             )
             with self._lock:
                 self._counters.inferences += 1

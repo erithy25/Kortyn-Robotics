@@ -25,6 +25,12 @@ are aligned, whether the Brain inpaints the transition, and what happens without
 the last action, or hold and log an emergency). ``StrategyConfig()`` is exactly the behaviour above. Every
 tick logs the plan age of the executed action; the Brain's load counters (``GetStats``) are read before
 and after each episode.
+
+Phase 3a: everything that does not depend on how time passes (requests, records, compatibility check,
+episode summary) lives in :class:`AgentCore`; the virtual-time agent (``kortyn/virtual_agent.py``) reuses it
+with the same loop on a simulation clock. Requests may carry a language instruction (from the env's
+``task_description``) and compressed camera images (``AgentConfig.image_transport``); the defaults keep the
+phase-1 wire format.
 """
 
 from __future__ import annotations
@@ -393,32 +399,22 @@ def request_seed(episode_seed: int, obs_step: int) -> int:
     return (episode_seed * 1_000_003 + obs_step) % (2**63)
 
 
-class Agent:
-    """Runs episodes against a Brain. One instance per process; not thread-safe."""
+class AgentCore:
+    """Time-independent part of an agent: requests, records and the episode summary.
 
-    def __init__(
-        self,
-        config: AgentConfig,
-        env: Environment,
-        brain: BrainClient,
-        spec: BrainSpec,
-        proxy: ProxyControl | None = None,
-        clock: Callable[[], float] = time.monotonic,
-        sleep: Callable[[float], None] = time.sleep,
-        stats_client: BrainClient | None = None,
-    ) -> None:
+    Shared by the wall-clock :class:`Agent` and the virtual-time agent (``kortyn/virtual_agent.py``), so
+    both build identical requests and summarize episodes identically (starvation causes, validity gate).
+    """
+
+    def __init__(self, config: AgentConfig, env: Environment, spec: BrainSpec) -> None:
         self.config = config
         self.env = env
-        self.brain = brain
         self.spec = spec
-        self.proxy = proxy
-        # Direct (not proxied) control-plane client for the Brain's load counters; None = no load data.
-        self.stats_client = stats_client
-        self._clock = clock
-        self._sleep = sleep
         self._next_request_id = 1
-        self._inbox: queue.SimpleQueue[_Completion] = queue.SimpleQueue()
         self.dt = 1.0 / env.fps
+        # Phase 3a: camera features may travel compressed; a language instruction comes from the env.
+        self._image_keys = frozenset(key for key, (kind, _) in spec.features.items() if kind == "VISUAL")
+        self._task = str(getattr(env, "task_description", "") or "")
         self._check_compatibility()
 
     # ------------------------------------------------------------------ setup
@@ -456,8 +452,10 @@ class Agent:
             obs_timestep=step,
             seed=request_seed(episode_seed, step),
             max_actions=self.config.actions_per_chunk,
-            observation=encode_observation(stacked),
+            observation=encode_observation(stacked, self.config.image_transport, self._image_keys),
         )
+        if self._task:
+            request.task = self._task
         if guide is not None:
             request.guide_start_timestep = guide.start_step
             request.guide_actions.CopyFrom(encode_array(guide.actions))
@@ -493,17 +491,6 @@ class Agent:
             queue_at_send=queue_len,
         )
 
-    def _on_done(self, request_id: int, future: Any) -> None:
-        """gRPC callback thread: only timestamp and hand over; all state changes happen in the loop."""
-        t_resp = self._clock()
-        try:
-            response = future.result()
-            self._inbox.put(_Completion(request_id, t_resp, response, "ok", None))
-        except grpc.FutureCancelledError:
-            self._inbox.put(_Completion(request_id, t_resp, None, "cancelled", "cancelled by agent"))
-        except grpc.RpcError as exc:
-            self._inbox.put(_Completion(request_id, t_resp, None, _status_from_rpc(exc), _rpc_message(exc)))
-
     @staticmethod
     def _fill_response(record: RequestRecord, response: pb.InferResponse) -> FloatArray:
         record.status = "ok"
@@ -514,6 +501,175 @@ class Agent:
         actions = decode_tensor(response.actions).astype(np.float32)
         record.n_actions = int(actions.shape[0])
         return actions
+
+    def _new_history(self, observation: Observation) -> deque[Observation]:
+        # Like LeRobot's populate_queues: the first observation fills the whole history.
+        return deque([observation] * self.spec.n_obs_steps, maxlen=self.spec.n_obs_steps)
+
+    def _max_steps(self) -> int:
+        return int(self.env.max_episode_steps)
+
+    # ------------------------------------------------------------------ bookkeeping
+    def _link_stats(self, ctx: EpisodeContext, invalid: list[str]) -> dict[str, Any] | None:
+        """Statistics of the link the episode ran over (proxy counters); ``None`` = no link to report."""
+        return None
+
+    def _finish(
+        self,
+        ctx: EpisodeContext,
+        *,
+        records: dict[int, RequestRecord],
+        ticks: TickSeries,
+        steps: int,
+        tick_starts: list[float],
+        max_coverage: float,
+        sum_reward: float,
+        success: bool,
+        wall: float,
+        t0: float,
+        invalid: list[str],
+        warmup_ms: float | None,
+        cpu_before: tuple[int, int] | None,
+        brain_load: dict[str, float] | None,
+        max_step_reward: float | None = None,
+    ) -> EpisodeOutcome:
+        cfg = self.config
+        steal = steal_fraction(cpu_before, read_cpu_times())
+        proxy_stats = self._link_stats(ctx, invalid)
+
+        compute, network, none_pending = self._attribute_starvation(ticks, tick_starts, records)
+        failed = [r for r in records.values() if r.status != "ok"]
+        for record in failed:
+            if record.status in ("unavailable", "error"):
+                invalid.append(f"request {record.request_id} {record.status}: {record.error}")
+        max_lateness = max(ticks.lateness_ms, default=0.0)
+        if max_lateness > cfg.max_tick_lateness_ms:
+            invalid.append(f"tick lateness {max_lateness:.1f} ms > {cfg.max_tick_lateness_ms} ms")
+        if proxy_stats is not None:
+            lateness = float(proxy_stats.get("max_delivery_lateness_ms", 0.0))
+            if lateness > cfg.max_proxy_lateness_ms:
+                invalid.append(f"proxy delivery lateness {lateness:.1f} ms > {cfg.max_proxy_lateness_ms} ms")
+            if int(proxy_stats.get("connections_opened_since_configure", 0)) > 0:
+                invalid.append("gRPC connection was (re)opened during the episode")
+        if steal is not None and steal > cfg.max_cpu_steal_fraction:
+            invalid.append(f"CPU steal {steal:.1%} > {cfg.max_cpu_steal_fraction:.0%}")
+
+        # Convert absolute monotonic times to seconds relative to the episode clock start.
+        requests: list[RequestRecord] = []
+        for record in sorted(records.values(), key=lambda r: r.request_id):
+            record.t_obs_s -= t0
+            record.t_send_s -= t0
+            if record.t_resp_s is not None:
+                record.t_resp_s -= t0
+            if record.t_first_exec_s is not None:
+                record.t_first_exec_s -= t0
+            requests.append(record)
+
+        episode = EpisodeRecord(
+            run=ctx.run,
+            profile=ctx.profile,
+            scenario=ctx.scenario,
+            mode=ctx.mode,
+            seed=ctx.seed,
+            attempt=ctx.attempt,
+            success=success,
+            steps=steps,
+            fps=self.env.fps,
+            wall_duration_s=wall,
+            max_coverage=max_coverage,
+            sum_reward=sum_reward,
+            n_requests=len(records),
+            n_failed_requests=len(failed),
+            starved_ticks=int(sum(ticks.starved)),
+            starvation_events=len(runs_of_true(ticks.starved)),
+            starved_ticks_compute=compute,
+            starved_ticks_network=network,
+            starved_ticks_none_pending=none_pending,
+            tick_overruns=sum(1 for value in ticks.lateness_ms if value > 1000.0 * self.dt),
+            max_tick_lateness_ms=max_lateness,
+            valid=not invalid,
+            invalid_reasons=invalid,
+            warmup_ms=warmup_ms,
+            cpu_steal_fraction=steal,
+            proxy=proxy_stats,
+            ticks=ticks,
+            strategy=ctx.strategy,
+            emergency_ticks=sum(1 for value in ticks.emergency if value),
+            emergency_events=len(runs_of_true([1 if value else 0 for value in ticks.emergency])),
+            emergency_ticks_age=sum(1 for value in ticks.emergency if value == 2),
+            brain_load=brain_load,
+            max_step_reward=max_step_reward,
+        )
+        return EpisodeOutcome(episode=episode, requests=requests)
+
+    @staticmethod
+    def _attribute_starvation(
+        ticks: TickSeries, tick_starts: list[float], records: dict[int, RequestRecord]
+    ) -> tuple[int, int, int]:
+        """Classify starved ticks: compute (late even without network), network, or nothing pending."""
+        compute = network = none_pending = 0
+        for index, starved in enumerate(ticks.starved):
+            if not starved:
+                continue
+            request_id = ticks.pending_request[index]
+            record = records.get(request_id)
+            if record is None:
+                none_pending += 1
+                continue
+            if record.status == "ok" and record.server_total_ms is not None:
+                ready_without_network = record.t_send_s + record.server_total_ms / 1000.0
+                if ready_without_network >= tick_starts[index]:
+                    compute += 1
+                else:
+                    network += 1
+            else:
+                network += 1
+        return compute, network, none_pending
+
+
+class Agent(AgentCore):
+    """Runs episodes against a Brain in real time (wall clock). One instance per process; not thread-safe."""
+
+    def __init__(
+        self,
+        config: AgentConfig,
+        env: Environment,
+        brain: BrainClient,
+        spec: BrainSpec,
+        proxy: ProxyControl | None = None,
+        clock: Callable[[], float] = time.monotonic,
+        sleep: Callable[[float], None] = time.sleep,
+        stats_client: BrainClient | None = None,
+    ) -> None:
+        self.brain = brain
+        self.proxy = proxy
+        # Direct (not proxied) control-plane client for the Brain's load counters; None = no load data.
+        self.stats_client = stats_client
+        self._clock = clock
+        self._sleep = sleep
+        self._inbox: queue.SimpleQueue[_Completion] = queue.SimpleQueue()
+        super().__init__(config, env, spec)
+
+    def _link_stats(self, ctx: EpisodeContext, invalid: list[str]) -> dict[str, Any] | None:
+        if self.proxy is None or ctx.mode != "realtime":
+            return None
+        try:
+            return self.proxy.stats()
+        except ProxyControlError as exc:
+            invalid.append(f"proxy stats unavailable: {exc}")
+            return None
+
+    # ------------------------------------------------------------------ requests
+    def _on_done(self, request_id: int, future: Any) -> None:
+        """gRPC callback thread: only timestamp and hand over; all state changes happen in the loop."""
+        t_resp = self._clock()
+        try:
+            response = future.result()
+            self._inbox.put(_Completion(request_id, t_resp, response, "ok", None))
+        except grpc.FutureCancelledError:
+            self._inbox.put(_Completion(request_id, t_resp, None, "cancelled", "cancelled by agent"))
+        except grpc.RpcError as exc:
+            self._inbox.put(_Completion(request_id, t_resp, None, _status_from_rpc(exc), _rpc_message(exc)))
 
     def _blocking_request(
         self,
@@ -559,10 +715,6 @@ class Agent:
         if ctx.mode == "realtime":
             return self._run_realtime(ctx, strategy)
         raise ValueError(f"unknown mode {ctx.mode!r}")
-
-    def _new_history(self, observation: Observation) -> deque[Observation]:
-        # Like LeRobot's populate_queues: the first observation fills the whole history.
-        return deque([observation] * self.spec.n_obs_steps, maxlen=self.spec.n_obs_steps)
 
     def _brain_stats(self) -> pb.BrainStats | None:
         if self.stats_client is None:
@@ -923,125 +1075,6 @@ class Agent:
             cpu_before=cpu_before,
             brain_load=None,
         )
-
-    def _max_steps(self) -> int:
-        return int(self.env.max_episode_steps)
-
-    # ------------------------------------------------------------------ bookkeeping
-    def _finish(
-        self,
-        ctx: EpisodeContext,
-        *,
-        records: dict[int, RequestRecord],
-        ticks: TickSeries,
-        steps: int,
-        tick_starts: list[float],
-        max_coverage: float,
-        sum_reward: float,
-        success: bool,
-        wall: float,
-        t0: float,
-        invalid: list[str],
-        warmup_ms: float | None,
-        cpu_before: tuple[int, int] | None,
-        brain_load: dict[str, float] | None,
-    ) -> EpisodeOutcome:
-        cfg = self.config
-        steal = steal_fraction(cpu_before, read_cpu_times())
-        proxy_stats: dict[str, Any] | None = None
-        if self.proxy is not None and ctx.mode == "realtime":
-            try:
-                proxy_stats = self.proxy.stats()
-            except ProxyControlError as exc:
-                invalid.append(f"proxy stats unavailable: {exc}")
-
-        compute, network, none_pending = self._attribute_starvation(ticks, tick_starts, records)
-        failed = [r for r in records.values() if r.status != "ok"]
-        for record in failed:
-            if record.status in ("unavailable", "error"):
-                invalid.append(f"request {record.request_id} {record.status}: {record.error}")
-        max_lateness = max(ticks.lateness_ms, default=0.0)
-        if max_lateness > cfg.max_tick_lateness_ms:
-            invalid.append(f"tick lateness {max_lateness:.1f} ms > {cfg.max_tick_lateness_ms} ms")
-        if proxy_stats is not None:
-            lateness = float(proxy_stats.get("max_delivery_lateness_ms", 0.0))
-            if lateness > cfg.max_proxy_lateness_ms:
-                invalid.append(f"proxy delivery lateness {lateness:.1f} ms > {cfg.max_proxy_lateness_ms} ms")
-            if int(proxy_stats.get("connections_opened_since_configure", 0)) > 0:
-                invalid.append("gRPC connection was (re)opened during the episode")
-        if steal is not None and steal > cfg.max_cpu_steal_fraction:
-            invalid.append(f"CPU steal {steal:.1%} > {cfg.max_cpu_steal_fraction:.0%}")
-
-        # Convert absolute monotonic times to seconds relative to the episode clock start.
-        requests: list[RequestRecord] = []
-        for record in sorted(records.values(), key=lambda r: r.request_id):
-            record.t_obs_s -= t0
-            record.t_send_s -= t0
-            if record.t_resp_s is not None:
-                record.t_resp_s -= t0
-            if record.t_first_exec_s is not None:
-                record.t_first_exec_s -= t0
-            requests.append(record)
-
-        episode = EpisodeRecord(
-            run=ctx.run,
-            profile=ctx.profile,
-            scenario=ctx.scenario,
-            mode=ctx.mode,
-            seed=ctx.seed,
-            attempt=ctx.attempt,
-            success=success,
-            steps=steps,
-            fps=self.env.fps,
-            wall_duration_s=wall,
-            max_coverage=max_coverage,
-            sum_reward=sum_reward,
-            n_requests=len(records),
-            n_failed_requests=len(failed),
-            starved_ticks=int(sum(ticks.starved)),
-            starvation_events=len(runs_of_true(ticks.starved)),
-            starved_ticks_compute=compute,
-            starved_ticks_network=network,
-            starved_ticks_none_pending=none_pending,
-            tick_overruns=sum(1 for value in ticks.lateness_ms if value > 1000.0 * self.dt),
-            max_tick_lateness_ms=max_lateness,
-            valid=not invalid,
-            invalid_reasons=invalid,
-            warmup_ms=warmup_ms,
-            cpu_steal_fraction=steal,
-            proxy=proxy_stats,
-            ticks=ticks,
-            strategy=ctx.strategy,
-            emergency_ticks=sum(1 for value in ticks.emergency if value),
-            emergency_events=len(runs_of_true([1 if value else 0 for value in ticks.emergency])),
-            emergency_ticks_age=sum(1 for value in ticks.emergency if value == 2),
-            brain_load=brain_load,
-        )
-        return EpisodeOutcome(episode=episode, requests=requests)
-
-    @staticmethod
-    def _attribute_starvation(
-        ticks: TickSeries, tick_starts: list[float], records: dict[int, RequestRecord]
-    ) -> tuple[int, int, int]:
-        """Classify starved ticks: compute (late even without network), network, or nothing pending."""
-        compute = network = none_pending = 0
-        for index, starved in enumerate(ticks.starved):
-            if not starved:
-                continue
-            request_id = ticks.pending_request[index]
-            record = records.get(request_id)
-            if record is None:
-                none_pending += 1
-                continue
-            if record.status == "ok" and record.server_total_ms is not None:
-                ready_without_network = record.t_send_s + record.server_total_ms / 1000.0
-                if ready_without_network >= tick_starts[index]:
-                    compute += 1
-                else:
-                    network += 1
-            else:
-                network += 1
-        return compute, network, none_pending
 
 
 # --------------------------------------------------------------------------------------------- CLI

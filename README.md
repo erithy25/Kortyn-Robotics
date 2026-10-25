@@ -3,17 +3,105 @@
 Kortyn lagert die KI eines Roboters (die *Policy*) auf einen Server im selben Netz aus („**Kortyn Brain**“)
 und misst, wie zuverlässig der Roboter („**Kortyn Agent**“) weiterarbeitet, wenn das Netz schlecht wird.
 Eine vortrainierte LeRobot-Policy löst eine simulierte Aufgabe, der Roboter läuft in **echter Echtzeit** (er
-wartet nie auf das Modell), und ein Netzwerk-Störproxy verschlechtert die Verbindung stufenweise.
+wartet nie auf das Modell), und ein Netzwerk-Störproxy verschlechtert die Verbindung stufenweise. Seit Phase 3a
+führt ein deterministischer **Simulationszeit-Modus** dieselbe Regelschleife auf einer virtuellen Uhr aus.
 
 | Phase | Frage | Kurzantwort | Report |
 |---|---|---|---|
 | **1 – Baseline** | Wie stark leidet die ausgelagerte Policy unter Latenz, Jitter und Stalls? | Echtzeit kostet nichts, solange das Latenzbudget hält; danach sinkt die Qualität mit dem Planalter. | [`reports/phase1.md`](reports/phase1.md) |
 | **2 – Freshness Engine** | Holt ein jüngeres Planalter die Qualität zurück, ohne unnötige Brain-Last? | **Nein.** Häufigere Anfragen senken das Planalter, bringen aber keine Qualität und kosten bis zu 2× Brain-Last. Keine Strategie schlägt die Baseline signifikant. | [`reports/phase2.md`](reports/phase2.md) |
+| **3a – Simulationszeit + SmolVLA** | Lässt sich die Echtzeit-Messung durch eine deterministische Simulation ersetzen? Schadet Latenz einer VLA-Policy (SmolVLA) mehr, besonders bei dynamischen Aufgaben? | **Ja**, validiert gegen Phase 1, deterministisch reproduzierbar, ≈ 6× weniger Seeds für dieselbe Präzision. SmolVLA ist in Millisekunden empfindlicher (Budget 312 statt 700 ms), relativ zum Budget nicht. Nicht die Dynamik der Aufgabe entscheidet, sondern ihre Präzisionsanforderung (über Budget: push −30 pp, coffee-push −7 pp). | [`reports/phase3a.md`](reports/phase3a.md) |
 
-- Aufgabe: **PushT** (LeRobot/gym-pusht, 10 Hz, max. 300 Schritte)
-- Policy: **`lerobot/diffusion_pusht`** (Diffusion Policy, Apache-2.0), lokal ins aktuelle LeRobot-Format
-  migriert
+- Aufgabe Phase 1–2: **PushT** (LeRobot/gym-pusht, 10 Hz, max. 300 Schritte)
+- Policy Phase 1–2: **`lerobot/diffusion_pusht`** (Diffusion Policy, Apache-2.0), lokal ins aktuelle
+  LeRobot-Format migriert
+- Phase 3a: **Meta-World** (drawer-close, push, coffee-push; MuJoCo, 80 Hz, max. 500 Schritte) mit
+  **`lerobot/smolvla_metaworld`** (SmolVLA, Apache-2.0)
 - Alles Open Source, keine Cloud, keine Telemetrie, läuft auf macOS (Apple Silicon, MPS) und Linux (CPU)
+
+---
+
+## Phase 3a: Simulationszeit-Modus und SmolVLA-Baseline – Ergebnisse auf einen Blick
+
+Messung vom 24./25.10.2026 auf derselben Maschine (4-vCPU-Xeon, keine GPU). Vollständiger Report mit allen
+Tabellen, Tests und Abbildungen: **[`reports/phase3a.md`](reports/phase3a.md)**, Rohtabellen in
+[`reports/phase3a_data.md`](reports/phase3a_data.md).
+
+**Was neu ist:**
+- **Simulationszeit-Modus** (`python -m kortyn.run_virtual`): Discrete-Event-Simulation mit virtueller Uhr.
+  - Der Agent läuft Anweisung für Anweisung wie in Echtzeit; die Policy rechnet weiterhin echt.
+  - *Wann* ein Plan ankommt, bestimmt ein Latenzmodell oder der Replay geloggter Phase-1-Latenzen. Das Modell
+    besteht aus dem Netzmodell des Proxys mit denselben Seeds, einem FIFO-Brain mit austauschbarem Scheduler
+    und der Servicezeit je Hardware-Profil.
+  - Zwei Läufe derselben Konfiguration sind identisch, unabhängig von Worker-Zahl und Reihenfolge: bei
+    Meta-World bitgleich, bei PushT bis auf die letzten Float-Bits der Physik-Engine (pymunk).
+  - Der Echtzeit-Modus (`python -m kortyn.run_experiment`) bleibt unverändert.
+- **SmolVLA auf Meta-World:**
+  - Die Sprachanweisung reist im Protokoll mit.
+  - Bilder lassen sich mit wählbarer Auflösung und Kompression übertragen.
+  - Die Meta-World-Umgebung ist exakt wie in LeRobots Evaluation aufgebaut.
+
+**Validierung gegen alle 550 Echtzeit-Episoden aus Phase 1** (gepaart über Seeds; Erfolg, Ø Max-Reward,
+Planalter, Starvation):
+
+| Latenzquelle | Vergleiche | KI enthält 0 | Holm-signifikant | Bewertung |
+|---|---:|---:|---:|---|
+| Replay der geloggten Latenzen | 44 | 42 | 2 (Planalter +0,05 ms) | ✅ alle 550 Episoden reproduziert, 441 bitgleich, der Rest bis auf die letzten Float-Bits |
+| Modell, episodengenaue Servicezeit | 44 | 41 | 0 | ✅ |
+| Modell, gepooltes Hardware-Profil | 52 | 49 | 2 (Planalter +14/+17 ms) | ✅ Abweichungen kommen aus der Drift der Phase-1-Maschine |
+
+**Messpräzision:**
+- Gepaarte Vergleiche naher Bedingungen streuen 2,5-mal weniger als in Echtzeit. Für dieselbe Präzision
+  reichen damit ≈ 6-mal weniger Seeds.
+- Die Power-Analyse ergab 100 Seeds je Bedingung. Nachweisbar sind damit Erfolgsunterschiede ab 15 pp (push)
+  bzw. 10 pp (coffee-push).
+
+**SmolVLA: Erfolgsverlust in pp gegen die synchrone Referenz** (100 Seeds je Bedingung, gepaart, ein Roboter;
+Latenz = publizierte GPU-Inferenzzeit + Netz-Szenario aus Phase 1):
+
+| GPU-Profil (Inferenz) | Netz: gut / Büro-WLAN / schlecht / sehr schlecht | drawer-close (Ref. 100 %) | push (Ref. 69 %) | coffee-push (Ref. 66 %) |
+|---|---|---:|---:|---:|
+| RTX 4090 (99 ms) | 4 Szenarien | ±0 / ±0 / ±0 / ±0 | −6 / −7 / −10 / **−15** | −1 / +1 / +1 / −6 |
+| RTX 3090 (174 ms) | 4 Szenarien | ±0 / ±0 / ±0 / ±0 | −8 / −8 / **−19** / **−26** | −1 / +3 / −5 / −7 |
+| Apple M4 (311 ms) | 4 Szenarien | ±0 / ±0 / ±0 / ±0 | **−23** / **−28** / **−32** / **−43** | −7 / **−8** / −7 / **−8** |
+| Apple M1 (722 ms, Grenzfall) | nur „gut“ | **−100** | **−62** | **−40** |
+
+Fett = 95-%-KI schließt die Null aus.
+
+**Abgleich der Sync-Referenz:**
+- **Publizierte Werte** (je 30 Episoden), auf den Seeds 1000–1029: drawer-close 100 gegen 100 %, push 77 gegen
+  70 %, coffee-push 73 gegen 90 %.
+- **LeRobots `lerobot-eval`**, gleiche 50 Seeds: 60 % gegen Kortyn 66 % (McNemar p = 0,45).
+
+**Antwort auf die Kernfrage:**
+- **In Millisekunden schadet Latenz SmolVLA mehr, relativ zum Budget nicht.**
+  - Die Queue überbrückt bei 80 Hz nur 312,5 ms statt 700 ms.
+  - Ø Verlust im/über Budget: push −10/−30 pp, coffee-push −1/−7 pp, drawer-close ±0; PushT −4/−44 pp.
+- **Vorbehalt:** Meta-World-Episoden sind nach 54–79 Takten (< 1 s) entschieden.
+  - Der latenzfreie Start-Plan deckt davon 50 Takte ab; Latenz trifft nur ein bis zwei Pläne, bei PushT rund 19.
+  - Je betroffenem Plan ist SmolVLA-push deshalb empfindlicher als PushT.
+- **„Dynamisch“ laut Experten-Test heißt nicht empfindlicher:** coffee-push verliert über dem Budget 23 pp
+  weniger als push. Entscheidend ist, wie viel der Start-Plan allein löst und wie präzise die folgenden Pläne
+  sein müssen.
+
+**Konsequenzen für Phase 3 (mehrere Roboter an einem Brain):**
+- **Kapazität (Rechnung):**
+  - RTX 4090 ohne Batching: zwei Roboter mit Reserve; ein dritter nur mit gestaffelten Anfragen.
+  - RTX 3090: ein Roboter.
+  - Apple M4: schon ein Roboter liegt über dem Budget.
+- **Scheduler:** Deadline (Budget − Rückweg) statt FIFO testen, mit Robotern in unterschiedlichen Netzen. Die
+  Anfragefrequenz sollte je Aufgabe wählbar sein, denn push profitiert von Frische (Sync-25 gegen Sync-50:
+  +12 pp).
+- **Bilder:** JPEG q90 als Standard: 1,1 statt 17,7 Mbit/s je Roboter, ohne signifikanten Verlust.
+  Herunterskalieren auf 240 px kostet 20 pp.
+- **Aufgaben:** eine Aufgabe mit längerem Horizont ergänzen (LIBERO-Long, nur Linux, oder verkettete
+  Meta-World-Aufgaben).
+- **Keine reine CPU-Inferenz:** 0,9–1,7 s je Plan auf dieser Maschine.
+
+**Laufzeit:**
+- Validierung ≈ 6 h: gepoolt 2 h 21 min, episodengenau 1 h 34 min, Replay 2 h 13 min.
+- SmolVLA ≈ 4,7 h in Vier-Worker-Äquivalent (Schätzung vorab: 4,7–12,7 h).
+- Vieles lief parallel; insgesamt ≈ 11 h Wanduhr.
 
 ---
 
@@ -223,11 +311,29 @@ for n in 4 6 12; do uv run python -m kortyn.run_experiment --config kortyn/exper
 
 # 5. Reports: reports/phase1.md und reports/phase2.md (--phase 1|2 für nur einen)
 uv run python -m kortyn.report
+
+# 6. Phase 3a: Validierung des Simulationszeit-Modus gegen Phase 1 (braucht die Phase-1-Ergebnisse)
+uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_model.yaml
+uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_replay.yaml
+uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_model.yaml --profile kalibriert \
+    --run modell__gut --run modell__sehr_schlecht --episodes 10 --workers 1 --results-dir results/phase3a/determinism
+# Aufgabenwahl (Totzeit-Toleranz der Meta-World-Experten) und SmolVLA (Checkpoint ≈ 0,9 GB beim ersten Lauf).
+# MuJoCo rendert ohne Display: Standard EGL (Linux) bzw. CGL (macOS), überschreibbar mit MUJOCO_GL.
+uv run python -m kortyn.expert_delay
+for task in drawer_close push coffee_push; do
+  uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/smolvla_${task}.yaml
+done
+uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/smolvla_transport.yaml
+uv run python -m kortyn.lerobot_reference --config kortyn/experiments/phase3a/smolvla_coffee_push.yaml \
+    --profile smolvla --episodes 50
+uv run python -m kortyn.bench_inference --config kortyn/experiments/phase3a/smolvla_push.yaml
+uv run python -m kortyn.report_phase3a      # reports/phase3a_data.md + reports/phase3a_*.png
 ```
 
 Laufzeiten auf der Messmaschine (4-vCPU-Xeon, keine GPU): Kalibrierung ≈ 10 min, alle Läufe ≈ 4 h 40 min (650
 Episoden: `kalibriert` 400, `ddim10` 250), LeRobot-Referenz DDPM-100 ≈ 1 h; Phase 2: Stufe 1 ≈ 2 h 50 min,
-Stufe 2 ≈ 4 h 25 min, Sync-Ablation ≈ 35 min. Auf Apple Silicon mit MPS ist die
+Stufe 2 ≈ 4 h 25 min, Sync-Ablation ≈ 35 min; Phase 3a: Validierung ≈ 6 h, SmolVLA ≈ 4,7 h mit 4 Workern
+(Aufschlüsselung in [`reports/phase3a.md`](reports/phase3a.md), Abschnitt 9). Auf Apple Silicon mit MPS ist die
 Inferenz schneller; die Echtzeit-Episoden dauern trotzdem ihre 10–30 s Simulationszeit.
 
 > **Mac-Hinweise:** Netzteil anschließen, `caffeinate -i` verwenden (sonst drosselt macOS lange Läufe),
@@ -262,7 +368,15 @@ Kortyn Brain :50051  ◄─ TCP/HTTP2 ─  netem_proxy :50052  ◄─  Kortyn Ag
 | `kortyn/calibrate.py` | Wählt die DDIM-Schrittzahl, bei der „gut“ nicht verhungert | `python -m kortyn.calibrate` |
 | `kortyn/lerobot_reference.py` | Offizielles `lerobot-eval` als Referenz | `python -m kortyn.lerobot_reference --profile ddim10` |
 | `kortyn/checkpoint.py` | Download (gepinnte Revision) + Migration ins Processor-Format | – |
-| `kortyn/proto/kortyn_brain.proto` | Wire-Protokoll (Protobuf, kein Pickle) | – |
+| `kortyn/proto/kortyn_brain.proto` | Wire-Protokoll (Protobuf, kein Pickle); Phase 3a: Sprachanweisung, komprimierte Bilder | – |
+| `kortyn/virtual_time.py` | Phase 3a: Discrete-Event-Simulation (virtuelle Uhr), Latenzmodelle (Netz = Proxy-Modell, Brain-Warteschlange mit austauschbarem Scheduler, Servicezeit je Hardware-Profil), Replay geloggter Latenzen | – |
+| `kortyn/virtual_agent.py` | Phase 3a: derselbe Agent auf der virtuellen Uhr; Policy rechnet echt im Prozess (`LocalBrain`) | – |
+| `kortyn/run_virtual.py` | Phase 3a: Simulationszeit-Läufe, parallel und bitgleich reproduzierbar, fortsetzbar (`--stop-file`) | `python -m kortyn.run_virtual --config …` |
+| `kortyn/metaworld_env.py` | Phase 3a: Meta-World wie LeRobots Evaluation, Bilder nur bei Bedarf gerendert | – |
+| `kortyn/expert_delay.py` | Phase 3a: Totzeit-Toleranz der skriptierten Meta-World-Experten (Aufgabenwahl) | `python -m kortyn.expert_delay` |
+| `kortyn/bench_inference.py` | Phase 3a: echte CPU-Inferenzzeit der Policy | `python -m kortyn.bench_inference --config …` |
+| `kortyn/env_determinism.py` | Phase 3a: Ist die PushT-Physik bitgenau reproduzierbar? | `python -m kortyn.env_determinism` |
+| `kortyn/report_phase3a.py` | `reports/phase3a_data.md` + Abbildungen: Validierung, Rauschen/Power, SmolVLA | `python -m kortyn.report_phase3a` |
 
 ### Warum ein eigener Brain-Server statt LeRobots Async Inference?
 
@@ -374,11 +488,36 @@ experiment:
         - {scenario: schlecht, strategy: baseline}          # baseline = exakt Phase 1
 ```
 
+**Phase-3a-Simulationszeit** (`python -m kortyn.run_virtual`): Läufe mit `timing:` statt Echtzeit. Ein Timing
+beschreibt, wie Latenz entsteht: `latency: model` setzt sie aus Client-Overhead, dem Proxy-Netzmodell des
+Szenarios, Transport-Overhead, einer Brain-Warteschlange (`brain_servers`, `scheduler`) und der Servicezeit eines
+Hardware-Profils zusammen; `latency: replay` spielt die geloggten Latenzen eines Phase-1-Laufs ab. Verteilungen:
+`constant`, `uniform`, `normal`, `lognormal` oder `empirical` (aus geloggten Läufen, optional `per_seed`).
+
+```yaml
+hardware_profiles:
+  rtx4090:
+    service:
+      smolvla: {kind: lognormal, mean_ms: 99.2, std_ms: 5.0}
+timings:
+  schnell:
+    latency: model
+    hardware: rtx4090
+    client_overhead: {kind: constant, value_ms: 1.0}
+    transport_overhead: {kind: constant, value_ms: 5.0}
+experiment:
+  suites:
+    - profile: smolvla
+      runs:
+        - {scenario: schlecht, timing: schnell, strategy: halten}   # Ergebnis: <results_dir>/smolvla/schnell__halten__schlecht/
+```
+
 ## Entwicklung
 
 ```bash
-uv run pytest                 # ~200 Tests: Proxy, Metriken, Codec, Migration, Brain, Golden-Test, Echtzeit-Agent,
-                              #   Latenzschätzer, Anfrage-Strategien, Inpainting, Phase-2-Report
+uv run pytest                 # ~270 Tests: Proxy, Metriken, Codec, Migration, Brain, Golden-Tests, Echtzeit-Agent,
+                              #   Latenzschätzer, Anfrage-Strategien, Inpainting, virtuelle Uhr, Latenzmodelle,
+                              #   Replay, Determinismus, Meta-World, SmolVLA (mit lokalem Checkpoint), Reports
 uv run ruff check . && uv run ruff format --check .
 uv run mypy kortyn            # strict
 # Protokoll geändert? Python-Module neu erzeugen:

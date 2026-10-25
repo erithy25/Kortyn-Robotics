@@ -1,0 +1,6 @@
+# SmolVLA on Meta-World drawer-close-v3 (see smolvla_base.yaml).
+extends: smolvla_base.yaml
+env:
+  metaworld: {task: drawer-close-v3}
+experiment:
+  results_dir: results/phase3a/smolvla/drawer_close

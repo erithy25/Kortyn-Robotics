@@ -1,0 +1,1730 @@
+{
+  "profile": "smolvla",
+  "profile_settings": {
+    "noise_scheduler_type": "DDIM",
+    "num_inference_steps": 10,
+    "n_action_steps": null
+  },
+  "clock": "virtual",
+  "brain": {
+    "policy_type": "smolvla",
+    "checkpoint": "checkpoints/smolvla_metaworld",
+    "device": "cpu",
+    "sampler": "flow-10",
+    "n_obs_steps": 1,
+    "max_actions": 50,
+    "lerobot_version": "0.6.1",
+    "torch_version": "2.11.0+cpu",
+    "torch_threads": 1,
+    "warmup_inference_ms": 0.0
+  },
+  "runs": {
+    "referenz_sync50": {
+      "scenario": "referenz_sync",
+      "mode": "sync",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "mittel",
+      "timing_settings": {
+        "description": "GPU mittel (RTX 3090)",
+        "latency": "model",
+        "hardware": "rtx3090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 174.1,
+        "std_ms": 8.7,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "sync_actions_per_chunk": 50
+    },
+    "referenz_sync25": {
+      "scenario": "referenz_sync",
+      "mode": "sync",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "mittel",
+      "timing_settings": {
+        "description": "GPU mittel (RTX 3090)",
+        "latency": "model",
+        "hardware": "rtx3090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 174.1,
+        "std_ms": 8.7,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      }
+    },
+    "schnell__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "schnell",
+      "timing_settings": {
+        "description": "GPU schnell (RTX 4090)",
+        "latency": "model",
+        "hardware": "rtx4090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 99.2,
+        "std_ms": 5.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schnell__buero_wlan": {
+      "scenario": "buero_wlan",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 20.0,
+        "rtt_jitter_ms": 10.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "schnell",
+      "timing_settings": {
+        "description": "GPU schnell (RTX 4090)",
+        "latency": "model",
+        "hardware": "rtx4090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 99.2,
+        "std_ms": 5.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schnell__schlecht": {
+      "scenario": "schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 80.0,
+        "rtt_jitter_ms": 40.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 300.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "timing": "schnell",
+      "timing_settings": {
+        "description": "GPU schnell (RTX 4090)",
+        "latency": "model",
+        "hardware": "rtx4090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 99.2,
+        "std_ms": 5.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "schnell__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "timing": "schnell",
+      "timing_settings": {
+        "description": "GPU schnell (RTX 4090)",
+        "latency": "model",
+        "hardware": "rtx4090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 99.2,
+        "std_ms": 5.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "mittel__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "mittel",
+      "timing_settings": {
+        "description": "GPU mittel (RTX 3090)",
+        "latency": "model",
+        "hardware": "rtx3090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 174.1,
+        "std_ms": 8.7,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "mittel__buero_wlan": {
+      "scenario": "buero_wlan",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 20.0,
+        "rtt_jitter_ms": 10.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "mittel",
+      "timing_settings": {
+        "description": "GPU mittel (RTX 3090)",
+        "latency": "model",
+        "hardware": "rtx3090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 174.1,
+        "std_ms": 8.7,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "mittel__schlecht": {
+      "scenario": "schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 80.0,
+        "rtt_jitter_ms": 40.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 300.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "timing": "mittel",
+      "timing_settings": {
+        "description": "GPU mittel (RTX 3090)",
+        "latency": "model",
+        "hardware": "rtx3090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 174.1,
+        "std_ms": 8.7,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "mittel__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "timing": "mittel",
+      "timing_settings": {
+        "description": "GPU mittel (RTX 3090)",
+        "latency": "model",
+        "hardware": "rtx3090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 174.1,
+        "std_ms": 8.7,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "langsam__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "langsam",
+      "timing_settings": {
+        "description": "GPU langsam (Apple M4, vla.cpp)",
+        "latency": "model",
+        "hardware": "m4_gpu",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 311.0,
+        "std_ms": 15.6,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "langsam__buero_wlan": {
+      "scenario": "buero_wlan",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 20.0,
+        "rtt_jitter_ms": 10.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "langsam",
+      "timing_settings": {
+        "description": "GPU langsam (Apple M4, vla.cpp)",
+        "latency": "model",
+        "hardware": "m4_gpu",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 311.0,
+        "std_ms": 15.6,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "langsam__schlecht": {
+      "scenario": "schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 80.0,
+        "rtt_jitter_ms": 40.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 300.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "timing": "langsam",
+      "timing_settings": {
+        "description": "GPU langsam (Apple M4, vla.cpp)",
+        "latency": "model",
+        "hardware": "m4_gpu",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 311.0,
+        "std_ms": 15.6,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "langsam__sehr_schlecht": {
+      "scenario": "sehr_schlecht",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 150.0,
+        "rtt_jitter_ms": 80.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": {
+          "interval_s": 10.0,
+          "duration_ms": 1000.0
+        },
+        "burst_gap_ms": 2.0
+      },
+      "timing": "langsam",
+      "timing_settings": {
+        "description": "GPU langsam (Apple M4, vla.cpp)",
+        "latency": "model",
+        "hardware": "m4_gpu",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 311.0,
+        "std_ms": 15.6,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "grenzfall__gut": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "grenzfall",
+      "timing_settings": {
+        "description": "Grenzfall Apple M1 (PyTorch MPS): Latenz l\u00e4nger als ein Chunk (50 Ticks = 625 ms)",
+        "latency": "model",
+        "hardware": "m1_gpu",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 721.8,
+        "std_ms": 36.1,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "strategy": "halten",
+      "strategy_settings": {
+        "description": "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer h\u00e4lt)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "none",
+          "schedule": "linear",
+          "max_overlap_steps": 10
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    }
+  },
+  "agent": {
+    "actions_per_chunk": 50,
+    "refill_threshold": 24,
+    "start_mode": "warm",
+    "request_timeout_s": 5.0,
+    "sync_actions_per_chunk": 25
+  },
+  "env": {
+    "kind": "metaworld",
+    "task": "coffee-push-v3",
+    "camera_name": "corner2",
+    "instruction": null,
+    "fps": 80.0,
+    "max_episode_steps": 500
+  },
+  "seeds": [
+    1000,
+    1099
+  ],
+  "workers": 4,
+  "torch_threads": 1,
+  "host": {
+    "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "cpu_count": 4,
+    "python": "3.12.3"
+  },
+  "git_commit": "a00b302e4994fe1a504ee25843c998c898a9b44c-dirty",
+  "started_utc": "2026-10-24T23:34:13+00:00",
+  "sessions": [
+    {
+      "started_utc": "2026-10-24T23:34:13+00:00",
+      "git_commit": "408409b2af3b9aa36cb51be982ace2a0ef33ae5e-dirty",
+      "runs": [
+        "referenz_sync25",
+        "referenz_sync50"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-25T04:57:20+00:00",
+      "git_commit": "a00b302e4994fe1a504ee25843c998c898a9b44c-dirty",
+      "runs": [
+        "grenzfall__gut",
+        "langsam__buero_wlan",
+        "langsam__gut",
+        "langsam__schlecht",
+        "langsam__sehr_schlecht",
+        "mittel__buero_wlan",
+        "mittel__gut",
+        "mittel__schlecht",
+        "mittel__sehr_schlecht",
+        "schnell__buero_wlan",
+        "schnell__gut",
+        "schnell__schlecht",
+        "schnell__sehr_schlecht"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    }
+  ]
+}

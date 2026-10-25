@@ -8,8 +8,13 @@ checkpoint's published numbers and Kortyn's ``referenz_sync`` run this separates
 * Kortyn's Brain/Agent pipeline            (lerobot-eval vs. referenz_sync),
 * real-time latency and the network        (referenz_sync vs. the network scenarios).
 
+PushT (phase 1, Diffusion Policy) and Meta-World (phase 3a, SmolVLA: env task, camera key and flow-matching
+steps from the experiment config; one env at a time):
+
     python -m kortyn.lerobot_reference --profile ddim10
     python -m kortyn.lerobot_reference --scheduler DDPM --num-inference-steps 100 --name ddpm100
+    python -m kortyn.lerobot_reference --config kortyn/experiments/phase3a/smolvla_coffee_push.yaml \
+        --profile smolvla --episodes 50
 """
 
 from __future__ import annotations
@@ -60,7 +65,24 @@ def main(argv: list[str] | None = None) -> int:
     steps = args.num_inference_steps or (profile.num_inference_steps if profile else 10)
     name = args.name or args.profile or f"{scheduler.lower()}{steps}"
     episodes = args.episodes or config.experiment.episodes
-    batch = args.batch_size or episodes
+    metaworld = config.env.metaworld if config.env.kind == "metaworld" else None
+    # Meta-World renders 480x480 frames per env and step: evaluate one env at a time
+    batch = args.batch_size or (1 if metaworld is not None else episodes)
+    if metaworld is not None:
+        # LeRobot's Meta-World env delivers the camera as observation.image; the policy's key comes from
+        # Kortyn's features_map (pixels -> policy key), exactly as the agent maps it
+        image_key = config.env.features_map.get("pixels", "observation.images.camera1")
+        sampler = f"flow-{steps}"
+        policy_args = [f"--policy.num_steps={steps}"]
+        env_args = [
+            "--env.type=metaworld",
+            f"--env.task={metaworld.task}",
+            "--rename_map=" + json.dumps({"observation.image": image_key}),
+        ]
+    else:
+        sampler = f"{scheduler}-{steps}"
+        policy_args = [f"--policy.noise_scheduler_type={scheduler}", f"--policy.num_inference_steps={steps}"]
+        env_args = ["--env.type=pusht"]
 
     from kortyn.checkpoint import ensure_checkpoint
 
@@ -79,9 +101,8 @@ def main(argv: list[str] | None = None) -> int:
         "lerobot.scripts.lerobot_eval",
         f"--policy.path={checkpoint}",
         f"--policy.device={args.device}",
-        f"--policy.noise_scheduler_type={scheduler}",
-        f"--policy.num_inference_steps={steps}",
-        "--env.type=pusht",
+        *policy_args,
+        *env_args,
         f"--eval.n_episodes={episodes}",
         f"--eval.batch_size={batch}",
         "--eval.use_async_envs=false",
@@ -114,9 +135,10 @@ def main(argv: list[str] | None = None) -> int:
         "tool": "lerobot-eval (LeRobot's official evaluation, synchronous)",
         "command": " ".join(command[1:]),
         "provenance": provenance,
-        "checkpoint": f"{config.brain.checkpoint.repo_id}@{config.brain.checkpoint.revision} (migrated)",
+        "checkpoint": f"{config.brain.checkpoint.repo_id}@{config.brain.checkpoint.revision}"
+        + (" (migrated)" if metaworld is None else ""),
         "checkpoint_sha256": digest.hexdigest(),
-        "sampler": f"{scheduler}-{steps}",
+        "sampler": sampler,
         "device": args.device,
         "episodes": len(successes),
         "successes": sum(successes),
