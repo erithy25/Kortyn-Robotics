@@ -17,7 +17,8 @@ führt ein deterministischer **Simulationszeit-Modus** dieselbe Regelschleife au
   LeRobot-Format migriert
 - Phase 3a: **Meta-World** (drawer-close, push, coffee-push; MuJoCo, 80 Hz, max. 500 Schritte) mit
   **`lerobot/smolvla_metaworld`** (SmolVLA, Apache-2.0)
-- Alles Open Source, keine Cloud, keine Telemetrie, läuft auf macOS (Apple Silicon, MPS) und Linux (CPU)
+- Alles Open Source, keine Cloud, keine Telemetrie. Läuft unter Linux (CPU oder NVIDIA-GPU mit CUDA) und unter
+  Windows 10/11 mit WSL2 (Ubuntu); die Messungen entstanden in einer Linux-Cloud-Umgebung ohne GPU
 
 ---
 
@@ -190,14 +191,14 @@ Holm-p ≥ 0,92.
 - **Echtes RTC:** SmolVLA (Flow Matching, Chunk 50, 10 Flow-Schritte) bringt LeRobots RTC mit, also Guidance per
   Autograd statt unseres gradientenfreien Inpaintings. Damit lässt sich die Freshness-Frage neu stellen: RTC soll
   genau das leisten, was hier scheiterte, nämlich häufiger umplanen ohne Konsistenzverlust.
-- **Hardware:** RTC kostet einen Backward-Pass pro Flow-Schritt. Das Brain braucht dafür GPU oder MPS (Mac) und muss
+- **Hardware:** RTC kostet einen Backward-Pass pro Flow-Schritt. Das Brain braucht dafür eine GPU und muss
   vorher kalibriert werden; das CPU-Brain von hier reicht nicht.
 - **Payload:** 512²-Bilder statt 96² sind ≈ 28× mehr Pixel pro Kamera. Bandbreite und Serialisierung werden relevant:
   Bildkompression im Protokoll und Messungen mit dem Bandbreitenlimit des Proxys einplanen.
 - **Neue Baseline nötig:** Für PushT gibt es keinen offiziellen SmolVLA-Checkpoint. Zwei Wege:
   - SmolVLA auf PushT feinjustieren; dann bleibt die Aufgabe vergleichbar, es kostet aber Rechenzeit auf eigener
     Hardware.
-  - Auf Meta-World wechseln: offizieller Checkpoint `smolvla_metaworld`, MuJoCo, läuft auch auf macOS. Der
+  - Auf Meta-World wechseln: offizieller Checkpoint `smolvla_metaworld`, MuJoCo, läuft ohne GPU. Der
     80-Hz-Steuertakt verschärft dort allerdings das Latenzbudget.
 
 **Laufzeit:** Stufe 1 2 h 48 min, Stufe 2 4 h 25 min, Sync-Ablation 33 min, also 7 h 46 min statt der angepeilten
@@ -207,7 +208,7 @@ Holm-p ≥ 0,92.
 
 ## Phase 1: Ergebnisse auf einen Blick
 
-Messung vom 23./24.10.2026 auf der Entwicklungsmaschine: Linux, 4-vCPU-Xeon, **CPU statt MPS**, Brain auf
+Messung vom 23./24.10.2026 auf der Entwicklungsmaschine: Linux, 4-vCPU-Xeon, **CPU statt GPU**, Brain auf
 3 Kernen. Je Zeile 50 Episoden mit identischen Seeds. Vollständiger Report mit Konfidenzintervallen, Tests und
 Abbildungen: **[`reports/phase1.md`](reports/phase1.md)**.
 
@@ -245,8 +246,8 @@ Abbildungen: **[`reports/phase1.md`](reports/phase1.md)**.
   (DDPM-100: Ø Max-Reward 0,963 gegenüber 0,961 publiziert).
 - **Untergrenze:** PushT ist quasistatisch, Stillstand kostet hier nur Zeit. Für dynamische Aufgaben sind die
   gemessenen Verluste eine Untergrenze.
-- **Auf dem Mac:** Mit MPS ist die Inferenz schneller, das verschiebt die Budget-Grenze. Vorher `kortyn.calibrate`
-  ausführen.
+- **Mit GPU:** Auf einer NVIDIA-GPU (z. B. RTX 3060 Ti unter WSL2) ist die Inferenz schneller, das verschiebt die
+  Budget-Grenze. Vorher `kortyn.calibrate` ausführen.
 
 **Konsequenzen für Phase 2 (Reflex-Modus) und Phase 3 (mehrere Roboter):**
 - **Phase 2:**
@@ -268,8 +269,9 @@ Abbildungen: **[`reports/phase1.md`](reports/phase1.md)**.
 
 ## Schnellstart (≈ 5 Minuten + Downloads)
 
-Voraussetzungen: macOS mit Apple Silicon oder Linux x86_64, [`uv`](https://docs.astral.sh/uv/)
-(`brew install uv` bzw. `curl -LsSf https://astral.sh/uv/install.sh | sh`), Git, ~4 GB freier Platz.
+Voraussetzungen: Linux x86_64 oder Windows 10/11 mit WSL2 (Ubuntu; Einrichtung Schritt für Schritt in
+[`docs/benchmark_rtx3060ti.md`](docs/benchmark_rtx3060ti.md), Schritte 1–5), [`uv`](https://docs.astral.sh/uv/)
+(`curl -LsSf https://astral.sh/uv/install.sh | sh`), Git, ~4 GB freier Platz (LIBERO für Phase 3: ~15 GB).
 
 ```bash
 git clone https://github.com/erithy25/Kortyn-Robotics.git
@@ -284,7 +286,7 @@ das Brain den Checkpoint (~1 GB) von Hugging Face und migriert ihn nach `checkpo
 ```bash
 uv run python -m kortyn.run_experiment --profile kalibriert --run gut --episodes 2 --results-dir results_smoke
 uv run python -m kortyn.report --results-dir results_smoke --reports-dir reports_smoke
-open reports_smoke/phase1.md   # macOS; unter Linux: xdg-open
+xdg-open reports_smoke/phase1.md   # unter WSL2: explorer.exe reports_smoke
 ```
 
 ## Vollständige Reproduktion
@@ -294,8 +296,7 @@ open reports_smoke/phase1.md   # macOS; unter Linux: xdg-open
 uv run python -m kortyn.calibrate
 
 # 2. Alle Szenarien × 50 Episoden für beide Brain-Profile (fortsetzbar, Abbruch mit Ctrl-C ist sicher)
-caffeinate -i uv run python -m kortyn.run_experiment        # macOS: caffeinate verhindert App Nap/Sleep
-# Linux: uv run python -m kortyn.run_experiment
+uv run python -m kortyn.run_experiment
 
 # 3. Referenzen mit LeRobots offiziellem Eval-Skript (synchron, gleiche Seeds)
 uv run python -m kortyn.lerobot_reference --profile kalibriert
@@ -318,7 +319,7 @@ uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validati
 uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_model.yaml --profile kalibriert \
     --run modell__gut --run modell__sehr_schlecht --episodes 10 --workers 1 --results-dir results/phase3a/determinism
 # Aufgabenwahl (Totzeit-Toleranz der Meta-World-Experten) und SmolVLA (Checkpoint ≈ 0,9 GB beim ersten Lauf).
-# MuJoCo rendert ohne Display: Standard EGL (Linux) bzw. CGL (macOS), überschreibbar mit MUJOCO_GL.
+# MuJoCo rendert ohne Display über EGL (Linux, WSL2), überschreibbar mit MUJOCO_GL.
 uv run python -m kortyn.expert_delay
 for task in drawer_close push coffee_push; do
   uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/smolvla_${task}.yaml
@@ -333,12 +334,12 @@ uv run python -m kortyn.report_phase3a      # reports/phase3a_data.md + reports/
 Laufzeiten auf der Messmaschine (4-vCPU-Xeon, keine GPU): Kalibrierung ≈ 10 min, alle Läufe ≈ 4 h 40 min (650
 Episoden: `kalibriert` 400, `ddim10` 250), LeRobot-Referenz DDPM-100 ≈ 1 h; Phase 2: Stufe 1 ≈ 2 h 50 min,
 Stufe 2 ≈ 4 h 25 min, Sync-Ablation ≈ 35 min; Phase 3a: Validierung ≈ 6 h, SmolVLA ≈ 4,7 h mit 4 Workern
-(Aufschlüsselung in [`reports/phase3a.md`](reports/phase3a.md), Abschnitt 9). Auf Apple Silicon mit MPS ist die
+(Aufschlüsselung in [`reports/phase3a.md`](reports/phase3a.md), Abschnitt 9). Mit einer NVIDIA-GPU ist die
 Inferenz schneller; die Echtzeit-Episoden dauern trotzdem ihre 10–30 s Simulationszeit.
 
-> **Mac-Hinweise:** Netzteil anschließen, `caffeinate -i` verwenden (sonst drosselt macOS lange Läufe),
-> Terminal nicht minimieren. Das Brain wählt automatisch `mps` (Fallback CPU); `PYTORCH_ENABLE_MPS_FALLBACK=1`
-> wird gesetzt. CPU-Pinning ist nur unter Linux aktiv und wird auf macOS ignoriert.
+> **Hinweise für Windows (WSL2):** Den aktuellen NVIDIA-Treiber unter Windows installieren, in Ubuntu keinen;
+> `nvidia-smi` muss in Ubuntu die Karte zeigen. Das Brain wählt automatisch `cuda` (Fallback CPU). Für lange Läufe
+> den Ruhezustand in den Windows-Energieeinstellungen ausschalten. CPU-Pinning ist nur unter Linux aktiv.
 
 ---
 
@@ -444,7 +445,7 @@ Diffusion Policy rechnet standardmäßig 100 DDPM-Schritte – auf der CPU ~6 s 
 `kortyn.calibrate` misst für mehrere DDIM-Schrittzahlen, ob „gut“ ohne Starvation läuft (p99-Latenz ≤ 5 Takte).
 Das Profil `kalibriert` nutzt die größte bestehende Schrittzahl (Eintrag in `kortyn/experiments/base.yaml`),
 das Profil `ddim10` die im Diffusion-Policy-Paper für Echtzeit verwendete Einstellung. Für vergleichbare Zahlen
-auf deinem Mac dieselben Profile verwenden; `calibrate` zeigt dir, ob dein Brain schneller ist.
+auf deinem Rechner dieselben Profile verwenden; `calibrate` zeigt dir, ob dein Brain schneller ist.
 
 ### Checkpoint-Migration
 
