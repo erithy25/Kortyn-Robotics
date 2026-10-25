@@ -171,3 +171,86 @@ def test_validation_config_must_reference_known_entries(tmp_path: Path) -> None:
         )
     with pytest.raises(ConfigError):
         ValidationConfig(experiment="x", template_run="r", gpu="g", batching="b", network="n", workers=0)
+
+
+def capacity_document(per_strategy: dict[str, tuple[int, list[bool]]]) -> dict[str, object]:
+    """Stage-2 results of the validation configuration: capacity and criterion (1) at sizes 1, 2, 4, 8."""
+    configurations = []
+    for strategy, (capacity, meets) in per_strategy.items():
+        sizes = [
+            {"robots": n, "criterion_1": ok, "miss_share": 0.0 if ok else 0.3}
+            for n, ok in zip((1, 2, 4, 8), meets, strict=True)
+        ]
+        batching = "realistisch"
+        configurations.append(
+            {
+                "network": "gut",
+                "gpu": "gpu",
+                "batching": batching,
+                "strategy": strategy,
+                "capacity": capacity,
+                "sizes": sizes,
+            }
+        )
+    return {"configurations": configurations}
+
+
+def selection_fleet() -> FleetSimConfig:
+    return FleetSimConfig(
+        gpus={"gpu": GpuConfig(s1_ms=420.0)},
+        batching={"realistisch": BatchingConfig(beta=0.15)},
+        strategies={
+            "a": StrategyConfig(scheduler="fifo"),
+            "d": StrategyConfig(scheduler="edf_batch", max_batch=16),
+            "e": StrategyConfig(scheduler="edf_batch", max_batch=16, admission=True),
+        },
+        networks={"gut": NetworkChoice(scenario="gut", margin_ms=0.0)},
+        validation=ValidationConfig(
+            experiment="x.yaml", template_run="fest_0ms", gpu="gpu", batching="realistisch", network="gut"
+        ),
+    )
+
+
+def test_select_cases_follows_the_preregistered_rule() -> None:
+    from kortyn.fleet_rollout import select_cases
+
+    fleet = selection_fleet()
+    document = capacity_document(
+        {"a": (2, [True, True, False, False]), "d": (8, [True] * 4), "e": (4, [True, True, True, False])}
+    )
+    cases = select_cases(document, fleet)
+    assert [(c.strategy, c.robots) for c in cases] == [("a", 2), ("a", 4), ("d", 2), ("d", 4)]
+    # the worst still meets (1) at 4 robots: n1, n2 = 2, 4
+    relaxed = capacity_document({"a": (4, [True] * 4), "d": (8, [True] * 4)})
+    assert [(c.strategy, c.robots) for c in select_cases(relaxed, fleet)] == [
+        ("a", 2),
+        ("a", 4),
+        ("d", 2),
+        ("d", 4),
+    ]
+    # the worst meets (1) only with one robot: n1 = 1, n2 = 2
+    tight = capacity_document({"a": (1, [True, False, False, False]), "d": (2, [True, True, False, False])})
+    assert [(c.strategy, c.robots) for c in select_cases(tight, fleet)] == [
+        ("a", 1),
+        ("a", 2),
+        ("d", 1),
+        ("d", 2),
+    ]
+
+
+def test_select_cases_breaks_ties_by_miss_share_and_rejects_degenerate_results() -> None:
+    from kortyn.fleet_predict import PredictionError
+    from kortyn.fleet_rollout import select_cases
+
+    fleet = selection_fleet()
+    document = capacity_document({"a": (2, [True, True, False, False]), "d": (2, [True, True, False, False])})
+    entries = document["configurations"]
+    assert isinstance(entries, list)
+    entries[1]["sizes"][3]["miss_share"] = 0.1  # d misses less at 8 robots: d is the better one
+    cases = select_cases(document, fleet)
+    assert {c.strategy for c in cases[:2]} == {"a"}
+    assert {c.strategy for c in cases[2:]} == {"d"}
+    with pytest.raises(PredictionError):
+        select_cases({"configurations": []}, fleet)
+    with pytest.raises(PredictionError, match="one robot"):
+        select_cases(capacity_document({"a": (0, [False] * 4), "d": (1, [True, False, False, False])}), fleet)

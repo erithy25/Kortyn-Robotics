@@ -28,7 +28,7 @@ import math
 import multiprocessing
 import sys
 import time
-from collections.abc import Generator
+from collections.abc import Generator, Mapping
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
@@ -393,6 +393,56 @@ def _batching_key(fleet: FleetSimConfig, validation: ValidationConfig, strategy:
     return validation.batching if fleet.strategies[strategy].batches else next(iter(fleet.batching))
 
 
+MAX_VALIDATION_ROBOTS = 4  # memory: ~2.3 GB per LIBERO simulator (pre-run deviation in reports/phase3.md)
+
+
+def select_cases(capacity: Mapping[str, Any], fleet: FleetSimConfig) -> list[ValidationCase]:
+    """The pre-registered choice of the four validation cases (reports/phase3.md, 0.5 and deviations).
+
+    * Strategies: the best and the worst by capacity in the validation configuration (GPU, batching, network
+      of ``fleet.validation``). Ties: the best has the lower, the worst the higher budget-miss share at the
+      largest fleet size both were simulated with.
+    * Sizes: ``n1`` = largest grid size <= 4 at which the worst strategy meets criterion (1), ``n2`` = the
+      next grid size; if it still meets (1) at 4, ``n1, n2 = 2, 4``.
+    """
+    validation = _validation(fleet)
+    entries: dict[str, Mapping[str, Any]] = {}
+    for entry in capacity["configurations"]:
+        strategy = str(entry["strategy"])
+        if entry["network"] != validation.network or entry["gpu"] != validation.gpu:
+            continue
+        if entry["batching"] != _batching_key(fleet, validation, strategy):
+            continue
+        entries[strategy] = entry
+    if len(entries) < 2:
+        raise PredictionError(
+            f"capacity results lack the validation configuration ({len(entries)} strategies)"
+        )
+
+    def miss_share(strategy: str, robots: int) -> float:
+        size = next((s for s in entries[strategy]["sizes"] if int(s["robots"]) == robots), None)
+        return 1.0 if size is None else float(size["miss_share"])
+
+    common = max(set.intersection(*({int(s["robots"]) for s in e["sizes"]} for e in entries.values())))
+    best = max(entries, key=lambda k: (int(entries[k]["capacity"]), -miss_share(k, common), k))
+    worst = min(entries, key=lambda k: (int(entries[k]["capacity"]), -miss_share(k, common), k))
+    if best == worst:
+        raise PredictionError("all strategies are equal in the validation configuration")
+    grid = sorted(
+        int(s["robots"]) for s in entries[worst]["sizes"] if int(s["robots"]) <= MAX_VALIDATION_ROBOTS
+    )
+    meets = {int(s["robots"]): bool(s["criterion_1"]) for s in entries[worst]["sizes"]}
+    passing = [n for n in grid if meets.get(n, False)]
+    if not passing:
+        raise PredictionError(f"the worst strategy {worst!r} misses criterion (1) already with one robot")
+    n1 = max(passing)
+    if n1 == grid[-1]:
+        n1, n2 = grid[-2], grid[-1]
+    else:
+        n2 = grid[grid.index(n1) + 1]
+    return [ValidationCase(strategy, robots) for strategy in (worst, best) for robots in (n1, n2)]
+
+
 # --------------------------------------------------------------------------------------------- evaluation
 @dataclass
 class CaseEvaluation:
@@ -475,6 +525,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--strategy", default=None, help="strategy of the case (key in the fleet config)")
     parser.add_argument("--robots", type=int, default=None, help="fleet size of the case")
     parser.add_argument("--evaluate", action="store_true", help="compare all finished cases with stage 2")
+    parser.add_argument(
+        "--select", action="store_true", help="print the four pre-registered validation cases"
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -485,6 +538,16 @@ def main(argv: list[str] | None = None) -> int:
     try:
         fleet = load_fleet_config(args.config)
         validation = _validation(fleet)
+        if args.select:
+            if fleet.prediction is None:
+                raise ConfigError("the fleet config has no 'prediction' section")
+            capacity_path = Path(fleet.prediction.output)
+            if not capacity_path.exists():
+                raise ConfigError(f"stage-2 results {capacity_path} do not exist")
+            cases = select_cases(json.loads(capacity_path.read_text(encoding="utf-8")), fleet)
+            for case in cases:
+                print(f"{case.strategy} {case.robots}")
+            return 0
         if args.evaluate:
             evaluations = evaluate_all(fleet)
             out = Path(validation.results_dir) / "evaluation.json"
