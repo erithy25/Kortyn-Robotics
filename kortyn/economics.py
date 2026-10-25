@@ -11,6 +11,10 @@ Monthly cost of one robot:
 * **Brain:** ``(GPU + host) / 36 / capacity + (GPU power x busy share + host power) x hours / capacity``
   (the Brain runs whenever the fleet runs; its GPU draws board power while busy and idle power otherwise).
 * **Onboard:** ``computer / 36 + power x hours`` (one computer per robot, at its working power).
+
+Supplement (not pre-registered, reported next to the pre-registered figures): with a shared Brain every robot
+still needs a small client computer for its cameras, the network and the motor commands. ``client`` adds its
+depreciation and electricity to the Brain cost per robot; the onboard computer does that work itself.
 """
 
 from __future__ import annotations
@@ -82,6 +86,20 @@ class OnboardOption:
 
 
 @dataclass
+class ClientOption:
+    """The small computer a robot needs next to a shared Brain (cameras, network, motor commands)."""
+
+    label: str
+    price_eur: float
+    power_w: float
+    price_source: PriceSource
+
+    def __post_init__(self) -> None:
+        if self.price_eur < 0 or self.power_w < 0:
+            raise ConfigError(f"client {self.label!r}: price and power must be >= 0")
+
+
+@dataclass
 class EconomicsConfig:
     electricity_eur_per_kwh: float
     electricity_source: PriceSource
@@ -90,6 +108,7 @@ class EconomicsConfig:
     host: HostOption | None = None
     gpus: list[GpuOption] = field(default_factory=list)
     onboard: list[OnboardOption] = field(default_factory=list)
+    client: ClientOption | None = None  # supplement: per-robot client next to the Brain
 
     def __post_init__(self) -> None:
         if self.electricity_eur_per_kwh < 0 or self.depreciation_months < 1:
@@ -167,14 +186,47 @@ def onboard_cost(config: EconomicsConfig, option: OnboardOption) -> OnboardCost:
     )
 
 
+@dataclass(frozen=True)
+class ClientCost:
+    label: str
+    capex_eur: float
+    monthly_eur: float  # depreciation + electricity of one client
+    electricity_month_eur: float
+
+
+def client_cost(config: EconomicsConfig) -> ClientCost | None:
+    """Cost of the per-robot client next to a shared Brain (``None`` without a ``client`` entry)."""
+    if config.client is None:
+        return None
+    kwh = config.client.power_w / 1000.0 * config.operating_hours_per_month
+    electricity = kwh * config.electricity_eur_per_kwh
+    return ClientCost(
+        label=config.client.label,
+        capex_eur=config.client.price_eur,
+        monthly_eur=config.client.price_eur / config.depreciation_months + electricity,
+        electricity_month_eur=electricity,
+    )
+
+
 def break_even_capacity(
-    config: EconomicsConfig, gpu: GpuOption, option: OnboardOption, busy_share: float
+    config: EconomicsConfig,
+    gpu: GpuOption,
+    option: OnboardOption,
+    busy_share: float,
+    with_client: bool = False,
 ) -> int:
-    """Smallest fleet at which the shared Brain is cheaper per robot and month than the onboard computer."""
+    """Smallest fleet at which the shared Brain is cheaper per robot and month than the onboard computer.
+
+    ``with_client`` adds the per-robot client (supplement); 0 means never (up to 10 000 robots).
+    """
+    if with_client and config.client is None:
+        raise ConfigError("break-even with client: the economics config has no 'client' entry")
     target = onboard_cost(config, option).monthly_per_robot_eur
+    client = client_cost(config) if with_client else None
+    extra = 0.0 if client is None else client.monthly_eur
     for capacity in range(1, 10_001):
         cost = brain_cost(config, gpu, capacity, busy_share)
-        if cost is not None and cost.monthly_per_robot_eur < target:
+        if cost is not None and cost.monthly_per_robot_eur + extra < target:
             return capacity
     return 0
 

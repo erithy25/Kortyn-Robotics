@@ -167,6 +167,7 @@ def test_report_builds_every_section(tmp_path: Path) -> None:
         assert heading in text, heading
     assert "Regel 1.4: JPEG q90" in text
     assert "1.3 Kalt- gegen Warmstart" in text
+    assert "mit Roboter-Rechner (Ergänzung)" in text  # supplement next to the pre-registered cost
     assert (out / "phase3_dosis_wirkung.png").stat().st_size > 10_000
     assert (out / "phase3_kapazitaet_buero_wlan.png").stat().st_size > 10_000
     assert "a_n2" in text

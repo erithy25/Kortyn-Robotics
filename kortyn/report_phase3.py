@@ -37,7 +37,14 @@ from matplotlib.lines import Line2D
 from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
 
 from kortyn.config import ConfigError, LiberoEnvConfig, load_config
-from kortyn.economics import EconomicsConfig, brain_cost, break_even_capacity, load_economics, onboard_cost
+from kortyn.economics import (
+    EconomicsConfig,
+    brain_cost,
+    break_even_capacity,
+    client_cost,
+    load_economics,
+    onboard_cost,
+)
 from kortyn.fleet import FleetSimConfig, load_fleet_config
 from kortyn.phase3_steps import (
     Episode,
@@ -551,6 +558,7 @@ def economics_section(
     batching: str,
     curve: tuple[Sequence[float], Sequence[float]] | None = None,
 ) -> list[str]:
+    client = client_cost(economics)
     lines = [
         f"Annahmen: Abschreibung über {economics.depreciation_months} Monate, Betrieb "
         f"{economics.operating_hours_per_month:.0f} h/Monat, "
@@ -559,9 +567,20 @@ def economics_section(
         f"{economics.host.label if economics.host else '–'} "
         f"({eur(economics.host.price_eur) if economics.host else '–'}, "
         f"{economics.host.power_w if economics.host else 0:.0f} W). Netz {network}, Batching {batching}.",
+    ]
+    if client is not None and economics.client is not None:
+        lines.append(
+            f"Ergänzung (nicht präregistriert): Rechner, den jeder Roboter neben dem Brain braucht: "
+            f"{client.label} ({eur(client.capex_eur)}, {economics.client.power_w:.0f} W, "
+            f"{eur(client.monthly_eur, 2)} je Monat; {economics.client.price_source.source}, "
+            f"{economics.client.price_source.date})."
+        )
+    with_client = client is not None
+    lines += [
         "",
-        "| GPU (Preis) | Strategie | Kapazität | Hardware je Roboter | Kosten je Roboter und Monat |",
-        "|---|---|---:|---:|---:|",
+        "| GPU (Preis) | Strategie | Kapazität | Hardware je Roboter | Kosten je Roboter und Monat |"
+        + (" mit Roboter-Rechner (Ergänzung) |" if with_client else ""),
+        "|---|---|---:|---:|---:|" + ("---:|" if with_client else ""),
     ]
     for gpu in economics.gpus:
         for strategy in STRATEGY_ORDER:
@@ -571,11 +590,17 @@ def economics_section(
             cost = brain_cost(economics, gpu, table[key], busy.get(key, 1.0))
             capex = "–" if cost is None else eur(cost.capex_per_robot_eur)
             monthly = "–" if cost is None else eur(cost.monthly_per_robot_eur, 2)
-            lines.append(
+            row = (
                 f"| {gpu.label} ({eur(gpu.price_eur)}, {gpu.condition}) | {STRATEGY_NAMES[strategy]} | "
-                f"{table[key]} | "
-                f"{capex} | {monthly} |"
+                f"{table[key]} | {capex} | {monthly} |"
             )
+            if client is not None:
+                row += (
+                    " – |"
+                    if cost is None
+                    else f" {eur(cost.monthly_per_robot_eur + client.monthly_eur, 2)} |"
+                )
+            lines.append(row)
     lines += [
         "",
         "| Rechner im Roboter | Preis | Leistung | Latenz je Plan | Erfolg f(L) "
@@ -591,12 +616,21 @@ def economics_section(
             f"{eur(onboard.monthly_per_robot_eur, 2)} | {option.latency_source.source} ({option.runtime}) |"
         )
     if economics.onboard and economics.gpus:
-        lines += ["", "Break-even (ab dieser Flottengröße ist das Brain je Roboter und Monat günstiger):", ""]
+        lines += [
+            "",
+            "Break-even (ab dieser Flottengröße ist das Brain je Roboter und Monat günstiger; GPU zu 90 % "
+            "ausgelastet" + ("; in Klammern mit Roboter-Rechner, Ergänzung" if with_client else "") + "):",
+            "",
+        ]
         for gpu in economics.gpus:
             cells = []
             for option in economics.onboard:
                 breakeven = break_even_capacity(economics, gpu, option, busy_share=0.9)
-                cells.append(f"{option.label}: {breakeven if breakeven else 'nie'}")
+                cell = f"{option.label}: {breakeven if breakeven else 'nie'}"
+                if with_client:
+                    extra = break_even_capacity(economics, gpu, option, busy_share=0.9, with_client=True)
+                    cell += f" ({extra if extra else 'nie'})"
+                cells.append(cell)
             lines.append(f"- {gpu.label}: " + "; ".join(cells))
     return lines
 

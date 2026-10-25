@@ -57,6 +57,15 @@ gpus:
       source: "wie RTX 4090 (dieselbe Karte, Software mit torch.compile)"
       date: "2026-10-25"
 
+client:                             # SUPPLEMENT, not pre-registered: what every robot still needs next to a shared Brain
+  label: "Raspberry Pi 5 4 GB (Kameras, WLAN, Motorbefehle)"
+  price_eur: 114.62                 # 136.40 EUR incl. VAT / 1.19
+  power_w: 6.0                      # assumption: light load (two cameras, image encoding, network, control loop)
+  price_source:
+    source: "reichelt elektronik, Raspberry Pi 5 B 4 GB (RASP PI 5 B 4GB), inkl. MwSt., lieferbar ab 24.11.2026; https://www.reichelt.com/de/de/shop/search/raspberry%20pi%205%204gb"
+    date: "2026-10-25"
+    note: "Derzeit nicht ab Lager; Preis durch die Speicherknappheit 2026 erhöht"
+
 onboard:
   - label: "Jetson Orin Nano Super 8 GB (Dev Kit)"
     price_eur: 498.40               # 593.10 EUR incl. VAT

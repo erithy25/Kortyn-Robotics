@@ -8,6 +8,7 @@ import pytest
 
 from kortyn.config import ConfigError
 from kortyn.economics import (
+    ClientOption,
     EconomicsConfig,
     GpuOption,
     HostOption,
@@ -15,6 +16,7 @@ from kortyn.economics import (
     PriceSource,
     brain_cost,
     break_even_capacity,
+    client_cost,
     cost_table_rows,
     load_economics,
     onboard_cost,
@@ -83,6 +85,38 @@ def test_onboard_cost_and_break_even() -> None:
     assert cheaper.monthly_per_robot_eur < onboard.monthly_per_robot_eur <= dearer.monthly_per_robot_eur
 
 
+def test_client_supplement_raises_brain_cost_and_break_even() -> None:
+    economics = config(
+        client=ClientOption(label="Pi", price_eur=108.0, power_w=6.0, price_source=SOURCE),
+    )
+    client = client_cost(economics)
+    assert client is not None
+    assert client.electricity_month_eur == pytest.approx(6 / 1000 * 730 * 0.25)
+    assert client.monthly_eur == pytest.approx(108 / 36 + 1.095)
+    gpu, option = economics.gpus[0], economics.onboard[0]
+    plain = break_even_capacity(economics, gpu, option, busy_share=0.9)
+    supplemented = break_even_capacity(economics, gpu, option, busy_share=0.9, with_client=True)
+    assert supplemented > plain > 0
+    brain = brain_cost(economics, gpu, supplemented, 0.9)
+    before = brain_cost(economics, gpu, supplemented - 1, 0.9)
+    assert brain is not None
+    assert before is not None
+    target = onboard_cost(economics, option).monthly_per_robot_eur
+    assert (
+        brain.monthly_per_robot_eur + client.monthly_eur
+        < target
+        <= before.monthly_per_robot_eur + client.monthly_eur
+    )
+    # a client as expensive as the onboard computer: the Brain never pays off
+    dear = config(client=ClientOption(label="dear", price_eur=600.0, power_w=20.0, price_source=SOURCE))
+    assert break_even_capacity(dear, gpu, option, busy_share=0.9, with_client=True) == 0
+    assert client_cost(config()) is None
+    with pytest.raises(ConfigError):
+        break_even_capacity(config(), gpu, option, busy_share=0.9, with_client=True)
+    with pytest.raises(ConfigError):
+        ClientOption(label="bad", price_eur=-1.0, power_w=6.0, price_source=SOURCE)
+
+
 def test_cost_table_rows_map_capacities_to_gpu_options() -> None:
     economics = config()
     rows = cost_table_rows(
@@ -132,3 +166,5 @@ def test_phase3_economics_assumptions_load() -> None:
     assert {gpu.profile for gpu in economics.gpus} >= {"rtx3090", "rtx4090", "rtx3060ti_schaetzung"}
     assert all(option.price_source.date and option.latency_source.source for option in economics.onboard)
     assert economics.host is not None
+    assert economics.client is not None
+    assert economics.client.price_source.date
