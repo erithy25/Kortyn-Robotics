@@ -17,6 +17,8 @@ logs/
 results/**/logs/
 results/lerobot_eval/*/lerobot_eval.log
 results/lerobot_eval/*/lerobot_output/videos/
+results/**/lerobot_eval.log
+results/**/lerobot_output/videos/
 results_smoke/
 reports_smoke/
 results_pilot/
