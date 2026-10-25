@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -42,6 +44,7 @@ from kortyn.fleet import (
 from kortyn.fleet_brain import AffineBatchProfile, BatchingBrain, FifoScheduler
 from kortyn.virtual_agent import VirtualTimeAgent
 from kortyn.virtual_time import (
+    Command,
     DurationSampler,
     ModelChannel,
     ModelTiming,
@@ -304,3 +307,86 @@ def test_scan_stops_after_consecutive_overload(tmp_path: Path) -> None:
     )
     with pytest.raises(ConfigError):
         ScanSettings(max_size=0)
+
+
+def test_timing_robots_reproduce_agents_sharing_an_edf_batching_brain() -> None:
+    """Fleet semantics: request steps, due times, batching and deliveries equal the agents' (3 robots)."""
+    from kortyn.fleet_brain import EdfBatchScheduler
+    from kortyn.virtual_time import Priority, WakeAt
+
+    length, starts = 90, (0.0, 0.37, 0.61)
+    model = AffineBatchProfile(s1_ms=650.0, beta=0.3, cv=0.0)  # overloaded: requests wait and get batched
+    timing = ModelTiming(zero(), zero(), zero(), zero())
+
+    def agents_run() -> list[list[tuple[int, float, float]]]:
+        sim = Simulation()
+        compute = FakeCompute()
+        brain = BatchingBrain(sim, compute, EdfBatchScheduler(max_batch=4), model, seed=1)
+        timelines: list[list[tuple[int, float, float]]] = [[], [], []]
+
+        def robot(index: int) -> Generator[Command, Any, None]:
+            yield WakeAt(starts[index], Priority.TICK)
+            config = AgentConfig(
+                actions_per_chunk=15, refill_threshold=6, start_mode="cold", client_id=f"robot-{index}"
+            )
+            agent = VirtualTimeAgent(
+                config,
+                FakeEnv(max_steps=length),
+                SPEC,
+                compute,
+                TimingConfig(latency="model", hardware="test"),
+                model_samplers(DistributionConfig(kind="constant", value_ms=0.0)),
+            )
+            link = VirtualLink(sim, NetworkConfig(), 5)
+            channel = ModelChannel(sim, brain, link, timing, 1000, 0, f"robot-{index}")
+            ctx = EpisodeContext(
+                run="test", profile="fake", scenario="test", mode="realtime", seed=1000 + index
+            )
+            ticks = SampledTicks(zero(), 1000 + index, 0, f"robot-{index}")
+            outcome = yield from agent.episode_process(ctx, StrategyConfig(), sim, channel, ticks, brain)
+            timelines[index] = [
+                (r.obs_timestep, r.t_obs_s, float(r.t_resp_s or -1.0))
+                for r in sorted(outcome.requests, key=lambda r: r.request_id)
+            ]
+
+        for index in range(3):
+            sim.process(robot(index))
+        sim.run()
+        return timelines
+
+    def robots_run() -> tuple[list[list[tuple[int, float, float]]], dict[int, int]]:
+        sim = Simulation()
+        compute = _ZeroCompute(15, 2)
+        brain = BatchingBrain(sim, compute, EdfBatchScheduler(max_batch=4), model, seed=1)
+        agent = FleetAgentConfig(
+            fps=FPS,
+            actions_per_chunk=15,
+            refill_threshold=6,
+            client_overhead_ms=0.0,
+            transport_overhead_ms=0.0,
+        )
+        stats = [RobotStats(robot=i, start_time=starts[i]) for i in range(3)]
+
+        def robot(index: int) -> Generator[Command, Any, None]:
+            yield WakeAt(starts[index], Priority.TICK)
+            timing_robot = TimingRobot(
+                index, sim, brain, agent, "gut", [length], 7, stats[index], 1e9, compute
+            )
+            yield from timing_robot.episode(0, length)
+
+        for index in range(3):
+            sim.process(robot(index))
+        sim.run()
+        # the agent records times on its episode clock (0 at the episode start)
+        timelines = [
+            [(r.obs_step, r.t_obs - s.start_time, float(r.t_resp or -1.0) - s.start_time) for r in s.requests]
+            for s in stats
+        ]
+        return timelines, dict(brain.counters.batch_sizes)
+
+    expected = agents_run()
+    got, batch_sizes = robots_run()
+    for index in range(3):
+        assert [r[0] for r in got[index]] == [r[0] for r in expected[index]], index
+        assert [r[1:] for r in got[index]] == pytest.approx([r[1:] for r in expected[index]]), index
+    assert max(batch_sizes) >= 2  # requests of several robots were batched
