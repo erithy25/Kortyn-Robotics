@@ -1,0 +1,93 @@
+# Phase 3 economics: every price and figure below is an ASSUMPTION with source and date (accessed 2026-10-25
+# unless stated). All amounts are NET (excl. VAT): a company deducts input VAT; new prices incl. 19 % VAT
+# are divided by 1.19, private used-market prices carry no VAT, electricity is quoted net. 2026 context: a memory shortage pushed GPU street prices to 1.4-3.5x list price, and NVIDIA
+# raised Jetson prices by up to 101 % in July 2026 (CNX Software, 22 Jul 2026). Read by kortyn.economics.
+electricity_eur_per_kwh: 0.2366
+electricity_source:
+  source: "Destatis, Pressemitteilung Nr. 345 vom 30.09.2026: Gewerbe 20-500 MWh/Jahr, 1. Halbjahr 2026 (vorläufig), ohne MwSt.; https://www.destatis.de/DE/Presse/Pressemitteilungen/2026/09/PD26_345_61243.html"
+  date: "2026-09-30"
+depreciation_months: 36           # economic life (AfA table 6.14.3.2); tax rules allow 1 year (BMF, 22.02.2022)
+operating_hours_per_month: 730.0  # the fleet runs around the clock (24/7)
+
+host:
+  label: "PC ohne GPU (Ryzen 7 7700, 32 GB, 1 TB, 750 W)"
+  price_eur: 950.0                  # (PCGH build EUR 1,030 (17.07.2026) + EUR 100 memory surcharge) / 1.19
+  power_w: 70.0                     # assumption: CPU mostly idle, the Brain process and network stack
+  price_source:
+    source: "PC Games Hardware, Spiele-PC-Konfigurationen (17.07.2026), Seiten 3-4, GPU herausgerechnet; Speicherpreise Oktober (PCGH, 18.10.2026); https://www.pcgameshardware.de/Komplett-PC-Hardware-217554/Specials/Gaming-Build-zusammenstellen-Setup-guenstig-kaufen-1408073/"
+    date: "2026-07-17"
+    note: "Straßenpreise inkl. MwSt. 1.130 EUR (inkl. 100 EUR Aufschlag für die Speicherpreise im Oktober 2026, Annahme), netto 950 EUR"
+
+gpus:
+  - profile: rtx3060ti_schaetzung
+    label: "RTX 3060 Ti 8 GB"
+    price_eur: 255.0
+    condition: used
+    board_power_w: 200.0
+    idle_power_w: 15.0
+    price_source:
+      source: "resaleprices.com, eBay-US-Angebote, Durchschnitt 275 USD; umgerechnet mit 0,93 EUR/USD (Annahme); https://resaleprices.com/gpu/nvidia-rtx-3060-ti"
+      date: "2026-10-25"
+      note: "Neu nicht mehr erhältlich; kein verlässlicher deutscher Preis gefunden"
+  - profile: rtx3090
+    label: "RTX 3090 24 GB"
+    price_eur: 1257.0
+    condition: used
+    board_power_w: 350.0
+    idle_power_w: 25.0
+    price_source:
+      source: "pcprice.watch, eBay-Verkaufspreise DE, Median aus 236 Verkäufen in 90 Tagen; https://pcprice.watch/search/RTX3090/DE/GPU"
+      date: "2026-10-25"
+  - profile: rtx4090
+    label: "RTX 4090 24 GB"
+    price_eur: 2185.0
+    condition: used
+    board_power_w: 450.0
+    idle_power_w: 25.0
+    price_source:
+      source: "pcprice.watch, eBay-Verkaufspreise DE, Median aus 98 Verkäufen in 90 Tagen; https://pcprice.watch/search/RTX4090/DE/GPU"
+      date: "2026-10-25"
+  - profile: rtx4090_kompiliert
+    label: "RTX 4090 24 GB, kompiliert"
+    price_eur: 2185.0
+    condition: used
+    board_power_w: 450.0
+    idle_power_w: 25.0
+    price_source:
+      source: "wie RTX 4090 (dieselbe Karte, Software mit torch.compile)"
+      date: "2026-10-25"
+
+onboard:
+  - label: "Jetson Orin Nano Super 8 GB (Dev Kit)"
+    price_eur: 498.40               # 593.10 EUR incl. VAT
+    power_w: 25.0
+    latency_ms: 567.0
+    runtime: "vla.cpp, C++/GGUF, nicht PyTorch"
+    price_source:
+      source: "reichelt elektronik, inkl. MwSt.; https://www.reichelt.com/de/en/shop/search/jetson%20orin"
+      date: "2026-10-25"
+    latency_source:
+      source: "vla.cpp, arXiv 2606.08094 v2: 141,8 ms je ausgeführter Aktion bei 4 Aktionen je Aufruf (≈ 567 ms je Aufruf), LIBERO"
+      date: "2026-09-21"
+  - label: "Jetson AGX Orin 64 GB (Dev Kit)"
+    price_eur: 3967.06              # 4,720.80 EUR incl. VAT
+    power_w: 50.0
+    latency_ms: 262.0
+    runtime: "vla.cpp, C++/GGUF, nicht PyTorch"
+    price_source:
+      source: "reichelt elektronik, inkl. MwSt.; https://www.reichelt.com/de/en/shop/search/jetson%20agx"
+      date: "2026-10-25"
+    latency_source:
+      source: "vla.cpp, arXiv 2606.08094 v2: 65,4 ms je ausgeführter Aktion bei 4 Aktionen je Aufruf (≈ 262 ms je Aufruf), Leistungsmodus nicht angegeben"
+      date: "2026-09-21"
+  - label: "Jetson AGX Thor (Dev Kit)"
+    price_eur: 5713.61              # 6,799.20 EUR incl. VAT
+    power_w: 70.0
+    latency_ms: 50.0
+    runtime: "Laufzeitumgebung nicht angegeben"
+    price_source:
+      source: "reichelt elektronik, inkl. MwSt.; MyBotShop 6.699,95 EUR; https://www.mybotshop.de/NVIDIA-Jetson-AGX-Thor-Developer-Kit_1"
+      date: "2026-10-25"
+    latency_source:
+      source: "Robion, arXiv 2609.12075: SmolVLA 50 ms auf Thor bei 70 W"
+      date: "2026-09-10"

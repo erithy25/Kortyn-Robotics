@@ -86,6 +86,7 @@ BATCHING_NAMES = {
     "pessimistisch": "pessimistisch",
     "kein_gewinn": "kein Gewinn",
 }
+NETWORK_NAMES = {"buero_wlan": "Büro-WLAN", "schlecht": "schlechtes Netz"}
 TASK_COLORS = ["#2a78d6", "#eb6834"]
 POOLED_COLOR = INK
 
@@ -269,9 +270,18 @@ def figure_dose(levels: Sequence[Level], libero: LiberoEnvConfig, budget_ms: flo
             label="beide Aufgaben (95-%-KI grau)",
         )
     )
-    for lv in jitter:
+    for lv in jitter:  # drawn next to the 1 000-ms level (its mean latency), not on top of it
+        ax.annotate(
+            "Jitter",
+            (1070.0, lv.rate),
+            xytext=(8, 0),
+            textcoords="offset points",
+            color=INK_2,
+            fontsize=8,
+            va="center",
+        )
         ax.errorbar(
-            [1000.0],
+            [1070.0],
             [lv.rate],
             yerr=[[lv.rate - lv.interval[0]], [lv.interval[1] - lv.rate]],
             fmt="D",
@@ -289,7 +299,7 @@ def figure_dose(levels: Sequence[Level], libero: LiberoEnvConfig, budget_ms: flo
                 marker="D",
                 linestyle="none",
                 markersize=7,
-                label="Jitter 500–1 500 ms (bei Mittel 1 000 ms)",
+                label="Jitter 500–1 500 ms (Mittel 1 000 ms)",
             )
         )
     ax.set_xlim(-60, max(2100.0, float(x.max()) + 250))
@@ -404,6 +414,8 @@ def figure_capacity(
     betas = [fleet.batching[p].beta for p in profiles]
     cols = min(2, len(gpus))
     rows = math.ceil(len(gpus) / cols)
+    shown = [v for (n, g, _, _), v in table.items() if n == network and g in gpus]
+    top_value = float(max([cap, *shown]))
     fig, axes, layout = make_figure(rows, cols, 3.5, 2.5, header_in=1.45, hspace_in=0.75, sharey=True)
     for index, gpu in enumerate(gpus):
         ax = axes[index // cols][index % cols]
@@ -420,8 +432,10 @@ def figure_capacity(
         ax.xaxis.set_minor_locator(NullLocator())
         ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}".replace(".", ",")))
         ax.set_yscale("symlog", base=2, linthresh=1)
-        ax.set_ylim(0, cap * 1.25)
-        ax.yaxis.set_major_locator(FixedLocator([0, 1, 2, 4, 8, 16, 32]))
+        ax.set_ylim(0, top_value * 1.3)
+        ax.yaxis.set_major_locator(
+            FixedLocator([v for v in (0, 1, 2, 4, 8, 16, 32, 64, 128) if v <= top_value * 1.3])
+        )
         ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:.0f}"))
         ax.set_title(gpu_label(fleet, gpu), loc="left", fontsize=10)
         if index % cols == 0:
@@ -447,9 +461,9 @@ def figure_capacity(
         fig,
         layout,
         "Kapazität: Roboter je GPU nach Strategie und Batching-Profil",
-        f"Netz {network}; Kapazität nach der vorab festgelegten Definition (≤ 1 % Budget-Verletzungen, "
-        "schlechtester "
-        f"Roboter nicht signifikant schlechter als ein einzelner); Raster 1–{cap}.",
+        f"Netz {NETWORK_NAMES.get(network, network)}; Kapazität nach der vorab festgelegten Definition "
+        "(≤ 1 % Budget-Verletzungen, schlechtester Roboter nicht signifikant schlechter als ein einzelner); "
+        f"Raster 1–{cap}.",
     )
     header_legend(fig, layout, handles, ncol=3, top_in=top)
     fig.savefig(path, dpi=DPI)
@@ -589,6 +603,7 @@ def build(args: argparse.Namespace) -> list[str]:
         "",
     ]
     out = Path(args.out_dir)
+    out.mkdir(parents=True, exist_ok=True)
     task_names: dict[int, str] = {}
     pilot = load_pilot(Path(args.pilot_config))
     if pilot is not None:

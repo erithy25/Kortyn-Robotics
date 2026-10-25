@@ -122,3 +122,12 @@ def test_validation_and_loading(tmp_path: Path) -> None:
     path.write_text("electricity_eur_per_kwh: 0.2\nunknown: 1\n", encoding="utf-8")
     with pytest.raises(ConfigError):
         load_economics(path)
+
+
+def test_phase3_economics_assumptions_load() -> None:
+    economics = load_economics(Path(__file__).resolve().parents[1] / "kortyn/experiments/phase3/economics.yaml")
+    assert economics.depreciation_months == 36
+    assert {gpu.profile for gpu in economics.gpus} >= {"rtx3090", "rtx4090", "rtx3060ti_schaetzung"}
+    assert all(option.price_source.date and option.latency_source.source for option in economics.onboard)
+    assert economics.host is not None
+
