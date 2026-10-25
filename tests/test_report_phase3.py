@@ -130,6 +130,11 @@ def test_report_builds_every_section(tmp_path: Path) -> None:
                     "difference": -0.02,
                     "interval": [-0.12, 0.08],
                     "passes": True,
+                    "predicted_own": 0.51,
+                    "difference_own": -0.01,
+                    "interval_own": [-0.1, 0.09],
+                    "latency_ms_stage1": [480.0, 900.0],
+                    "latency_ms_measured": [470.0, 880.0],
                 }
             ]
         ),
@@ -173,6 +178,7 @@ def test_report_builds_every_section(tmp_path: Path) -> None:
     assert (out / "phase3_dosis_wirkung.png").stat().st_size > 10_000
     assert (out / "phase3_kapazitaet_buero_wlan.png").stat().st_size > 10_000
     assert "a_n2" in text
+    assert "470 / 880 ms" in text  # diagnosis: rollout latencies next to stage 1
 
 
 def test_report_skips_missing_inputs(tmp_path: Path) -> None:

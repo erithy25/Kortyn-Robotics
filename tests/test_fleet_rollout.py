@@ -166,6 +166,12 @@ def test_validation_rollouts_end_to_end(tmp_path: Path, pusht_tiny_checkpoint: P
     assert 0.0 <= evaluation.measured <= 1.0
     assert 0.0 <= evaluation.predicted <= 1.0
     assert evaluation.interval[0] <= evaluation.difference <= evaluation.interval[1]
+    assert evaluation.predicted_own is not None
+    assert 0.0 <= evaluation.predicted_own <= 1.0
+    assert evaluation.interval_own is not None
+    assert evaluation.latency_ms_stage1 is not None
+    assert evaluation.latency_ms_measured is not None
+    assert evaluation.latency_ms_measured[0] <= evaluation.latency_ms_measured[1]
     with pytest.raises(ConfigError, match="already holds"):
         run_case(two, case, tmp_path / "val2" / case.label)
 
@@ -266,3 +272,20 @@ def test_select_cases_breaks_ties_by_miss_share_and_rejects_degenerate_results()
         select_cases({"configurations": []}, fleet)
     with pytest.raises(PredictionError, match="one robot"):
         select_cases(capacity_document({"a": (0, [False] * 4), "d": (1, [True, False, False, False])}), fleet)
+
+
+def test_episode_latencies_and_weighted_quantiles(tmp_path: Path) -> None:
+    from kortyn.fleet_rollout import _weighted_quantiles, episode_latencies
+
+    path = tmp_path / "requests.jsonl"
+    rows = [
+        {"robot": 0, "robot_episode": 0, "t_obs_s": 0.0, "t_resp_s": 0.4},
+        {"robot": 0, "robot_episode": 0, "t_obs_s": 1.25, "t_resp_s": 1.95},
+        {"robot": 1, "robot_episode": 0, "t_obs_s": 0.0, "t_resp_s": 10.0},  # timeout: counts at 10 s
+        {"robot": 1, "robot_episode": 0, "t_obs_s": 2.0, "t_resp_s": None},  # never answered: skipped
+    ]
+    path.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+    latencies = episode_latencies(path)
+    assert latencies[(0, 0)] == pytest.approx([400.0, 700.0])
+    assert latencies[(1, 0)] == pytest.approx([10_000.0])
+    assert _weighted_quantiles([300.0, 100.0, 200.0], [1.0, 1.0, 2.0], (0.5, 0.95)) == [200.0, 300.0]

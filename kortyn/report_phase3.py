@@ -606,6 +606,26 @@ def validation_section(evaluations: Sequence[Mapping[str, Any]]) -> list[str]:
             f"| {e['case']} | {e['robots']} ({e['admitted']}) | {e['episodes']} | {pct(e['measured'])} | "
             f"{pct(e['predicted'])} | {pp(e['difference'])} {interval_pp(tuple(e['interval']))} | {verdict} |"
         )
+    diagnosed = [e for e in evaluations if e.get("predicted_own") is not None]
+    if diagnosed:
+        lines += [
+            "",
+            "Diagnose (Ergänzung, ohne Gate): dieselbe Regel mit den in den Rollouts gemessenen Latenzen "
+            "jeder Episode statt der aus Stufe 1, und die Latenzen beider Quellen (Median / 95. Perzentil).",
+            "",
+            "| Fall | vorhergesagt aus eigenen Latenzen | gemessen − vorhergesagt [98,75-%-KI] "
+            "| Latenz Stufe 1 | Latenz Rollouts |",
+            "|---|---:|---|---:|---:|",
+        ]
+        for e in diagnosed:
+            stage1 = e.get("latency_ms_stage1")
+            rollout = e.get("latency_ms_measured")
+            lines.append(
+                f"| {e['case']} | {pct(e['predicted_own'])} | {pp(e['difference_own'])} "
+                f"{interval_pp(tuple(e['interval_own']))} | "
+                f"{'–' if stage1 is None else f'{stage1[0]:.0f} / {stage1[1]:.0f} ms'} | "
+                f"{'–' if rollout is None else f'{rollout[0]:.0f} / {rollout[1]:.0f} ms'} |"
+            )
     return lines
 
 

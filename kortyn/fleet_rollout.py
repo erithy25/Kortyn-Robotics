@@ -48,6 +48,8 @@ from kortyn.fleet_predict import (
     DoseResponse,
     PredictionError,
     episode_prediction,
+    histogram_latencies,
+    level_weights,
     load_dose_response,
     paired_difference_interval,
     read_stage1,
@@ -464,6 +466,40 @@ class CaseEvaluation:
     passes: bool
     admitted: int
     robots: int
+    # Diagnosis (supplement, no gate): the same rule fed with each episode's own measured latencies, and the
+    # latency quantiles of stage 1 (replication 0, window) against those measured in the rollouts.
+    predicted_own: float | None = None
+    difference_own: float | None = None
+    interval_own: tuple[float, float] | None = None
+    latency_ms_stage1: tuple[float, float] | None = None  # median, p95
+    latency_ms_measured: tuple[float, float] | None = None
+
+
+def _weighted_quantiles(
+    values: list[float], counts: list[float], quantiles: tuple[float, ...]
+) -> list[float]:
+    order = sorted(range(len(values)), key=values.__getitem__)
+    total = sum(counts)
+    result = []
+    for q in quantiles:
+        target, cumulative = q * total, 0.0
+        for index in order:
+            cumulative += counts[index]
+            if cumulative >= target:
+                result.append(values[index])
+                break
+    return result
+
+
+def episode_latencies(requests_path: Path) -> dict[tuple[int, int], list[float]]:
+    """End-to-end latency (ms) of every answered request, per (robot, robot episode); timeouts count."""
+    latencies: dict[tuple[int, int], list[float]] = {}
+    for record in read_jsonl(requests_path):
+        if record.get("t_resp_s") is None:
+            continue
+        key = (int(record["robot"]), int(record["robot_episode"]))
+        latencies.setdefault(key, []).append(1000.0 * (float(record["t_resp_s"]) - float(record["t_obs_s"])))
+    return latencies
 
 
 def evaluate_case(
@@ -484,20 +520,51 @@ def evaluate_case(
             f"stage 1 has {len(records)} runs for {key}, {case.robots} robots, replication 0"
         )
     robots = records[0].robot_records
+    own_latencies = episode_latencies(case_dir / REQUESTS_FILE)
     measured: list[float] = []
     predicted: list[float] = []
+    predicted_own: list[float] = []
+    rollout_latencies: list[float] = []
     for episode in read_jsonl(case_dir / EPISODES_FILE):
         if not episode["counted"]:
             continue
         weights = robots[int(episode["robot"])].weights
         if weights is None:
             raise PredictionError(f"robot {episode['robot']} has no stage-1 latencies in {key}")
+        seed = int(episode["seed"])
         measured.append(float(bool(episode["success"])))
-        predicted.append(episode_prediction(dose, int(episode["seed"]), weights))
+        predicted.append(episode_prediction(dose, seed, weights))
+        own = own_latencies.get((int(episode["robot"]), int(episode["robot_episode"])), [])
+        if not own:
+            raise PredictionError(
+                f"episode {episode['robot']}/{episode['robot_episode']} has no answered request"
+            )
+        rollout_latencies.extend(own)
+        own_weights = level_weights(dose.levels_ms, own, [1.0] * len(own))
+        predicted_own.append(episode_prediction(dose, seed, own_weights))
     difference, interval = paired_difference_interval(
         measured, predicted, validation.confidence, validation.bootstrap, validation.seed
     )
+    difference_own, interval_own = paired_difference_interval(
+        measured, predicted_own, validation.confidence, validation.bootstrap, validation.seed
+    )
+    stage1_values: list[float] = []
+    stage1_counts: list[float] = []
+    for data in read_jsonl(path):
+        k = data["key"]
+        if (
+            (k["network"], k["gpu"], k["batching"], k["strategy"]) == key
+            and int(k["robots"]) == case.robots
+            and int(k["replication"]) == 0
+        ):
+            for robot in data["robots"]:
+                if robot["admitted"] and robot["histogram"]:
+                    centres, counts = histogram_latencies(robot["histogram"])
+                    stage1_values.extend(centres)
+                    stage1_counts.extend(counts)
     meta = json.loads((case_dir / META_FILE).read_text(encoding="utf-8"))
+    stage1_q = _weighted_quantiles(stage1_values, stage1_counts, (0.5, 0.95)) if stage1_values else []
+    rollout_q = _weighted_quantiles(rollout_latencies, [1.0] * len(rollout_latencies), (0.5, 0.95))
     return CaseEvaluation(
         case=case.label,
         episodes=len(measured),
@@ -508,6 +575,11 @@ def evaluate_case(
         passes=interval[0] <= 0.0 <= interval[1],
         admitted=int(meta["admitted"]),
         robots=case.robots,
+        predicted_own=sum(predicted_own) / len(predicted_own),
+        difference_own=difference_own,
+        interval_own=interval_own,
+        latency_ms_stage1=(stage1_q[0], stage1_q[1]) if len(stage1_q) == 2 else None,
+        latency_ms_measured=(rollout_q[0], rollout_q[1]) if len(rollout_q) == 2 else None,
     )
 
 
