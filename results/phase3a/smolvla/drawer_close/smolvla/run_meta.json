@@ -1669,7 +1669,7 @@
     1000,
     1099
   ],
-  "workers": 1,
+  "workers": 4,
   "torch_threads": 1,
   "host": {
     "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
@@ -1678,7 +1678,7 @@
     "cpu_count": 4,
     "python": "3.12.3"
   },
-  "git_commit": "003673de253f41905ff7cc1aa238f41449ddef08",
+  "git_commit": "94f424ce7a0fa8e64c01162b510d37650e3ec1c8-dirty",
   "started_utc": "2026-10-24T22:22:58+00:00",
   "sessions": [
     {
@@ -1701,6 +1701,34 @@
     {
       "started_utc": "2026-10-25T03:16:35+00:00",
       "git_commit": "003673de253f41905ff7cc1aa238f41449ddef08",
+      "runs": [
+        "grenzfall__gut",
+        "langsam__buero_wlan",
+        "langsam__gut",
+        "langsam__schlecht",
+        "langsam__sehr_schlecht",
+        "mittel__buero_wlan",
+        "mittel__gut",
+        "mittel__schlecht",
+        "mittel__sehr_schlecht",
+        "schnell__buero_wlan",
+        "schnell__gut",
+        "schnell__schlecht",
+        "schnell__sehr_schlecht"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-25T08:31:01+00:00",
+      "git_commit": "94f424ce7a0fa8e64c01162b510d37650e3ec1c8-dirty",
       "runs": [
         "grenzfall__gut",
         "langsam__buero_wlan",

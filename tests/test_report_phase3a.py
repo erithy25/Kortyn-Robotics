@@ -384,3 +384,28 @@ def test_pooled_effects_split_by_latency_budget_and_compare_tasks():
         [EffectFamily("x", half, {"schnell__gut": partial}, 312.5, {"schnell__gut": 100.0})]
     )
     assert ten == []  # the reference has no success on those seeds: no relative value
+
+
+def test_cpu_inference_table_reads_the_benchmark_files(tmp_path):
+    import json
+
+    from kortyn.report_phase3a import cpu_inference_table
+
+    assert cpu_inference_table(tmp_path) == []
+    (tmp_path / "phase3a").mkdir()
+    result = {
+        "processor": "Test CPU",
+        "results": [
+            {
+                "threads": 1,
+                "median_ms": 1743.6,
+                "p90_ms": 1849.4,
+                "min_ms": 1674.2,
+                "policy": "smolvla",
+                "sampler": "flow-10",
+            }
+        ],
+    }
+    (tmp_path / "phase3a" / "cpu_inference_smolvla.json").write_text(json.dumps(result))
+    lines = cpu_inference_table(tmp_path)
+    assert lines[2] == "| smolvla | flow-10 | Test CPU | 1 | 1744 ms | 1849 ms | 1674 ms |"

@@ -1618,6 +1618,27 @@ def figure_latency_effect(points: Sequence[EffectPoint], path: Path) -> None:
 
 
 # --------------------------------------------------------------------------------------------- report
+def cpu_inference_table(results: Path) -> list[str]:
+    """Real inference time of the policies on this machine (``kortyn.bench_inference``)."""
+    lines: list[str] = []
+    for path in sorted((results / "phase3a").glob("cpu_inference_*.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        rows = data.get("results", [])
+        if not rows:
+            continue
+        if not lines:
+            lines = [
+                "| Policy | Sampler | CPU | Threads | Median | p90 | Minimum |",
+                "|---|---|---|---:|---:|---:|---:|",
+            ]
+        for row in rows:
+            lines.append(
+                f"| {row.get('policy', '–')} | {row.get('sampler', '–')} | {data.get('processor', '–')} "
+                f"| {row['threads']} | {row['median_ms']:.0f} ms | {row['p90_ms']:.0f} ms | {row['min_ms']:.0f} ms |"
+            )
+    return lines
+
+
 def expert_delay_table(results: Path) -> list[str]:
     path = results / "phase3a" / "expert_delay.json"
     if not path.is_file():
@@ -1761,6 +1782,18 @@ def write_report(results: Path, reports: Path) -> Path:
         transport = transport_table(tasks)
         if transport:
             lines += ["### Bildübertragung", "", *transport]
+        cpu = cpu_inference_table(results)
+        if cpu:
+            lines += [
+                "### Echte Inferenzzeit auf dieser Maschine (CPU)",
+                "",
+                "Brain-Pfad (Vorverarbeitung, Modell, Nachverarbeitung) mit Beobachtungen der Evaluations-Seeds, "
+                "auf der sonst leeren Maschine gemessen. Die Experimente ersetzen diese Zeiten durch die "
+                "publizierten GPU-Profile.",
+                "",
+                *cpu,
+                "",
+            ]
     if points:
         lines += [
             "## Latenzwirkung: SmolVLA gegen PushT",
