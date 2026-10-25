@@ -260,6 +260,34 @@ def test_meta_merge_refuses_to_mix_different_settings():
     assert len(fresh["sessions"]) == 1
 
 
+def test_settings_added_later_match_their_absence_only_with_the_old_behaviour():
+    source = {"paths": ["results/p/*"], "quantity": "server_total_ms"}
+    run = {"scenario": "gut", "timing_settings": {"service": {"kind": "empirical", "empirical": source}}}
+    previous = stored_meta(runs={"gut": run})
+
+    def with_source(**extra):
+        return {
+            "gut": {
+                **run,
+                "timing_settings": {"service": {"kind": "empirical", "empirical": {**source, **extra}}},
+            }
+        }
+
+    same = run_experiment.merge_run_meta(
+        previous, stored_meta(runs=with_source(per_seed=False)), ["gut"], {"gut"}
+    )
+    assert same["runs"]["gut"]["timing_settings"]["service"]["empirical"]["per_seed"] is False
+    with pytest.raises(run_experiment.RunnerError, match=r"runs\.gut"):
+        run_experiment.merge_run_meta(
+            previous, stored_meta(runs=with_source(per_seed=True)), ["gut"], {"gut"}
+        )
+    with pytest.raises(run_experiment.RunnerError, match=r"runs\.gut"):  # unknown new keys still count
+        run_experiment.merge_run_meta(previous, stored_meta(runs=with_source(scale_by=2)), ["gut"], {"gut"})
+    assert run_experiment.same_settings([1, {"a": 2}], [1, {"a": 2}])
+    assert not run_experiment.same_settings([1, 2], [1, 2, 3])
+    assert not run_experiment.same_settings({"per_seed": False}, {})  # only an addition is compatible
+
+
 def test_unreadable_meta_is_reported_not_overwritten(tmp_path):
     path = tmp_path / "run_meta.json"
     path.write_text("{broken", encoding="utf-8")
