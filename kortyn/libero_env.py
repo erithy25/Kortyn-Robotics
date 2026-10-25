@@ -44,7 +44,9 @@ ASSETS_REPO_ID = "lerobot/libero-assets"
 ASSET_SUBDIRS = ("articulated_objects", "stable_scanned_objects", "turbosquid_objects", "stable_hope_objects")
 GRIPPER_OPEN = -1.0  # LIBERO's gripper command for "open" (LeRobot's settling no-op uses it as well)
 ACTION_DIM = 7  # end-effector delta position (3) + delta rotation (3) + gripper (1)
-MAX_CACHED_TASKS = 2  # simulators kept alive per process (consecutive episodes mostly share a task)
+# Simulators kept alive per env object. One LIBERO simulator with its render context holds ~1.1-1.5 GB;
+# consecutive episodes of a run mostly share a task, so rebuilding on a task switch is rare.
+MAX_CACHED_TASKS = 1
 
 
 def disable_telemetry() -> None:

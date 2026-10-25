@@ -50,6 +50,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--threads", type=int, default=None, help="torch/OpenMP threads of lerobot-eval")
     parser.add_argument(
+        "--task-ids",
+        default=None,
+        help="LIBERO: evaluate only these tasks of the config (comma-separated, seeds as in the config)",
+    )
+    parser.add_argument(
         "--from-eval-info",
         default=None,
         help="summarize an eval_info.json from an earlier run of the identical command instead of re-running",
@@ -84,7 +89,22 @@ def main(argv: list[str] | None = None) -> int:
         policy_args = [f"--policy.num_steps={steps}"]
         if profile is not None and profile.n_action_steps is not None:
             policy_args.append(f"--policy.n_action_steps={profile.n_action_steps}")
-        env_args = libero_env_args(libero)
+        evaluated = list(libero.task_ids)
+        if args.task_ids is not None:
+            evaluated = [int(part) for part in args.task_ids.split(",") if part.strip()]
+            unknown = sorted(set(evaluated) - set(libero.task_ids))
+            if not evaluated or unknown:
+                LOG.error("--task-ids must be a non-empty subset of the config's tasks %s", libero.task_ids)
+                return 2
+        env_args = libero_env_args(libero, evaluated)
+        # LeRobot's env names the cameras image/image2; the checkpoint was trained with them renamed
+        rename = {
+            "observation.images.image": libero.cameras.get("agentview_image", "observation.images.camera1"),
+            "observation.images.image2": libero.cameras.get(
+                "robot0_eye_in_hand_image", "observation.images.camera2"
+            ),
+        }
+        env_args.append("--rename_map=" + json.dumps(rename))
         from kortyn.libero_env import prepare_libero
 
         prepare_libero(libero)
@@ -156,7 +176,7 @@ def main(argv: list[str] | None = None) -> int:
         info = json.loads((work_dir / "eval_info.json").read_text(encoding="utf-8"))
         provenance = "run by kortyn.lerobot_reference"
     if libero is not None:
-        success_by_seed = libero_success_by_seed(info, libero)
+        success_by_seed = libero_success_by_seed(info, libero, evaluated)
         successes = list(success_by_seed.values())
     else:
         successes = [bool(s) for s in info["per_task"][0]["metrics"]["successes"]]
@@ -184,12 +204,12 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def libero_env_args(libero: LiberoEnvConfig) -> list[str]:
-    """lerobot-eval arguments for the LIBERO episodes of an experiment config (LeRobot's env defaults)."""
+def libero_env_args(libero: LiberoEnvConfig, task_ids: list[int]) -> list[str]:
+    """lerobot-eval arguments for LIBERO episodes of an experiment config (LeRobot's env defaults)."""
     return [
         "--env.type=libero",
         f"--env.task={libero.suite}",
-        "--env.task_ids=[" + ",".join(str(task_id) for task_id in libero.task_ids) + "]",
+        "--env.task_ids=[" + ",".join(str(task_id) for task_id in task_ids) + "]",
         f"--env.observation_height={libero.observation_height}",
         f"--env.observation_width={libero.observation_width}",
         f"--env.control_mode={libero.control_mode}",
@@ -199,18 +219,24 @@ def libero_env_args(libero: LiberoEnvConfig) -> list[str]:
     ]
 
 
-def libero_success_by_seed(info: dict[str, Any], libero: LiberoEnvConfig) -> dict[str, bool]:
+def libero_success_by_seed(
+    info: dict[str, Any], libero: LiberoEnvConfig, task_ids: list[int] | None = None
+) -> dict[str, bool]:
     """Per-episode success of a LIBERO lerobot-eval run, keyed by the Kortyn seed of the same episode.
 
     lerobot-eval runs episode ``j`` of every task from init state ``j`` with seed ``eval_seed + j``; Kortyn's
-    run episode ``i`` plays task ``task_ids[i // episodes_per_task]``, episode ``i % episodes_per_task``.
+    run episode ``i`` plays task ``libero.task_ids[i // episodes_per_task]``, episode
+    ``i % episodes_per_task``. ``task_ids``: the evaluated subset (default: all tasks of the config).
     """
     by_task: dict[int, list[bool]] = {}
     for entry in info.get("per_task", []):
         task_id = int(entry["task_id"])
         by_task[task_id] = [bool(s) for s in entry["metrics"]["successes"]]
+    evaluated = set(libero.task_ids if task_ids is None else task_ids)
     result: dict[str, bool] = {}
     for position, task_id in enumerate(libero.task_ids):
+        if task_id not in evaluated:
+            continue
         successes = by_task.get(task_id)
         if successes is None or len(successes) != libero.episodes_per_task:
             found = None if successes is None else len(successes)
