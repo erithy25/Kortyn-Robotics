@@ -24,6 +24,7 @@ import argparse
 import json
 import logging
 import math
+import re
 import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -1180,6 +1181,16 @@ def task_comparison(tasks: Sequence[TaskData]) -> list[str]:
     return lines
 
 
+def transport_name(label: str) -> str:
+    """Readable name of a transport ablation run: ``transport_jpeg75_240px`` -> ``JPEG q75, 240×240``."""
+    match = re.fullmatch(r"transport_(jpeg|png)(\d+)?(?:_(\d+)px)?", label)
+    if match is None:
+        return label.removeprefix("transport_")
+    codec, quality, size = match.groups()
+    name = codec.upper() + (f" q{quality}" if quality else "")
+    return name + (f", {size}×{size} (im Brain auf 480×480 skaliert)" if size else ", 480×480")
+
+
 def transport_table(tasks: Sequence[TaskData]) -> list[str]:
     """Image transport ablation: payload, bandwidth and success against raw frames (same seeds)."""
     lines: list[str] = []
@@ -1188,8 +1199,14 @@ def transport_table(tasks: Sequence[TaskData]) -> list[str]:
         reference = data.runs.get(SYNC_MATCHED)
         if not variants or reference is None:
             continue
+        common = set(reference.episodes)
+        for label in variants:
+            common &= set(data.runs[label].episodes)
+        seeds = sorted(common)
+        if not seeds:
+            continue
         lines += [
-            f"**{data.task}** (synchrone Referenz, 25 Aktionen pro Plan):",
+            f"**{data.task}** (synchrone Referenz, 25 Aktionen pro Plan, Seeds {seeds[0]}–{seeds[-1]}, n = {len(seeds)}):",
             "",
             "| Bildübertragung | KB pro Anfrage | Bandbreite/Roboter bei 3,2 Anfragen/s | Erfolg [KI] | Δ vs. roh [KI] (p) |",
             "|---|---:|---:|---:|---:|",
@@ -1197,10 +1214,9 @@ def transport_table(tasks: Sequence[TaskData]) -> list[str]:
         for label in [SYNC_MATCHED, *variants]:
             run = data.runs[label]
             kb, _, _ = run_bandwidth(run)
-            seeds = sorted(set(run.episodes) & set(reference.episodes))
             success = estimate("success", run.ordered(seeds))
             delta = paired_delta(reference, run, "success") if label != SYNC_MATCHED else None
-            name = {SYNC_MATCHED: "roh, 480×480 (LeRobot-Eval)"}.get(label, label.removeprefix("transport_"))
+            name = "roh, 480×480 (LeRobot-Eval)" if label == SYNC_MATCHED else transport_name(label)
             per_robot = 8.0 * kb * 1000.0 * (80.0 / 25.0) / 1e6
             delta_text = "–" if delta is None else f"{fmt_interval(delta.interval, 'pp')} ({p_text(delta.p)})"
             lines.append(

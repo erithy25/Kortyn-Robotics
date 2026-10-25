@@ -301,3 +301,23 @@ def test_lerobot_eval_rows_compare_the_official_evaluation_on_the_same_seeds(tmp
         lerobot_eval_rows(tmp_path / "none", [TaskData("coffee-push-v3", {"referenz_sync50": sync50}, {})])
         == []
     )
+
+
+def test_transport_table_compares_on_the_seeds_all_variants_share():
+    from kortyn.report_phase3a import TaskData, transport_name, transport_table
+
+    assert transport_name("transport_jpeg90") == "JPEG q90, 480×480"
+    assert transport_name("transport_jpeg75_240px").startswith("JPEG q75, 240×240")
+    assert transport_name("transport_png") == "PNG, 480×480"
+    assert transport_name("transport_custom") == "custom"
+    # the raw reference has 100 seeds (80 % successes overall, 100 % on the first 50), the variant 50
+    reference = run([episode(s, success=s < 1050 or s % 5 == 0) for s in range(1000, 1100)])
+    variant = run([episode(s, success=s % 2 == 0) for s in range(1000, 1050)])
+    lines = transport_table(
+        [TaskData("push-v3", {"referenz_sync25": reference, "transport_jpeg90": variant}, {})]
+    )
+    assert "n = 50" in lines[0]
+    rows = [line for line in lines if line.startswith("| roh") or line.startswith("| JPEG")]
+    assert rows[0].split("|")[4].strip().startswith("100 %")  # the reference on the common seeds
+    assert rows[1].split("|")[4].strip().startswith("50 %")
+    assert rows[1].split("|")[5].strip().startswith("-50 pp")

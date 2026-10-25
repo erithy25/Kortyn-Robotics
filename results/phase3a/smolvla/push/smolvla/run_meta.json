@@ -187,6 +187,186 @@
         "min_ms": 0.0,
         "max_ms": null
       }
+    },
+    "transport_jpeg90": {
+      "scenario": "referenz_sync",
+      "mode": "sync",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "mittel",
+      "timing_settings": {
+        "description": "GPU mittel (RTX 3090)",
+        "latency": "model",
+        "hardware": "rtx3090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 174.1,
+        "std_ms": 8.7,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "image_transport": {
+        "codec": "jpeg",
+        "quality": 90,
+        "height": null,
+        "width": null
+      }
+    },
+    "transport_jpeg75_240px": {
+      "scenario": "referenz_sync",
+      "mode": "sync",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "mittel",
+      "timing_settings": {
+        "description": "GPU mittel (RTX 3090)",
+        "latency": "model",
+        "hardware": "rtx3090",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 1.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 5.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "lognormal",
+        "value_ms": 0.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 174.1,
+        "std_ms": 8.7,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "image_transport": {
+        "codec": "jpeg",
+        "quality": 75,
+        "height": 240,
+        "width": 240
+      }
     }
   },
   "agent": {
@@ -217,7 +397,7 @@
     "cpu_count": 4,
     "python": "3.12.3"
   },
-  "git_commit": "eaa6e60058249c5248662675e87badb7d7721abe-dirty",
+  "git_commit": "13829137100493a9c93450f88c16c258f847fb43",
   "started_utc": "2026-10-24T22:42:49+00:00",
   "sessions": [
     {
@@ -226,6 +406,23 @@
       "runs": [
         "referenz_sync25",
         "referenz_sync50"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-25T02:45:01+00:00",
+      "git_commit": "13829137100493a9c93450f88c16c258f847fb43",
+      "runs": [
+        "transport_jpeg75_240px",
+        "transport_jpeg90"
       ],
       "cpu_pinning": null,
       "host": {
