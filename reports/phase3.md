@@ -236,3 +236,53 @@ Alle Einträge sind vor der Auswertung der jeweils betroffenen Ergebnisse geschr
 | 11:15 | 0.5 Episodenlängen | Episodenlängen der Warteschlangen-Simulation: alle Episoden der 0-ms-Stufe beider Aufgaben, gleich gewichtet gezogen | Präzisierung | – |
 | 11:40 | 0.5 Validierung, Flottengrößen | Validierungsflotten höchstens 4 statt 8 Roboter: n₁ = größte Rastergröße ≤ 4, bei der die schlechteste Strategie Kriterium (1) erfüllt, n₂ = nächste Rastergröße; erfüllt sie (1) noch bei 4, gilt n₁ = 2, n₂ = 4. Die Policy-Inferenz der Validierung läuft in per Fork geteilten Worker-Prozessen (Ergebnis je Anfrage unabhängig vom rechnenden Prozess) | Gemessen: Eine LIBERO-Umgebung belegt ≈ 2,3 GB (Szene und Modell ≈ 1,1 GB, Software-Renderer ≈ 1 GB, Texturen 185 MB); 8 Roboter bräuchten ≈ 20 GB bei 13,4 GB Limit. Festgelegt vor der ersten Warteschlangen-Simulation | Die Validierung deckt Flotten bis 4 Roboter ab; größere Flotten bleiben unvalidierte Vorhersage (im Report so gekennzeichnet) |
 | 11:40 | Durchführung | Bis `lerobot-eval` fertig ist, rechnet ein Kortyn-Worker statt zwei | Zwei Worker neben `lerobot-eval` liegen am Speicherlimit (zwei weitere OOM-Abbrüche um 11:14) | Nur Laufzeit |
+| 11:55 | 0.5 Validierung, Konfiguration | Die Validierung läuft auf einem eigenen GPU-Profil „Validierung“ mit s₁ = 420 ms statt auf „RTX 3060 Ti (Schätzung)“; Batching „realistisch“ und Büro-WLAN bleiben | Die Recherche (unten) senkt die 3060-Ti-Schätzung von den eingeplanten ≈ 420 ms auf 220 ms. Damit überlastet keine Strategie das Brain mit ≤ 4 Robotern, und die Validierung prüfte nur den flachen Teil der Kurve. 420 ms ist die ursprünglich eingeplante Schätzung (Skalierung mit der Rechenleistung) und erzeugt bei 4 Robotern ohne Batching Überlast. Festgelegt vor der ersten Warteschlangen-Simulation | Die Validierung prüft die Methode (Warteschlange × Dosis-Wirkung), nicht eine bestimmte GPU |
+| 11:55 | 0.5 GPU-Profile | Zusätzliches Profil „RTX 4090 kompiliert“ (`torch.compile`) als Sensitivität | Eager-PyTorch ist bei Batch 1 vom Kernel-Start-Overhead dominiert; kompiliert sinkt s₁ auf etwa ein Viertel. Zeigt, wie stark die Kapazität von der Software abhängt | Ein weiteres Modell-Profil, keine geänderte Schwelle |
+
+## Festlegung der Brain-Profile (vor der ersten Warteschlangen-Simulation)
+
+_Geschrieben am 25.10.2026 um 11:55 UTC nach der Recherche, vor jeder Warteschlangen-Simulation, mit eigenem
+Commit. Modell-Eingaben, keine Erfolgskriterien._
+
+**Was die Recherche ergab:**
+- **SmolVLA:** Für SmolVLA selbst gibt es keine publizierte Kurve Servicezeit gegen Batchgröße. SmolVLA-Paper,
+  LeRobot-Paper, LeRobot-Issues und vla.cpp messen nur Batch 1.
+- **Eager-PyTorch ist bei Batch 1 vom Start-Overhead der Kernels dominiert, nicht von der GPU-Rechenzeit.**
+  - LeRobot-Issue #4633 (RTX 4090, eine Kamera): eager 194 ms, davon 181 ms in den 10 Flow-Schritten;
+    kompiliert 39,8 ms.
+  - π0.5 eager: 150,5 ms auf einer RTX 4090, 333,8 ms auf einer RTX PRO 6000 (vLLM-Omni PR #9237).
+  - Deshalb unterscheiden sich GPUs bei Batch 1 weniger, als ihre Rechenleistung erwarten ließe.
+- **Rechenaufwand je Roboter:** etwa 590 GFLOP (zweimal SigLIP-512, Sprachmodell-Präfix, Action-Expert).
+  Das sind ≈ 6–8 ms GPU-Zeit auf einer RTX 4090, ≈ 12–15 ms auf einer RTX 3090 und ≈ 27–34 ms auf einer
+  RTX 3060 Ti. Solange die Rechenzeit klein gegen den Overhead ist, kostet jeder weitere Roboter im Batch
+  wenig.
+- **Gemessenes Batching vergleichbarer VLAs** (β = Zusatzkosten je weiterer Anfrage relativ zu einer
+  Einzelinferenz):
+  - GR00T N1.7 auf L40S: 0,07–0,10 (Armory, arXiv 2608.00337).
+  - Graph-optimierte VLAs: 0,16–0,35 (GR00T/π0.5 auf H200, Rosa, arXiv 2607.01088; GR00T auf RTX 5090,
+    PhyAI, arXiv 2608.03682).
+  - π0.5 auf L40S, Hopper und Thor: 0,42–0,50 (Armory; PhyAI).
+  - OpenVLA mit Stichproben-Schleife: ≈ 1 (RoboMonkey, arXiv 2506.17811).
+
+**Servicezeit einer Einzelinferenz s₁** (LIBERO-Eingabe mit zwei Kameras, 10 Flow-Schritte, Chunk 50, eager
+PyTorch, einschließlich Vor- und Nachverarbeitung):
+
+| Profil | s₁ | Grundlage |
+|---|---:|---|
+| RTX 4090 | 115 ms | LeRobot-Paper (arXiv 2602.22818, Tab. 3): 99,2 ms fp32, Eingabe nicht angegeben; plus ≈ 15 ms für die zweite Kamera und die Vorverarbeitung. Eine zweite Messung (Issue #4633) ergab 194 ms; die Spanne zeigt die Host-Abhängigkeit |
+| RTX 3090 | 180 ms | vla.cpp (arXiv 2606.08094 v2, Tab. IV): 174,1 ms eager, Benchmark LIBERO, ohne Tokenisierung und Serialisierung; plus ≈ 6 ms Vorverarbeitung |
+| RTX 3060 Ti (Schätzung) | 220 ms | Keine Messung gefunden. Overhead wie RTX 3090, GPU-Rechenzeit ≈ 2,2-mal so lang (32,4 statt 71 BF16-TFLOPS, 448 statt 936 GB/s): ≈ 200 ms, aufgerundet für WSL2. Wird durch die Benchmark-Messung ersetzt |
+| RTX 4090 kompiliert | 50 ms | Issue #4633: 39,8 ms mit `torch.compile` (eine Kamera); plus zweite Kamera und Vorverarbeitung |
+| Validierung | 420 ms | Testprofil der Validierung (siehe Abweichungen): erzeugt Überlast schon bei 4 Robotern |
+
+**Batching-Profile** s(b) = s₁ · (1 + β · (b − 1)) · ε, ε lognormal mit 5 % Variationskoeffizient:
+
+| Profil | β | Begründung |
+|---|---:|---|
+| optimistisch | 0,05 | Die GPU-Rechenzeit je weiterem Roboter versteckt sich unter dem Overhead, bis b · g ≈ s₁; gemessen bis 0,07–0,10 (GR00T, L40S) |
+| realistisch | 0,15 | β ≈ g / s₁ für eager: 0,06 (4090), 0,07 (3090), 0,14 (3060 Ti); aufgerundet, damit auch kompilierte Ausführung grob abgedeckt ist |
+| pessimistisch | 0,45 | Obere Grenze gemessener VLA-Batching-Kurven (π0.5 auf L40S, Hopper, Thor) |
+| kein Batching-Gewinn | 1,0 | b Anfragen kosten b Inferenzen, z. B. bei einer Schleife über die Stichproben |
+
+Alle Profile gelten bis Batch 32 (`batch_limit`). Die Scheduler b, d und e begrenzen Batches auf 16.
+Messtabellen aus `kortyn/bench_batch.py` ersetzen ein Profil vollständig.

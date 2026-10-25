@@ -690,16 +690,29 @@ def run_fleet(config: FleetSimConfig, key: RunKey, lengths: Sequence[int]) -> Ru
 
 
 # --------------------------------------------------------------------------------------------- grid
-def grid(config: FleetSimConfig, sizes: Iterable[int] | None = None) -> list[RunKey]:
-    """All runs of a config. Strategies without batching run once per GPU (batching profile irrelevant)."""
+def grid(
+    config: FleetSimConfig,
+    sizes: Iterable[int] | None = None,
+    networks: Iterable[str] | None = None,
+    gpus: Iterable[str] | None = None,
+    batching: Iterable[str] | None = None,
+) -> list[RunKey]:
+    """All runs of a config (optionally a subset). Strategies without batching run once per GPU.
+
+    A strategy without batching runs under the config's first batching profile only (its service time is
+    ``s(1)`` in every profile).
+    """
+    chosen_networks = _subset("networks", config.networks, networks)
+    chosen_gpus = _subset("gpus", config.gpus, gpus)
+    chosen_batching = _subset("batching", config.batching, batching)
     keys: list[RunKey] = []
     first_batching = next(iter(config.batching))
-    for network, gpu, strategy_name in itertools.product(config.networks, config.gpus, config.strategies):
+    for network, gpu, strategy_name in itertools.product(chosen_networks, chosen_gpus, config.strategies):
         strategy = config.strategies[strategy_name]
         if config.gpus[gpu].table is not None:
             profiles = ["gemessen"]
         elif strategy.batches:
-            profiles = list(config.batching)
+            profiles = list(chosen_batching)
         else:
             profiles = [first_batching]
         for batching, robots, replication in itertools.product(
@@ -707,6 +720,18 @@ def grid(config: FleetSimConfig, sizes: Iterable[int] | None = None) -> list[Run
         ):
             keys.append(RunKey(network, gpu, batching, strategy_name, robots, replication))
     return keys
+
+
+def _subset(name: str, defined: dict[str, Any], chosen: Iterable[str] | None) -> list[str]:
+    if chosen is None:
+        return list(defined)
+    selected = list(dict.fromkeys(chosen))
+    unknown = [item for item in selected if item not in defined]
+    if unknown or not selected:
+        raise ConfigError(
+            f"unknown or empty {name} selection {unknown or selected}; defined: {list(defined)}"
+        )
+    return selected
 
 
 _WORKER_CONFIG: FleetSimConfig | None = None
@@ -762,11 +787,18 @@ def run_grid(config: FleetSimConfig, keys: Sequence[RunKey], out_path: Path, wor
     return len(pending)
 
 
+def _names(text: str | None) -> list[str] | None:
+    return None if text is None else [part.strip() for part in text.split(",") if part.strip()]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Phase-3 fleet simulation of the Brain's queue (stage 1).")
     parser.add_argument("--config", required=True)
     parser.add_argument("--workers", type=int, default=None)
     parser.add_argument("--sizes", default=None, help="comma-separated fleet sizes (default: from config)")
+    parser.add_argument("--networks", default=None, help="comma-separated subset of the config's networks")
+    parser.add_argument("--gpus", default=None, help="comma-separated subset of the config's GPU profiles")
+    parser.add_argument("--batching", default=None, help="comma-separated subset of the batching profiles")
     parser.add_argument("--out", default=None, help="results file (default: from config)")
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
@@ -778,7 +810,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         config = load_fleet_config(args.config)
         sizes = None if args.sizes is None else [int(s) for s in args.sizes.split(",") if s.strip()]
-        keys = grid(config, sizes)
+        keys = grid(config, sizes, _names(args.networks), _names(args.gpus), _names(args.batching))
         workers = args.workers if args.workers is not None else (config.workers or os.cpu_count() or 1)
         run_grid(config, keys, Path(args.out or config.results_path), max(1, workers))
     except ConfigError as exc:

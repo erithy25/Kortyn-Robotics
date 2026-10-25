@@ -259,3 +259,25 @@ def test_fleet_config_validation_and_loading(tmp_path: Path) -> None:
     path.write_text("gpus: {g: {s1_ms: 100, unknown: 1}}\n")
     with pytest.raises(ConfigError):
         load_fleet_config(path)
+
+
+def test_grid_subsets(tmp_path: Path) -> None:
+    config = small_config(tmp_path)
+    keys = grid(config, networks=["buero_wlan"], gpus=["gpu"], batching=["gut"])
+    assert {k.batching for k in keys if k.strategy == "d"} == {"gut"}
+    assert {k.batching for k in keys if k.strategy == "a"} == {"keiner"}  # no batching: first profile
+    with pytest.raises(ConfigError):
+        grid(config, gpus=["unknown"])
+    with pytest.raises(ConfigError):
+        grid(config, networks=[])
+
+
+def test_phase3_fleet_config_loads() -> None:
+    config = load_fleet_config(Path(__file__).resolve().parents[1] / "kortyn/experiments/phase3/fleet.yaml")
+    assert config.agent.budget_s == pytest.approx(1.25)
+    assert config.agent.period_s == pytest.approx(1.25)
+    assert set(config.strategies) == {"a", "b", "c", "d", "e"}
+    assert config.validation is not None
+    assert config.validation.gpu == "validierung"
+    assert config.prediction is not None
+    assert config.prediction.levels[0].latency_ms == 0.0

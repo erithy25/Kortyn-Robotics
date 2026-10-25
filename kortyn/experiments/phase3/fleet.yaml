@@ -1,0 +1,82 @@
+# Phase 3, step 4: fleets of robots sharing one GPU Brain (stage 1 queue simulation, stage 2 prediction,
+# stage 3 validation). Model inputs fixed before the first queue simulation (reports/phase3.md, section
+# "Brain-Profile"); sources in that section.
+#
+#   python -m kortyn.fleet --config kortyn/experiments/phase3/fleet.yaml           # stage 1
+#   python -m kortyn.fleet_predict --config kortyn/experiments/phase3/fleet.yaml   # stage 2 (capacity)
+#   python -m kortyn.fleet_rollout --config kortyn/experiments/phase3/fleet.yaml --strategy d --robots 4
+description: "Phase 3: ein Brain, viele LIBERO-Roboter (SmolVLA, 2 Kameras, Chunk 50, alle 25 Takte)"
+
+agent:                          # must match the rollout agent of libero_main.yaml (checked by the validation)
+  fps: 20.0
+  actions_per_chunk: 50
+  refill_threshold: 24          # a plan every 25 ticks (1.25 s); latency budget (24 + 1) x 50 ms = 1.25 s
+  request_timeout_s: 10.0
+  client_overhead_ms: 1.0       # encode + send on the robot
+  transport_overhead_ms: 5.0    # decode + framing on the Brain side
+
+episode_lengths:                # drawn from the 0-ms level of the dose-response experiment (pre-registered)
+  paths: [results/phase3/libero/smolvla_libero/fest_0ms/episodes.jsonl]
+
+gpus:                           # s1: one inference, LIBERO input (two 360x360 cameras), 10 flow steps, eager PyTorch
+  rtx3060ti_schaetzung: {s1_ms: 220.0}   # estimate until the benchmark (docs/benchmark_rtx3060ti.md) measures it
+  rtx3090: {s1_ms: 180.0}
+  rtx4090: {s1_ms: 115.0}
+  rtx4090_kompiliert: {s1_ms: 50.0}      # sensitivity: torch.compile instead of eager
+  validierung: {s1_ms: 420.0}            # test profile of the validation: overload at 4 robots without batching
+
+batching:                       # s(b) = s1 * (1 + beta * (b - 1)); the first entry also labels a/c (no batching)
+  realistisch: {beta: 0.15}
+  optimistisch: {beta: 0.05}
+  pessimistisch: {beta: 0.45}
+  kein_gewinn: {beta: 1.0}
+
+strategies:
+  a: {scheduler: fifo}
+  b: {scheduler: fifo_batch, max_batch: 16, max_wait_ms: 25.0}
+  c: {scheduler: edf}
+  d: {scheduler: edf_batch, max_batch: 16}
+  e: {scheduler: edf_batch, max_batch: 16, admission: true, max_utilization: 0.9}
+
+networks:                       # margin: one-way mean + half the jitter width (the Brain's downlink estimate)
+  buero_wlan: {scenario: buero_wlan, margin_ms: 15.0}
+  schlecht: {scenario: schlecht, margin_ms: 60.0}
+
+fleet_sizes: [1, 2, 4, 8, 16, 32]
+replications: 10
+start_spread_s: 10.0
+window_start_s: 30.0
+horizon_s: 630.0
+service_cv: 0.05
+batch_limit: 32
+seed: 3000
+results_path: results/phase3/fleet/stage1.jsonl
+
+prediction:
+  experiment: kortyn/experiments/phase3/libero_main.yaml
+  profile: smolvla_libero
+  levels:
+    - {latency_ms: 0, run: fest_0ms}
+    - {latency_ms: 250, run: fest_250ms}
+    - {latency_ms: 500, run: fest_500ms}
+    - {latency_ms: 1000, run: fest_1000ms}
+    - {latency_ms: 1250, run: fest_1250ms}
+    - {latency_ms: 1500, run: fest_1500ms}
+    - {latency_ms: 2000, run: fest_2000ms}
+  bootstrap: 10000
+  seed: 4242
+  output: results/phase3/fleet/capacity.json
+
+validation:
+  experiment: kortyn/experiments/phase3/libero_main.yaml
+  template_run: fest_0ms        # agent, strategy (halten) and image settings of the dose-response robots
+  gpu: validierung
+  batching: realistisch
+  network: buero_wlan
+  profile: smolvla_libero
+  results_dir: results/phase3/validation
+  episodes: 100
+  workers: 2
+  confidence: 0.9875
+  bootstrap: 10000
+  seed: 5150
