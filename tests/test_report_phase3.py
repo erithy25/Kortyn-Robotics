@@ -258,3 +258,112 @@ def test_jitter_check_predicts_uniform_latency_from_fixed_levels() -> None:
     assert check.interval[0] <= check.difference <= check.interval[1]
     assert jitter_check({0.0: run(True)}, run(True), 500.0, 1500.0, libero) is None  # one level: no curve
     assert jitter_check(fixed, {}, 500.0, 1500.0, libero) is None  # no common seeds
+
+
+def _supplement_data() -> dict[str, object]:
+    def size(robots: int, ok: bool, worst: float, admitted: float | None = None) -> dict[str, object]:
+        return {
+            "robots": robots,
+            "miss_share": 0.0 if ok else 0.5,
+            "busy_share": min(1.0, 0.25 * robots),
+            "criterion_1": ok,
+            "criterion_2": robots == 1,
+            "admitted_mean": float(robots if admitted is None else admitted),
+            "worst": worst,
+            "fleet_mean": worst + 0.01,
+        }
+
+    return {
+        "levels_ms": [0.0, 500.0, 1000.0],
+        "curve": [0.5, 0.3, 0.1],
+        "configurations": [
+            {
+                "network": "buero_wlan",
+                "gpu": "g1",
+                "batching": "realistisch",
+                "strategy": "a",
+                "capacity": 1,
+                "sizes": [size(1, True, 0.40), size(2, True, 0.38), size(4, False, 0.0), size(8, False, 0.0)],
+            },
+            {
+                "network": "buero_wlan",
+                "gpu": "g1",
+                "batching": "realistisch",
+                "strategy": "d",
+                "capacity": 1,
+                "sizes": [
+                    size(1, True, 0.40),
+                    size(2, True, 0.39),
+                    size(4, True, 0.35),
+                    size(8, True, 0.20, admitted=6.0),
+                ],
+            },
+        ],
+    }
+
+
+def test_queue_only_lookup_and_success_table(tmp_path: Path) -> None:
+    from kortyn.report_phase3 import queue_only_lookup, success_table
+
+    fleet = load_fleet_config(write_fleet(tmp_path))
+    data = _supplement_data()
+    table = queue_only_lookup(data, fleet)
+    assert table[("buero_wlan", "g1", "realistisch", "a")] == 2
+    assert table[("buero_wlan", "g1", "optimistisch", "a")] == 2  # FIFO: the same under every profile
+    assert table[("buero_wlan", "g1", "realistisch", "d")] == 4  # n = 8 rejects robots
+    lines = success_table(data, fleet, "buero_wlan", "realistisch", "g1")
+    text = "\n".join(lines)
+    assert "38 % (Ø 39 %)" in text
+    assert "✗ (50 % über Budget)" in text
+    assert "✗ (6 von 8 aufgenommen)" in text
+
+
+def test_matched_fleet_and_section(tmp_path: Path) -> None:
+    from kortyn.economics import EconomicsConfig, GpuOption, HostOption, OnboardOption, PriceSource
+    from kortyn.report_phase3 import matched_fleet, matched_section
+
+    fleet = load_fleet_config(write_fleet(tmp_path))
+    data = _supplement_data()
+    assert matched_fleet(data, fleet, ("buero_wlan", "g1", "realistisch", "d"), 0.35) == (4, 1.0)
+    assert matched_fleet(data, fleet, ("buero_wlan", "g1", "realistisch", "a"), 0.35) == (2, 0.5)
+    assert matched_fleet(data, fleet, ("buero_wlan", "g1", "realistisch", "a"), 0.45) is None
+    source = PriceSource(source="test", date="2026-10-25")
+    economics = EconomicsConfig(
+        electricity_eur_per_kwh=0.25,
+        electricity_source=source,
+        host=HostOption(label="host", price_eur=900.0, power_w=60.0, price_source=source),
+        gpus=[
+            GpuOption(
+                profile="g1",
+                label="GPU 1",
+                price_eur=300.0,
+                board_power_w=200.0,
+                idle_power_w=15.0,
+                price_source=source,
+            )
+        ],
+        onboard=[
+            OnboardOption(
+                label="Jetson",
+                price_eur=500.0,
+                power_w=25.0,
+                latency_ms=500.0,
+                price_source=source,
+                latency_source=source,
+            ),
+            OnboardOption(
+                label="Fast",
+                price_eur=5000.0,
+                power_w=70.0,
+                latency_ms=0.0001,
+                price_source=source,
+                latency_source=source,
+            ),
+        ],
+    )
+    text = "\n".join(matched_section(data, fleet, economics, "buero_wlan", "realistisch", ["a", "d"]))
+    assert "Jetson (500 ms, 30 %" in text
+    assert "| 2, " in text  # FIFO keeps two robots at >= 30 %
+    assert "| 4, " in text  # d keeps four
+    assert "nicht erreichbar" in text  # nobody reaches the 50 % of the fast onboard computer
+    assert matched_section({"configurations": []}, fleet, economics, "buero_wlan", "realistisch", ["a"]) == []

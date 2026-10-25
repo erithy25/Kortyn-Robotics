@@ -431,6 +431,133 @@ def capacity_lookup(data: Mapping[str, Any], fleet: FleetSimConfig) -> dict[tupl
     return table
 
 
+def queue_only_lookup(data: Mapping[str, Any], fleet: FleetSimConfig) -> dict[tuple[str, str, str, str], int]:
+    """Supplement: capacity by criterion (1) alone (every robot admitted), from the stage-2 results."""
+    first = next(iter(fleet.batching))
+    table: dict[tuple[str, str, str, str], int] = {}
+    for entry in data["configurations"]:
+        capacity = 0
+        for size in sorted(entry["sizes"], key=lambda s: int(s["robots"])):
+            robots = int(size["robots"])
+            admitted = float(size.get("admitted_mean", robots))
+            if not bool(size["criterion_1"]) or admitted < robots - 1e-9:
+                break
+            capacity = robots
+        key = (entry["network"], entry["gpu"], entry["batching"], entry["strategy"])
+        table[key] = capacity
+        if not fleet.strategies[entry["strategy"]].batches and entry["batching"] == first:
+            for profile in fleet.batching:
+                table[(entry["network"], entry["gpu"], profile, entry["strategy"])] = capacity
+    return table
+
+
+def _sizes(data: Mapping[str, Any], fleet: FleetSimConfig, key: tuple[str, str, str, str]) -> list[Any]:
+    """Stage-2 size results of a configuration (unbatched strategies are stored under the first profile)."""
+    network, gpu, batching, strategy = key
+    if not fleet.strategies[strategy].batches:
+        batching = next(iter(fleet.batching))
+    for entry in data["configurations"]:
+        if (entry["network"], entry["gpu"], entry["batching"], entry["strategy"]) == (
+            network,
+            gpu,
+            batching,
+            strategy,
+        ):
+            return sorted(entry["sizes"], key=lambda s: int(s["robots"]))
+    return []
+
+
+def _serves(size: Mapping[str, Any]) -> bool:
+    """Criterion (1) holds and every robot is admitted."""
+    robots = int(size["robots"])
+    return bool(size["criterion_1"]) and float(size.get("admitted_mean", robots)) >= robots - 1e-9
+
+
+def success_table(
+    data: Mapping[str, Any], fleet: FleetSimConfig, network: str, batching: str, gpu: str
+) -> list[str]:
+    """Supplement: predicted success of the worst robot per strategy and fleet size (criterion (1) marked)."""
+    sizes = sorted(fleet.fleet_sizes)
+    lines = [
+        "| Strategie | " + " | ".join(f"{n} Roboter" for n in sizes) + " |",
+        "|---|" + "---:|" * len(sizes),
+    ]
+    for strategy in STRATEGY_ORDER:
+        if strategy not in fleet.strategies:
+            continue
+        by_size = {int(s["robots"]): s for s in _sizes(data, fleet, (network, gpu, batching, strategy))}
+        cells = []
+        for n in sizes:
+            size = by_size.get(n)
+            if size is None or size.get("worst") is None:
+                cells.append("–")
+            elif float(size.get("admitted_mean", n)) < n - 1e-9:
+                cells.append(f"✗ ({float(size['admitted_mean']):.0f} von {n} aufgenommen)")
+            elif not _serves(size):
+                cells.append(f"✗ ({pct(float(size['miss_share']))} über Budget)")
+            else:
+                cells.append(f"{pct(float(size['worst']))} (Ø {pct(float(size['fleet_mean']))})")
+        lines.append(f"| {STRATEGY_NAMES[strategy]} | " + " | ".join(cells) + " |")
+    return lines
+
+
+def matched_fleet(
+    data: Mapping[str, Any], fleet: FleetSimConfig, key: tuple[str, str, str, str], target: float
+) -> tuple[int, float] | None:
+    """Largest grid fleet whose worst robot is predicted at least ``target`` while criterion (1) holds.
+
+    Returns (robots, busy share) or ``None`` if not even one robot reaches the target. Sizes are scanned
+    upwards and the search stops at the first size that fails, like the capacity rule.
+    """
+    best: tuple[int, float] | None = None
+    for size in _sizes(data, fleet, key):
+        if not _serves(size) or size.get("worst") is None or float(size["worst"]) < target:
+            break
+        best = (int(size["robots"]), float(size["busy_share"]))
+    return best
+
+
+def matched_section(
+    data: Mapping[str, Any],
+    fleet: FleetSimConfig,
+    economics: EconomicsConfig,
+    network: str,
+    batching: str,
+    strategies: Sequence[str],
+) -> list[str]:
+    """Supplement: fleets keeping every robot at an onboard computer's predicted success, and their cost."""
+    if "curve" not in data or not economics.onboard:
+        return []
+    levels, curve = data["levels_ms"], data["curve"]
+    client = client_cost(economics)
+    extra = 0.0 if client is None else client.monthly_eur
+    lines = [
+        "| Rechner im Roboter (Latenz, Erfolg f(L), Kosten je Monat) | Brain-GPU | "
+        + " | ".join(f"{STRATEGY_NAMES[s]}: Roboter, Kosten je Roboter" for s in strategies)
+        + " |",
+        "|---|---|" + "---|" * len(strategies),
+    ]
+    for option in economics.onboard:
+        target = predicted_success(levels, curve, option.latency_ms)
+        onboard = onboard_cost(economics, option)
+        head = (
+            f"{option.label} ({option.latency_ms:.0f} ms, {pct(target)}, "
+            f"{eur(onboard.monthly_per_robot_eur, 2)})"
+        )
+        for gpu in economics.gpus:
+            cells = []
+            for strategy in strategies:
+                match = matched_fleet(data, fleet, (network, gpu.profile, batching, strategy), target)
+                if match is None:
+                    cells.append("nicht erreichbar")
+                    continue
+                cost = brain_cost(economics, gpu, match[0], match[1])
+                monthly = "–" if cost is None else eur(cost.monthly_per_robot_eur + extra, 2)
+                cells.append(f"{match[0]}, {monthly}")
+            lines.append(f"| {head} | {gpu.label} | " + " | ".join(cells) + " |")
+    return lines
+
+
 def gpu_label(fleet: FleetSimConfig, gpu: str) -> str:
     names = {
         "rtx3060ti_schaetzung": "RTX 3060 Ti (Schätzung)",
@@ -871,6 +998,43 @@ def build(args: argparse.Namespace) -> list[str]:
                     f"Budget-Verletzungen: {gpu_label(fleet, gpu)}, Batching realistisch, Büro-WLAN",
                 )
                 lines += [f"![Budget-Verletzungen {gpu}]({name})", ""]
+        queue_only = queue_only_lookup(capacity, fleet)
+        lines += [
+            "### Ergänzung (nicht präregistriert): Kapazität nach Kriterium 1 allein",
+            "",
+            "Größte Rasterflotte, bei der höchstens 1 % der Anfragen ihr Budget reißen und jeder Roboter "
+            "aufgenommen wird; Kriterium 2 (Erfolg des schlechtesten Roboters) bleibt hier außen vor.",
+            "",
+        ]
+        for network in fleet.networks:
+            lines += [
+                f"**Netz {network}, Batching realistisch:**",
+                "",
+                *capacity_table(queue_only, fleet, network, "realistisch"),
+                "",
+            ]
+        for gpu in [g for g in fleet.gpus if g != "validierung"]:
+            lines += [
+                f"**{gpu_label(fleet, gpu)}, Büro-WLAN: Abhängigkeit vom Batching-Profil (Kriterium 1):**",
+                "",
+                *batching_table(queue_only, fleet, "buero_wlan", gpu),
+                "",
+            ]
+        if "worst" in capacity["configurations"][0]["sizes"][0]:
+            lines += [
+                "### Ergänzung (nicht präregistriert): vorhergesagter Erfolg je Flottengröße",
+                "",
+                "Schlechtester Roboter (Ø der Flotte), Büro-WLAN, Batching realistisch; ✗ = Kriterium 1 "
+                "verletzt oder nicht alle Roboter aufgenommen.",
+                "",
+            ]
+            for gpu in [g for g in fleet.gpus if g != "validierung"]:
+                lines += [
+                    f"**{gpu_label(fleet, gpu)}:**",
+                    "",
+                    *success_table(capacity, fleet, "buero_wlan", "realistisch", gpu),
+                    "",
+                ]
         scan = load_capacity(Path(args.capacity_scan))
         if scan is not None:
             scan_table = capacity_lookup(scan, fleet)
@@ -913,6 +1077,27 @@ def build(args: argparse.Namespace) -> list[str]:
                 ),
                 "",
             ]
+            matched = matched_section(
+                capacity,
+                fleet,
+                economics,
+                "buero_wlan",
+                "realistisch",
+                [s for s in "abd" if s in fleet.strategies],
+            )
+            if matched:
+                lines += [
+                    "### Ergänzung (nicht präregistriert): Flotten bei gleichem Erfolg wie ein Rechner im "
+                    "Roboter",
+                    "",
+                    "Größte Rasterflotte, deren schlechtester Roboter mindestens den vorhergesagten Erfolg "
+                    "des Rechners im Roboter erreicht (f(L) bei dessen Latenz), mit Kriterium 1. Kosten je "
+                    "Roboter und Monat nach der präregistrierten Formel plus Roboter-Rechner; Büro-WLAN, "
+                    "Batching realistisch.",
+                    "",
+                    *matched,
+                    "",
+                ]
     evaluation_path = Path(args.validation)
     if evaluation_path.exists():
         evaluations = json.loads(evaluation_path.read_text(encoding="utf-8"))
