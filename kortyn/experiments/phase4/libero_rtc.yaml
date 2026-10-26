@@ -1,6 +1,7 @@
 # Phase 4, step 3: dense dose-response of SmolVLA on LIBERO-Long WITH real-time chunking (RTC), same sample,
 # agent and settings as the runs without RTC (libero_dose.yaml, phase 3). RTC settings, strategy and levels are
-# pre-registered in reports/phase4_preregistration.md (sections 4 and 5.1). Run in the LIBERO environment:
+# pre-registered in reports/phase4_preregistration.md (sections 4 and 5.1); images with the standard
+# lossless codec of step 1 (zstd_9, results/phase4/codec.json). Run in the LIBERO environment:
 #   UV_PROJECT_ENVIRONMENT=.venv-libero uv run --no-group metaworld --group libero \
 #       python -m kortyn.run_virtual --config kortyn/experiments/phase4/libero_rtc.yaml --share-model
 extends: libero_dose.yaml
@@ -8,13 +9,13 @@ experiment:
   suites:
     - profile: smolvla_libero_rtc
       runs:
-        - {scenario: gut, timing: fest_0ms, strategy: rtc, label: rtc_0ms}
-        - {scenario: gut, timing: fest_100ms, strategy: rtc, label: rtc_100ms}
-        - {scenario: gut, timing: fest_200ms, strategy: rtc, label: rtc_200ms}
-        - {scenario: gut, timing: fest_300ms, strategy: rtc, label: rtc_300ms}
-        - {scenario: gut, timing: fest_500ms, strategy: rtc, label: rtc_500ms}
-        - {scenario: gut, timing: fest_750ms, strategy: rtc, label: rtc_750ms}
-        - {scenario: gut, timing: fest_1000ms, strategy: rtc, label: rtc_1000ms}
+        - {scenario: gut, timing: fest_0ms, strategy: rtc, image_transport: {codec: zstd, level: 9}, label: rtc_0ms}
+        - {scenario: gut, timing: fest_100ms, strategy: rtc, image_transport: {codec: zstd, level: 9}, label: rtc_100ms}
+        - {scenario: gut, timing: fest_200ms, strategy: rtc, image_transport: {codec: zstd, level: 9}, label: rtc_200ms}
+        - {scenario: gut, timing: fest_300ms, strategy: rtc, image_transport: {codec: zstd, level: 9}, label: rtc_300ms}
+        - {scenario: gut, timing: fest_500ms, strategy: rtc, image_transport: {codec: zstd, level: 9}, label: rtc_500ms}
+        # rtc_750ms dropped: pre-registered cut 3 (reports/phase4.md, deviations)
+        - {scenario: gut, timing: fest_1000ms, strategy: rtc, image_transport: {codec: zstd, level: 9}, label: rtc_1000ms}
         # rtc_1250ms dropped: pre-registered cut 1 (reports/phase4.md, deviations)
 
 profiles:

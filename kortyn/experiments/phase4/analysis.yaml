@@ -31,7 +31,6 @@ conditions:
     - {latency_ms: 200, run: results/phase4/libero/smolvla_libero_rtc/rtc_200ms}
     - {latency_ms: 300, run: results/phase4/libero/smolvla_libero_rtc/rtc_300ms}
     - {latency_ms: 500, run: results/phase4/libero/smolvla_libero_rtc/rtc_500ms}
-    - {latency_ms: 750, run: results/phase4/libero/smolvla_libero_rtc/rtc_750ms}
     - {latency_ms: 1000, run: results/phase4/libero/smolvla_libero_rtc/rtc_1000ms}
 reference_sync: results/phase3/libero/smolvla_libero/sync25
 retest:

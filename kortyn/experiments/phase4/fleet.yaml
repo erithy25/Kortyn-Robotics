@@ -3,9 +3,13 @@
 # lengths, batching profiles, schedulers, network, seed: common random numbers with phase 3), but strategies
 # a, b, d, e only and the RTX 3060 Ti with and without the RTC overhead.
 #
-#   python -m kortyn.fleet --config kortyn/experiments/phase4/fleet.yaml --scan --scan-replications 5 \
-#       --scan-stop-on-rejection --gpus rtx3060ti_schaetzung --out results/phase4/fleet/scan.jsonl
-#   python -m kortyn.fleet_capacity --stage1 results/phase4/fleet/scan.jsonl \
+#   F="python -m kortyn.fleet --config kortyn/experiments/phase4/fleet.yaml --scan --scan-replications 5 \
+#       --scan-stop-on-rejection"
+#   $F --gpus rtx3060ti_schaetzung --networks buero_wlan --out results/phase4/fleet/scan.jsonl
+#   $F --gpus rtx3060ti_schaetzung_rtc --networks buero_wlan --out results/phase4/fleet/scan_rtc.jsonl
+#   $F --strategies d --batching realistisch --networks wlan_25,...,wlan_400_roh \
+#       --out results/phase4/fleet/scan_wlan.jsonl                                  # section 7.4
+#   python -m kortyn.fleet_capacity --stage1 results/phase4/fleet/scan.jsonl results/phase4/fleet/scan_rtc.jsonl \
 #       --curve rtx3060ti_schaetzung=ohne_rtc --curve rtx3060ti_schaetzung_rtc=mit_rtc \
 #       --out results/phase4/fleet/capacity.json
 description: "Phase 4: ein Brain, viele LIBERO-Roboter (SmolVLA, Kapazität mit 3-pp-Toleranz, ohne/mit RTC)"
@@ -23,6 +27,7 @@ episode_lengths:
 
 gpus:
   rtx3060ti_schaetzung: {s1_ms: 220.0}   # estimate (no measurement file from docs/benchmark_rtx3060ti.md)
+  rtx3060ti_schaetzung_rtc: {s1_ms: 222.5}  # s1 * (1 + r), r = 1.1 % (results/phase4/rtc_overhead.json)
 
 batching:
   realistisch: {beta: 0.15}
@@ -38,6 +43,19 @@ strategies:
 
 networks:
   buero_wlan: {scenario: buero_wlan, margin_ms: 15.0}
+  # Section 7.4: one shared radio medium (rate C, assumption) on top of the office-WLAN latency model.
+  # Payload per request: zstd_9 images (291912 B, codec.json) plus 221 B metadata
+  # (phase 3: request minus raw image tensors); response 1424 B (phase-3 mean). '_roh': raw images.
+  wlan_25: {scenario: buero_wlan, margin_ms: 15.0, wlan_mbit_s: 25.0, request_bytes: 292133, response_bytes: 1424}
+  wlan_50: {scenario: buero_wlan, margin_ms: 15.0, wlan_mbit_s: 50.0, request_bytes: 292133, response_bytes: 1424}
+  wlan_100: {scenario: buero_wlan, margin_ms: 15.0, wlan_mbit_s: 100.0, request_bytes: 292133, response_bytes: 1424}
+  wlan_200: {scenario: buero_wlan, margin_ms: 15.0, wlan_mbit_s: 200.0, request_bytes: 292133, response_bytes: 1424}
+  wlan_400: {scenario: buero_wlan, margin_ms: 15.0, wlan_mbit_s: 400.0, request_bytes: 292133, response_bytes: 1424}
+  wlan_25_roh: {scenario: buero_wlan, margin_ms: 15.0, wlan_mbit_s: 25.0, request_bytes: 777859, response_bytes: 1424}
+  wlan_50_roh: {scenario: buero_wlan, margin_ms: 15.0, wlan_mbit_s: 50.0, request_bytes: 777859, response_bytes: 1424}
+  wlan_100_roh: {scenario: buero_wlan, margin_ms: 15.0, wlan_mbit_s: 100.0, request_bytes: 777859, response_bytes: 1424}
+  wlan_200_roh: {scenario: buero_wlan, margin_ms: 15.0, wlan_mbit_s: 200.0, request_bytes: 777859, response_bytes: 1424}
+  wlan_400_roh: {scenario: buero_wlan, margin_ms: 15.0, wlan_mbit_s: 400.0, request_bytes: 777859, response_bytes: 1424}
 
 fleet_sizes: [1, 2, 4, 8, 16, 32]   # grid mode only; the capacity uses the scan (every size, see above)
 replications: 5

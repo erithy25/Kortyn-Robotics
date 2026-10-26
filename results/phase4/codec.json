@@ -1,0 +1,138 @@
+{
+ "experiment": "kortyn/experiments/phase4/libero_dose.yaml",
+ "episodes": 100,
+ "capture_ticks": [
+  0,
+  50,
+  100,
+  150,
+  200
+ ],
+ "requests": 500,
+ "frame_shape": {
+  "observation.images.camera1": [
+   1,
+   360,
+   360,
+   3
+  ],
+  "observation.images.camera2": [
+   1,
+   360,
+   360,
+   3
+  ]
+ },
+ "period_s": 1.25,
+ "max_codec_ms": 25.0,
+ "tie_share": 0.02,
+ "repeats": 3,
+ "standard": "zstd_9",
+ "candidates": [
+  {
+   "label": "raw",
+   "codec": "raw",
+   "level": null,
+   "requests": 500,
+   "identical_frames": 500,
+   "identical_model_inputs": 500,
+   "mean_bytes": 777638.0,
+   "p95_bytes": 777638.0,
+   "mbit_per_robot": 4.9768832000000005,
+   "encode_ms": 0.1553830002194445,
+   "decode_ms": 0.10131850012840005,
+   "codec_ms": 0.25903949926942005,
+   "lossless": true
+  },
+  {
+   "label": "png_1",
+   "codec": "png",
+   "level": 1,
+   "requests": 500,
+   "identical_frames": 500,
+   "identical_model_inputs": 500,
+   "mean_bytes": 260450.564,
+   "p95_bytes": 318874.85,
+   "mbit_per_robot": 1.6668836096000001,
+   "encode_ms": 18.25852349975321,
+   "decode_ms": 9.356260499771452,
+   "codec_ms": 27.75826249990132,
+   "lossless": true
+  },
+  {
+   "label": "png_6",
+   "codec": "png",
+   "level": 6,
+   "requests": 500,
+   "identical_frames": 500,
+   "identical_model_inputs": 500,
+   "mean_bytes": 228109.086,
+   "p95_bytes": 289066.05,
+   "mbit_per_robot": 1.4598981504000001,
+   "encode_ms": 74.83399649981948,
+   "decode_ms": 8.524904500063712,
+   "codec_ms": 83.78638649992354,
+   "lossless": true
+  },
+  {
+   "label": "webp_0",
+   "codec": "webp",
+   "level": 0,
+   "requests": 500,
+   "identical_frames": 500,
+   "identical_model_inputs": 500,
+   "mean_bytes": 190966.52,
+   "p95_bytes": 250970.9,
+   "mbit_per_robot": 1.222185728,
+   "encode_ms": 41.26987600011489,
+   "decode_ms": 6.312329000593309,
+   "codec_ms": 47.33388799922977,
+   "lossless": true
+  },
+  {
+   "label": "webp_4",
+   "codec": "webp",
+   "level": 4,
+   "requests": 500,
+   "identical_frames": 500,
+   "identical_model_inputs": 500,
+   "mean_bytes": 154561.564,
+   "p95_bytes": 206111.19999999998,
+   "mbit_per_robot": 0.9891940096000001,
+   "encode_ms": 291.23999849980464,
+   "decode_ms": 6.8122004995530006,
+   "codec_ms": 297.44795599981444,
+   "lossless": true
+  },
+  {
+   "label": "zstd_3",
+   "codec": "zstd",
+   "level": 3,
+   "requests": 500,
+   "identical_frames": 500,
+   "identical_model_inputs": 500,
+   "mean_bytes": 312360.512,
+   "p95_bytes": 403274.35,
+   "mbit_per_robot": 1.9991072767999998,
+   "encode_ms": 4.879395999978442,
+   "decode_ms": 1.1242729997320566,
+   "codec_ms": 6.024896000781155,
+   "lossless": true
+  },
+  {
+   "label": "zstd_9",
+   "codec": "zstd",
+   "level": 9,
+   "requests": 500,
+   "identical_frames": 500,
+   "identical_model_inputs": 500,
+   "mean_bytes": 291911.852,
+   "p95_bytes": 381062.64999999997,
+   "mbit_per_robot": 1.8682358528,
+   "encode_ms": 15.935379500206182,
+   "decode_ms": 1.1295715003143414,
+   "codec_ms": 17.100393499276834,
+   "lossless": true
+  }
+ ]
+}
