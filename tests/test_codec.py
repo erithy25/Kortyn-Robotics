@@ -127,7 +127,7 @@ def test_downscaled_images_are_restored_to_the_camera_resolution():
 @pytest.mark.parametrize(
     ("change", "message"),
     [
-        ({"encoding": "webp"}, "unknown image encoding"),
+        ({"encoding": "bmp"}, "unknown image encoding"),
         ({"dtype": "float32"}, "needs dtype uint8"),
         ({"encoded_shape": [2, 48, 64, 3]}, "do not match"),
         ({"data": b"not an image"}, "could not be decoded"),
@@ -146,3 +146,93 @@ def test_malformed_image_tensors_are_rejected(change, message):
         decode_tensor(tensor)
     with pytest.raises(CodecError, match="uint8"):
         encode_images(np.zeros((1, 8, 8, 3), dtype=np.float32), ImageTransportConfig(codec="jpeg"))
+
+
+# --------------------------------------------------------------------------------------------- phase 4
+LOSSLESS = [
+    ImageTransportConfig(codec="raw"),
+    ImageTransportConfig(codec="png"),
+    ImageTransportConfig(codec="png", level=6),
+    ImageTransportConfig(codec="webp", level=0),
+    ImageTransportConfig(codec="webp", level=4),
+    ImageTransportConfig(codec="zstd"),
+    ImageTransportConfig(codec="zstd", level=9),
+]
+
+
+def phase4_images() -> dict[str, np.ndarray]:
+    rng = np.random.default_rng(4)
+    noise = rng.integers(0, 256, size=(1, 64, 48, 3), dtype=np.uint8)
+    return {
+        "noise": noise,
+        "smooth_two_frames": smooth_frames(t=2, h=40, w=56),
+        "black": np.zeros((1, 32, 32, 3), dtype=np.uint8),
+        "white": np.full((1, 32, 32, 3), 255, dtype=np.uint8),
+        "one_channel": np.ascontiguousarray(noise[..., :1]),
+    }
+
+
+@pytest.mark.parametrize("transport", LOSSLESS, ids=lambda t: f"{t.codec}-{t.level}")
+def test_lossless_codecs_return_the_frames_bit_for_bit(transport):
+    assert transport.is_lossless
+    for name, frames in phase4_images().items():
+        message = pb.Tensor.FromString(encode_images(frames, transport).SerializeToString())
+        decoded = decode_tensor(message)
+        assert decoded.dtype == np.uint8, name
+        assert decoded.shape == frames.shape, name
+        assert np.array_equal(decoded, frames), name
+
+
+def test_lossless_codecs_compress():
+    # PNG and WebP predict pixels from their neighbours: smooth frames shrink a lot. zstd sees only bytes:
+    # it compresses repetition (a flat frame), not gradients.
+    frames = smooth_frames(t=1, h=96, w=96)
+    flat = np.full((1, 96, 96, 3), 90, dtype=np.uint8)
+    for transport in LOSSLESS[1:]:
+        if transport.codec == "zstd":
+            assert encode_images(flat, transport).ByteSize() < flat.nbytes / 20, transport
+        else:
+            assert encode_images(frames, transport).ByteSize() < frames.nbytes / 2, transport
+
+
+def test_codec_levels_are_validated_and_lossless_flag_is_strict():
+    from kortyn.config import ConfigError
+
+    for codec, level in (("png", 10), ("webp", 7), ("zstd", 0), ("zstd", 23), ("jpeg", 3), ("raw", 1)):
+        with pytest.raises(ConfigError, match="level"):
+            ImageTransportConfig(codec=codec, level=level)
+    assert not ImageTransportConfig(codec="jpeg").is_lossless
+    assert not ImageTransportConfig(codec="png", height=48, width=48).is_lossless
+    assert not ImageTransportConfig(codec="raw", height=48).is_lossless
+
+
+def test_malformed_zstd_and_webp_payloads_are_rejected():
+    import zstandard
+
+    frames = smooth_frames(t=1)
+    zstd = encode_images(frames, ImageTransportConfig(codec="zstd"))
+    truncated = pb.Tensor()
+    truncated.CopyFrom(zstd)
+    truncated.data = zstd.data[: len(zstd.data) // 2]
+    with pytest.raises(CodecError, match="zstd"):
+        decode_tensor(truncated)
+    # a payload that inflates beyond the declared shape is refused (no decompression bomb)
+    bomb = pb.Tensor()
+    bomb.CopyFrom(zstd)
+    bomb.data = zstandard.ZstdCompressor().compress(bytes(frames.nbytes * 4))
+    with pytest.raises(CodecError, match="zstd"):
+        decode_tensor(bomb)
+    webp = encode_images(frames, ImageTransportConfig(codec="webp"))
+    wrong = pb.Tensor()
+    wrong.CopyFrom(webp)
+    del wrong.encoded_shape[:]
+    wrong.encoded_shape.extend([1, frames.shape[1] // 2, frames.shape[2], 3])
+    del wrong.shape[:]
+    wrong.shape.extend([1, frames.shape[1] // 2, frames.shape[2], 3])
+    with pytest.raises(CodecError, match="webp"):
+        decode_tensor(wrong)
+    garbage = pb.Tensor()
+    garbage.CopyFrom(webp)
+    garbage.data = b"RIFF0000WEBPnot really"
+    with pytest.raises(CodecError, match="webp"):
+        decode_tensor(garbage)

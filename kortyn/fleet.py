@@ -792,11 +792,16 @@ MISS_SHARE_LIMIT = 0.01  # capacity criterion (1), also the stop rule of the sca
 
 @dataclass(frozen=True)
 class ScanSettings:
-    """Fleet sizes 1, 2, 3, ... per configuration, until criterion (1) fails ``stop_after`` times in a row."""
+    """Fleet sizes 1, 2, 3, ... per configuration, until criterion (1) fails ``stop_after`` times in a row.
+
+    ``stop_on_rejection`` (phase 4) also ends the scan at the first size where admission control turns a
+    robot away: a rejected robot counts as failed, so no larger size can raise the capacity.
+    """
 
     max_size: int = 128
     replications: int = 3
     stop_after: int = 3
+    stop_on_rejection: bool = False
 
     def __post_init__(self) -> None:
         if self.max_size < 1 or self.replications < 1 or self.stop_after < 1:
@@ -804,11 +809,11 @@ class ScanSettings:
 
 
 def _scan_config(
-    base: RunKey, settings: ScanSettings, stored: Mapping[RunKey, tuple[int, int]]
+    base: RunKey, settings: ScanSettings, stored: Mapping[RunKey, tuple[int, int, int]]
 ) -> list[dict[str, Any]]:
     """One configuration's scan (``base.robots`` and ``base.replication`` are ignored); runs in a worker.
 
-    ``stored``: (requests, misses) of runs already in the results file (a resumed scan counts them).
+    ``stored``: (requests, misses, admitted) of runs already in the results file (a resumed scan counts them).
     """
     if _WORKER_CONFIG is None:
         raise RuntimeError("fleet worker not initialized")
@@ -816,16 +821,21 @@ def _scan_config(
     failures = 0
     for robots in range(1, settings.max_size + 1):
         requests = misses = 0
+        rejected = False
         for replication in range(settings.replications):
             key = replace(base, robots=robots, replication=replication)
             if key in stored:
                 requests += stored[key][0]
                 misses += stored[key][1]
+                rejected = rejected or stored[key][2] < robots
                 continue
             record = run_fleet(_WORKER_CONFIG, key, _WORKER_LENGTHS).to_json()
             results.append(record)
             requests += int(record["requests"])
             misses += int(record["misses"])
+            rejected = rejected or int(record["admitted"]) < robots
+        if settings.stop_on_rejection and rejected:
+            break
         if requests == 0:
             continue
         failures = failures + 1 if misses / requests > MISS_SHARE_LIMIT else 0
@@ -838,10 +848,14 @@ def run_scan(
     config: FleetSimConfig, bases: Sequence[RunKey], settings: ScanSettings, out_path: Path, workers: int
 ) -> int:
     """Scan every configuration of ``bases`` in parallel (one configuration per task); append the runs."""
-    stored: dict[RunKey, tuple[int, int]] = {}
+    stored: dict[RunKey, tuple[int, int, int]] = {}
     if out_path.exists():
         for record in read_jsonl(out_path):
-            stored[RunKey(**record["key"])] = (int(record["requests"]), int(record["misses"]))
+            stored[RunKey(**record["key"])] = (
+                int(record["requests"]),
+                int(record["misses"]),
+                int(record["admitted"]),
+            )
     lengths = load_episode_lengths(config.episode_lengths)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     written = 0
@@ -893,6 +907,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--scan-stop-after", type=int, default=3, help="consecutive sizes failing criterion (1)"
     )
+    parser.add_argument(
+        "--scan-stop-on-rejection",
+        action="store_true",
+        help="also stop at the first size where admission control rejects a robot (phase 4)",
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -909,7 +928,9 @@ def main(argv: list[str] | None = None) -> int:
             if args.out is None:
                 raise ConfigError("--scan needs --out (a results file of its own)")
             bases = list(dict.fromkeys(replace(key, robots=1, replication=0) for key in keys))
-            settings = ScanSettings(args.scan_max, args.scan_replications, args.scan_stop_after)
+            settings = ScanSettings(
+                args.scan_max, args.scan_replications, args.scan_stop_after, args.scan_stop_on_rejection
+            )
             run_scan(config, bases, settings, Path(args.out), max(1, workers))
         else:
             run_grid(config, keys, Path(args.out or config.results_path), max(1, workers))

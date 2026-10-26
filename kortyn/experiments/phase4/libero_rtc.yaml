@@ -1,0 +1,41 @@
+# Phase 4, step 3: dense dose-response of SmolVLA on LIBERO-Long WITH real-time chunking (RTC), same sample,
+# agent and settings as the runs without RTC (libero_dose.yaml, phase 3). RTC settings, strategy and levels are
+# pre-registered in reports/phase4_preregistration.md (sections 4 and 5.1). Run in the LIBERO environment:
+#   UV_PROJECT_ENVIRONMENT=.venv-libero uv run --no-group metaworld --group libero \
+#       python -m kortyn.run_virtual --config kortyn/experiments/phase4/libero_rtc.yaml --share-model
+extends: libero_dose.yaml
+experiment:
+  suites:
+    - profile: smolvla_libero_rtc
+      runs:
+        - {scenario: gut, timing: fest_0ms, strategy: rtc, label: rtc_0ms}
+        - {scenario: gut, timing: fest_100ms, strategy: rtc, label: rtc_100ms}
+        - {scenario: gut, timing: fest_200ms, strategy: rtc, label: rtc_200ms}
+        - {scenario: gut, timing: fest_300ms, strategy: rtc, label: rtc_300ms}
+        - {scenario: gut, timing: fest_500ms, strategy: rtc, label: rtc_500ms}
+        - {scenario: gut, timing: fest_750ms, strategy: rtc, label: rtc_750ms}
+        - {scenario: gut, timing: fest_1000ms, strategy: rtc, label: rtc_1000ms}
+        - {scenario: gut, timing: fest_1250ms, strategy: rtc, label: rtc_1250ms}
+
+profiles:
+  smolvla_libero_rtc:
+    num_inference_steps: 10     # as smolvla_libero
+    image_size: [360, 360]
+    rtc: {prefix_attention_schedule: exp, max_guidance_weight: 10.0}  # LeRobot's RTC, unmodified
+
+strategies:
+  rtc:
+    description: "wie halten, dazu Real-Time Chunking: der Rest des alten Plans führt den neuen (LeRobot-RTC)"
+    guard: {mode: hold}
+    smoothing: {mode: rtc, schedule: exp, max_overlap_steps: 24}  # schedule: the Brain's RTC weighs the overlap
+
+# The fixed latencies of the runs without RTC, for the RTC profile too (the service time is the latency).
+hardware_profiles:
+  fest_0ms: {service: {smolvla_libero_rtc: {kind: constant, value_ms: 0}}}
+  fest_100ms: {service: {smolvla_libero_rtc: {kind: constant, value_ms: 100}}}
+  fest_200ms: {service: {smolvla_libero_rtc: {kind: constant, value_ms: 200}}}
+  fest_300ms: {service: {smolvla_libero_rtc: {kind: constant, value_ms: 300}}}
+  fest_500ms: {service: {smolvla_libero_rtc: {kind: constant, value_ms: 500}}}
+  fest_750ms: {service: {smolvla_libero_rtc: {kind: constant, value_ms: 750}}}
+  fest_1000ms: {service: {smolvla_libero_rtc: {kind: constant, value_ms: 1000}}}
+  fest_1250ms: {service: {smolvla_libero_rtc: {kind: constant, value_ms: 1250}}}

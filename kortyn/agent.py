@@ -45,7 +45,7 @@ import socket
 import sys
 import time
 from collections import deque
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
@@ -132,6 +132,46 @@ class Environment(Protocol):
 
 
 # --------------------------------------------------------------------------------------------- clients
+_RTC_POLICIES = frozenset({"smolvla"})  # policies whose Brain applies guides with real-time chunking
+
+
+def sends_guides(mode: str) -> bool:
+    """Smoothing modes whose requests carry a guide (the rest of the old plan): inpainting and RTC."""
+    return mode in ("inpaint", "rtc")
+
+
+def continues_plan(mode: str, queued: Sequence[object]) -> bool:
+    """Whether a guide goes out with this request.
+
+    RTC continues the plan that is running: with no queued action left (the first plan of a cold start, or a
+    robot that ran dry) there is nothing to continue and the plan is sampled unguided. Inpainting (phase 2)
+    always sends its guide, as before.
+    """
+    return mode != "rtc" or len(queued) > 0
+
+
+def check_guidance(spec: BrainSpec, mode: str, strategy: str | None) -> None:
+    """Raise unless the Brain applies guides the way the smoothing mode asks for.
+
+    ``inpaint`` is gradient-free inpainting in a diffusion Brain, ``rtc`` real-time chunking in a
+    flow-matching Brain (phase 4); a known mismatch would silently run the other method.
+    """
+    if not sends_guides(mode):
+        return
+    if not spec.supports_guidance:
+        raise IncompatibleBrainError(
+            f"strategy {strategy!r} sends guides ({mode}), "
+            f"but the Brain ({spec.policy_type}) does not support guides"
+        )
+    if (mode == "inpaint" and spec.policy_type in _RTC_POLICIES) or (
+        mode == "rtc" and spec.policy_type == "diffusion"
+    ):
+        raise IncompatibleBrainError(
+            f"strategy {strategy!r} asks for {mode!r}, but a {spec.policy_type} Brain applies guides "
+            f"with {'inpainting' if spec.policy_type == 'diffusion' else 'real-time chunking'}"
+        )
+
+
 @dataclass(frozen=True)
 class BrainSpec:
     """What the agent needs to know about the Brain's policy (from GetInfo)."""
@@ -708,12 +748,8 @@ class Agent(AgentCore):
     def run_episode(self, ctx: EpisodeContext, strategy: StrategyConfig | None = None) -> EpisodeOutcome:
         """Run one episode; ``strategy`` (phase 2) defaults to the phase-1 behaviour."""
         strategy = strategy or StrategyConfig()
-        inpaint = strategy.smoothing.mode == "inpaint"
-        if ctx.mode == "realtime" and inpaint and not self.spec.supports_guidance:
-            raise IncompatibleBrainError(
-                f"strategy {ctx.strategy!r} inpaints transitions, but the Brain ({self.spec.policy_type}) "
-                "does not support guides"
-            )
+        if ctx.mode == "realtime":
+            check_guidance(self.spec, strategy.smoothing.mode, ctx.strategy)
         gc.collect()  # outside the timed loop; the loop itself runs with gc disabled
         if ctx.mode == "sync":
             return self._run_sync(ctx)
@@ -751,7 +787,7 @@ class Agent(AgentCore):
         policy = make_request_policy(strategy.request, cfg.refill_threshold, dt)
         latency = LatencyEstimator(strategy.latency)
         guard = strategy.guard
-        inpaint = strategy.smoothing.mode == "inpaint"
+        inpaint = sends_guides(strategy.smoothing.mode)
         observation = env.reset(seed=ctx.seed)
         history = self._new_history(observation)
         actions = ActionQueue()
@@ -908,16 +944,17 @@ class Agent(AgentCore):
                     dt,
                 )
                 if decision.send:
+                    queued = actions.peek(k + 1, cfg.actions_per_chunk)
                     guide = (
                         build_guide(
                             step=k,
                             previous_action=previous_action,
                             current_action=action,
-                            queued=actions.peek(k + 1, cfg.actions_per_chunk),
+                            queued=queued,
                             expected_delay_ticks=decision.expected_delay_ticks,
                             config=strategy.smoothing,
                         )
-                        if inpaint
+                        if inpaint and continues_plan(strategy.smoothing.mode, queued)
                         else None
                     )
                     request = self._build_request(history, k, ctx.seed, guide)

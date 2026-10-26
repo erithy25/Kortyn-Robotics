@@ -22,6 +22,14 @@ flow-matching noise comes from the same seeded CPU generator, and the profile's 
 sets the number of flow-matching integration steps. Phase 3: a profile can declare the camera resolution
 the Brain accepts (``image_size``), since SmolVLA resizes images itself and LeRobot's LIBERO evaluation feeds
 it frames of another size than its checkpoint features state.
+
+Phase 4 adds **real-time chunking** for flow-matching policies (profile ``rtc``): LeRobot's own RTC
+(``lerobot.policies.rtc``, unmodified) is switched on through the policy's ``rtc_config``. A guide then
+carries the not-yet-executed rest of the previous plan in env units; its entries from the observation step on
+become ``prev_chunk_left_over`` (normalized like the policy's actions), the leading frozen entries the
+``inference_delay`` and their count the ``execution_horizon``. RTC differentiates through its correction
+step, so that path runs under ``torch.no_grad`` instead of ``torch.inference_mode``; the weights never need
+gradients. A request without a guide runs exactly the unguided computation.
 """
 
 from __future__ import annotations
@@ -50,7 +58,7 @@ from lerobot.processor import (
 )
 from lerobot.utils.constants import OBS_IMAGES
 
-from kortyn.config import BrainProfile, ConfigError
+from kortyn.config import BrainProfile, ConfigError, RtcSettings
 from kortyn.inpainting import GuidanceError, guided_conditional_sample
 from kortyn.typing_utils import Array, FloatArray
 
@@ -180,6 +188,25 @@ def _with_image_size(
     )
 
 
+def _enable_rtc(policy: Any, settings: RtcSettings, chunk: int) -> None:
+    """Switch on LeRobot's RTC for ``policy`` (its own configuration hook, no change to LeRobot)."""
+    from lerobot.configs.types import RTCAttentionSchedule
+    from lerobot.policies.rtc.configuration_rtc import RTCConfig
+
+    supports = getattr(policy, "supports_rtc", None)
+    if not callable(supports) or not supports():
+        raise ConfigError(f"real-time chunking is not available for {policy.config.type} policies")
+    policy.config.rtc_config = RTCConfig(
+        enabled=True,
+        prefix_attention_schedule=RTCAttentionSchedule[settings.prefix_attention_schedule.upper()],
+        max_guidance_weight=settings.max_guidance_weight,
+        execution_horizon=chunk,  # every request passes its own horizon; this is only the fallback
+    )
+    policy.init_rtc_processor()
+    # RTC's correction step runs with gradients enabled; frozen weights keep it from tracing the network.
+    policy.requires_grad_(False)
+
+
 class PolicyRunner:
     """Owns one policy instance. Not thread-safe: call ``infer`` from a single thread."""
 
@@ -207,6 +234,9 @@ class PolicyRunner:
             checkpoint_dir, config=config, strict=True
         )
         self.policy.eval()
+        self.rtc = profile.rtc
+        if self.rtc is not None:
+            _enable_rtc(self.policy, self.rtc, self.max_actions)
         self.preprocessor, self.postprocessor = make_pre_post_processors(
             config,
             pretrained_path=str(checkpoint_dir),
@@ -273,8 +303,17 @@ class PolicyRunner:
 
     @property
     def supports_guidance(self) -> bool:
-        """Inpainting needs the diffusion sampler and an explicit initial noise."""
-        return str(self.config.type) == "diffusion" and self._noise_shape is not None
+        """Guides need explicit initial noise and either the diffusion sampler (inpainting) or RTC."""
+        return self.guidance_method != ""
+
+    @property
+    def guidance_method(self) -> str:
+        """``inpainting`` (diffusion), ``rtc`` (flow matching with RTC on) or ``""`` (no guides)."""
+        if self._noise_shape is None:
+            return ""
+        if str(self.config.type) == "diffusion":
+            return "inpainting"
+        return "rtc" if self.rtc is not None else ""
 
     def dummy_observation(self) -> dict[str, Array]:
         """A valid observation history of zeros (used for warm-up and tests)."""
@@ -356,6 +395,9 @@ class PolicyRunner:
             raise ObservationError("guide contains non-finite values")
         if weights.min() < 0.0 or weights.max() > 1.0:
             raise ObservationError("guide weights must be in [0, 1]")
+        if self.guidance_method == "rtc":
+            self._rtc_guide_parts(guide)
+            return
         first = guide.offset + self.n_obs_steps - 1
         if first < 0 or first >= int(self.config.horizon):
             raise ObservationError(
@@ -378,6 +420,43 @@ class PolicyRunner:
             np.asarray(guide.weights[:count], dtype=np.float32), device=self.device
         )
         return known, weights
+
+    def _rtc_guide_parts(self, guide: GuideSpec) -> tuple[FloatArray, int]:
+        """The guide's entries from the observation step on and the number of leading frozen entries.
+
+        Entries before the observation step (the action executed at the previous tick) have no counterpart in
+        a chunk that starts at the observation step and are dropped.
+        """
+        skip = max(0, -guide.offset)
+        if guide.offset > 0:
+            raise ObservationError(
+                f"an RTC guide must start at or before the observation step, got offset {guide.offset}"
+            )
+        actions = np.asarray(guide.actions, dtype=np.float32)[skip:]
+        weights = np.asarray(guide.weights, dtype=np.float32)[skip:]
+        if actions.shape[0] == 0:
+            raise ObservationError("the RTC guide has no action at or after the observation step")
+        if actions.shape[0] > self.max_actions:
+            raise ObservationError(
+                f"the RTC guide has {actions.shape[0]} actions, the chunk only {self.max_actions}"
+            )
+        frozen = int(np.argmin(weights >= 1.0)) if np.any(weights < 1.0) else int(weights.size)
+        if frozen < 1:
+            raise ObservationError("an RTC guide starts with at least one frozen action (weight 1)")
+        return actions, frozen
+
+    def _rtc_kwargs(self, guide: GuideSpec) -> dict[str, Any]:
+        """RTC arguments: ``inference_delay``, ``prev_chunk_left_over`` (normalized, ``(1, G, action_dim)``)
+        and ``execution_horizon``."""
+        actions, frozen = self._rtc_guide_parts(guide)
+        leftover = torch.as_tensor(actions, device=self.device)
+        if self._action_normalizer is not None:
+            leftover = self._action_normalizer(create_transition(action=leftover))[TransitionKey.ACTION]
+        return {
+            "inference_delay": frozen,
+            "prev_chunk_left_over": leftover.to(device=self.device, dtype=torch.float32).unsqueeze(0),
+            "execution_horizon": int(actions.shape[0]),
+        }
 
     def _guided_chunk(self, batch: dict[str, Any], noise: torch.Tensor, guide: GuideSpec) -> torch.Tensor:
         """``predict_action_chunk`` (offline mode) with the inpainting sampler."""
@@ -424,9 +503,13 @@ class PolicyRunner:
             generator = torch.Generator(device="cpu").manual_seed(seed % (2**63))
             noise = torch.randn(self._noise_shape, generator=generator, dtype=torch.float32)
             kwargs["noise"] = noise.to(self.device)
-        with torch.inference_mode():
+        rtc = guide is not None and self.guidance_method == "rtc"
+        # RTC differentiates through its correction step: no inference mode on that path.
+        with torch.no_grad() if rtc else torch.inference_mode():
             if guide is None:
                 chunk = self.policy.predict_action_chunk(batch, **kwargs)
+            elif rtc:
+                chunk = self.policy.predict_action_chunk(batch, **kwargs, **self._rtc_kwargs(guide))
             else:
                 chunk = self._guided_chunk(batch, kwargs["noise"], guide)
             if chunk.ndim == 2:

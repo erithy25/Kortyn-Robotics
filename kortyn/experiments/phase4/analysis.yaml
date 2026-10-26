@@ -1,0 +1,43 @@
+# Phase 4 evaluation (kortyn.phase4_steps), pre-registered in reports/phase4_preregistration.md, sections 5-7.
+# Without RTC the phase-3 levels are reused (after the reuse check R0) next to the new ones.
+#   python -m kortyn.phase4_steps curves --config kortyn/experiments/phase4/analysis.yaml
+#   python -m kortyn.phase4_steps retest --config kortyn/experiments/phase4/analysis.yaml
+experiment: kortyn/experiments/phase3/libero_main.yaml   # episode layout: the task of every seed
+bootstrap: 2000
+seed: 4242
+tolerance: 0.03
+tick_ms: 50.0
+fit_max_ms: 1250.0
+zero_from_ms: 1500.0
+gof_alpha: 0.01
+without: ohne_rtc
+with_rtc: mit_rtc
+conditions:
+  ohne_rtc:
+    - {latency_ms: 0, run: results/phase3/libero/smolvla_libero/fest_0ms}
+    - {latency_ms: 100, run: results/phase4/libero/smolvla_libero/fest_100ms}
+    - {latency_ms: 200, run: results/phase4/libero/smolvla_libero/fest_200ms}
+    - {latency_ms: 300, run: results/phase4/libero/smolvla_libero/fest_300ms}
+    - {latency_ms: 500, run: results/phase3/libero/smolvla_libero/fest_500ms}
+    - {latency_ms: 750, run: results/phase4/libero/smolvla_libero/fest_750ms}
+    - {latency_ms: 1000, run: results/phase3/libero/smolvla_libero/fest_1000ms}
+    - {latency_ms: 1250, run: results/phase3/libero/smolvla_libero/fest_1250ms}
+    - {latency_ms: 1500, run: results/phase3/libero/smolvla_libero/fest_1500ms}
+    - {latency_ms: 2000, run: results/phase3/libero/smolvla_libero/fest_2000ms}
+  mit_rtc:
+    - {latency_ms: 0, run: results/phase4/libero/smolvla_libero_rtc/rtc_0ms}
+    - {latency_ms: 100, run: results/phase4/libero/smolvla_libero_rtc/rtc_100ms}
+    - {latency_ms: 200, run: results/phase4/libero/smolvla_libero_rtc/rtc_200ms}
+    - {latency_ms: 300, run: results/phase4/libero/smolvla_libero_rtc/rtc_300ms}
+    - {latency_ms: 500, run: results/phase4/libero/smolvla_libero_rtc/rtc_500ms}
+    - {latency_ms: 750, run: results/phase4/libero/smolvla_libero_rtc/rtc_750ms}
+    - {latency_ms: 1000, run: results/phase4/libero/smolvla_libero_rtc/rtc_1000ms}
+    - {latency_ms: 1250, run: results/phase4/libero/smolvla_libero_rtc/rtc_1250ms}
+reference_sync: results/phase3/libero/smolvla_libero/sync25
+retest:
+  fleet: kortyn/experiments/phase3/fleet.yaml
+  results_dir: results/phase3/validation
+  informative: [a_n2, e_n2, e_n4]
+  draws: 10000
+output: results/phase4/curves.json
+retest_output: results/phase4/retest.json

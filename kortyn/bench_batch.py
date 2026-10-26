@@ -16,10 +16,16 @@ The result is a JSON table that the fleet model reads directly (``format: kortyn
 ``kortyn.fleet_brain.TableBatchProfile``): per batch size the median and the 90th percentile of the
 service time. Batch sizes that run out of GPU memory are marked ``oom``; larger ones are skipped.
 
+With ``--rtc`` (phase 4) every request of a batch carries the rest of a previous plan and the policy runs with
+LeRobot's real-time chunking (EXP schedule, guidance weight 10, 25 overlapping actions, the first 5 of them
+executed before the new plan arrives), as the phase-4 Brain does; the table then holds the service time
+with RTC.
+
 The script is self-contained (it imports nothing from Kortyn), so a single downloaded file runs with
 
     uv run bench_batch.py                       # all batch sizes 1..32 on the GPU
     uv run bench_batch.py --sizes 1-4 --repeats 5   # a quick check
+    uv run bench_batch.py --rtc                 # the same with real-time chunking
 
 ``uv`` installs Python 3.12, PyTorch and LeRobot on first use. Step-by-step guide for Windows with WSL2:
 ``docs/benchmark_rtx3060ti.md``. Nothing is sent anywhere except the anonymous model download from the
@@ -53,6 +59,8 @@ STATE_KEY = "observation.state"
 STATE_DIM = 8
 TASK = "put both the alphabet soup and the tomato sauce in the basket"  # LIBERO-Long task 0
 MAX_BATCH = 32
+RTC_HORIZON = 25  # current action + 24 queued actions: the overlap of the phase-4 robots
+RTC_DELAY = 5  # actions of the old plan executed before the new one arrives (250 ms)
 
 
 class BenchmarkError(RuntimeError):
@@ -184,7 +192,9 @@ def slug(text: str) -> str:
 class SmolVLABatchRunner:
     """``lerobot/smolvla_libero`` with LeRobot's own pre- and postprocessing, batched synthetic inputs."""
 
-    def __init__(self, device: str, num_steps: int, image_size: int, revision: str = REVISION) -> None:
+    def __init__(
+        self, device: str, num_steps: int, image_size: int, revision: str = REVISION, rtc: bool = False
+    ) -> None:
         import torch
         from huggingface_hub import snapshot_download
         from lerobot.configs.policies import PreTrainedConfig
@@ -202,10 +212,24 @@ class SmolVLABatchRunner:
         config: Any = PreTrainedConfig.from_pretrained(path)
         config.num_steps = num_steps
         config.device = device
+        self.rtc = rtc
+        if rtc:
+            from lerobot.configs.types import RTCAttentionSchedule
+            from lerobot.policies.rtc.configuration_rtc import RTCConfig
+
+            config.rtc_config = RTCConfig(
+                enabled=True,
+                prefix_attention_schedule=RTCAttentionSchedule.EXP,
+                max_guidance_weight=10.0,
+                execution_horizon=RTC_HORIZON,
+            )
         self.chunk = int(config.chunk_size)
         self.max_action_dim = int(config.max_action_dim)
+        self.action_dim = int(config.output_features["action"].shape[0])
         self.policy: Any = get_policy_class(config.type).from_pretrained(path, config=config, strict=True)
         self.policy.eval()
+        if rtc:
+            self.policy.requires_grad_(False)  # RTC's correction step must not trace the network
         self.preprocessor, self.postprocessor = make_pre_post_processors(
             config,
             pretrained_path=path,
@@ -233,7 +257,9 @@ class SmolVLABatchRunner:
             batch[STATE_KEY] = torch.randn((size, STATE_DIM), generator=generator, dtype=torch.float32)
             batch["task"] = [TASK] * size
             noise = torch.randn((size, self.chunk, self.max_action_dim), generator=generator)
-            self._inputs[size] = {"batch": batch, "noise": noise}
+            # the rest of a previous plan, already in the model's normalized action space
+            leftover = 0.5 * torch.randn((size, RTC_HORIZON, self.action_dim), generator=generator)
+            self._inputs[size] = {"batch": batch, "noise": noise, "leftover": leftover}
         return self._inputs[size]
 
     def infer(self, size: int) -> None:
@@ -242,8 +268,16 @@ class SmolVLABatchRunner:
         inputs = self._batch(size)
         self.policy.reset()
         batch = self.preprocessor(dict(inputs["batch"]))
-        with torch.inference_mode():
-            chunk = self.policy.predict_action_chunk(batch, noise=inputs["noise"].to(self.device))
+        kwargs: dict[str, Any] = {"noise": inputs["noise"].to(self.device)}
+        if self.rtc:
+            kwargs.update(
+                inference_delay=RTC_DELAY,
+                prev_chunk_left_over=inputs["leftover"].to(self.device),
+                execution_horizon=RTC_HORIZON,
+            )
+        # RTC differentiates through its correction step: no inference mode on that path
+        with torch.no_grad() if self.rtc else torch.inference_mode():
+            chunk = self.policy.predict_action_chunk(batch, **kwargs)
             if chunk.ndim != 3 or chunk.shape[0] != size:
                 raise BenchmarkError(f"expected {size} action chunks, got shape {tuple(chunk.shape)}")
             steps = int(chunk.shape[1])
@@ -295,12 +329,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--num-steps", type=int, default=10, help="flow-matching steps (phase 3: 10)")
     parser.add_argument("--image-size", type=int, default=360, help="camera image size (LIBERO: 360)")
     parser.add_argument("--revision", default=REVISION, help="model revision (pinned)")
+    parser.add_argument("--rtc", action="store_true", help="with real-time chunking (phase 4)")
     parser.add_argument("--out", default=None, help="output JSON (default: smolvla_batch_<gpu>_<date>.json)")
     args = parser.parse_args(argv)
     try:
         settings = Settings(parse_sizes(args.sizes), args.repeats, args.warmup)
         print(f"Lade {CHECKPOINT} (Revision {args.revision[:8]}) auf {args.device} ...", flush=True)
-        runner = SmolVLABatchRunner(args.device, args.num_steps, args.image_size, args.revision)
+        runner = SmolVLABatchRunner(args.device, args.num_steps, args.image_size, args.revision, args.rtc)
         device = runner.describe()
         print(f"Geraet: {device['gpu']}. Messe Batchgroessen {args.sizes} ({args.repeats} Wiederholungen).")
         started = time.perf_counter()
@@ -316,6 +351,16 @@ def main(argv: list[str] | None = None) -> int:
                 "image_size": args.image_size,
                 "state_dim": STATE_DIM,
                 "task": TASK,
+                "rtc": (
+                    {
+                        "schedule": "EXP",
+                        "max_guidance_weight": 10.0,
+                        "horizon": RTC_HORIZON,
+                        "delay": RTC_DELAY,
+                    }
+                    if args.rtc
+                    else None
+                ),
             },
             "settings": {"repeats": settings.repeats, "warmup": settings.warmup, "sizes": settings.sizes},
             "duration_s": round(time.perf_counter() - started, 1),
@@ -328,7 +373,8 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         print("Abgebrochen.", file=sys.stderr)
         return 130
-    out = Path(args.out or f"smolvla_batch_{slug(str(device['gpu']))}_{dt.date.today():%Y%m%d}.json")
+    suffix = "_rtc" if args.rtc else ""
+    out = Path(args.out or f"smolvla_batch{suffix}_{slug(str(device['gpu']))}_{dt.date.today():%Y%m%d}.json")
     out.write_text(json.dumps(document, indent=1), encoding="utf-8")
     print(f"Fertig. Ergebnis gespeichert in: {out.resolve()}")
     return 0
