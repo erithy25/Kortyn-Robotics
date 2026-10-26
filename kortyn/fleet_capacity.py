@@ -17,8 +17,9 @@ The curves are evaluated once on the 10-ms histogram bins (point fit and every b
 prediction is a weighted sum of its histogram.
 
     python -m kortyn.fleet_capacity --analysis kortyn/experiments/phase4/analysis.yaml \\
-        --stage1 results/phase4/fleet/scan.jsonl --curve rtx3060ti_schaetzung=ohne_rtc \\
-        --curve rtx3060ti_schaetzung_rtc=mit_rtc --out results/phase4/fleet/capacity.json
+        --stage1 results/phase4/fleet/scan.jsonl results/phase4/fleet/scan_rtc.jsonl \\
+        --curve rtx3060ti_schaetzung=ohne_rtc --curve rtx3060ti_schaetzung_rtc=mit_rtc \\
+        --out results/phase4/fleet/capacity.json
 """
 
 from __future__ import annotations
@@ -246,7 +247,12 @@ def evaluate(
     runs: Iterable[Run], curves: Mapping[str, BinCurves], gpu_condition: Mapping[str, str], tolerance: float
 ) -> list[CapacityResult]:
     grouped: dict[ConfigKey, dict[int, list[Run]]] = defaultdict(lambda: defaultdict(list))
+    seen: set[tuple[ConfigKey, int, int]] = set()
     for run in runs:
+        identity = (run.key, run.robots, run.replication)
+        if identity in seen:  # e.g. the same scan passed twice: a replication must not count twice
+            raise PredictionError(f"run {identity} appears more than once in the stage-1 results")
+        seen.add(identity)
         grouped[run.key][run.robots].append(run)
     results = []
     for key in sorted(grouped):
@@ -305,7 +311,9 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(description="Phase-4 capacity from stage-1 latencies and smooth curves.")
     parser.add_argument("--analysis", default="kortyn/experiments/phase4/analysis.yaml")
-    parser.add_argument("--stage1", required=True, help="stage-1 results (scan or grid)")
+    parser.add_argument(
+        "--stage1", required=True, nargs="+", help="stage-1 results (scan or grid), one or more"
+    )
     parser.add_argument("--curve", action="append", required=True, help="GPU profile = condition name")
     parser.add_argument("--out", required=True)
     parser.add_argument("--log-level", default="INFO")
@@ -325,7 +333,7 @@ def main(argv: list[str] | None = None) -> int:
         libero = libero_layout(config.experiment)
         doses = {name: load_condition(config.conditions[name], libero) for name in names}
         fits = fit_conditions(doses, config.spec, config.bootstrap, config.seed)
-        runs = read_runs(Path(args.stage1))
+        runs = [run for path in args.stage1 for run in read_runs(Path(path))]
         bins = max((run.fleet[0].histogram.size for run in runs if run.fleet), default=1)
         curves = {name: bin_curves(fit, bins) for name, fit in fits.items()}
         results = evaluate(runs, curves, gpu_condition, config.tolerance)

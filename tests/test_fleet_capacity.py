@@ -140,3 +140,10 @@ def test_medium_busy_share_is_averaged_over_replications(tmp_path: Path) -> None
     legacy = record(1, 0, [120.0])
     del legacy["medium_busy_share"]  # phase-3 records carry no medium
     assert fc.read_runs(write(tmp_path / "legacy.jsonl", [legacy]))[0].medium_busy_share is None
+
+
+def test_a_run_given_twice_is_an_error(tmp_path: Path) -> None:
+    path = write(tmp_path / "s.jsonl", [record(1, 0, [120.0]), record(2, 0, [120.0, 220.0])])
+    runs = fc.read_runs(path) + fc.read_runs(path)
+    with pytest.raises(PredictionError, match="more than once"):
+        fc.evaluate(runs, {"c": fc.bin_curves(fit(600.0), 50)}, {"gpu": "c"}, 0.03)
