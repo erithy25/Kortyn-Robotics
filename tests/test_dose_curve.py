@@ -221,3 +221,43 @@ def test_fit_report_lists_parameters() -> None:
     assert float(report[0]["df"]) == 5.0
     assert 0.0 <= float(report[0]["p_value"]) <= 1.0
     assert math.isclose(float(report[0]["h"]), 4.0, rel_tol=0.5)
+
+
+def test_pooled_fit_of_one_sample_is_the_registered_fit() -> None:
+    truth = {0: dc.TaskCurve(0.45, 420.0, 4.0), 8: dc.TaskCurve(0.5, 800.0, 3.0)}
+    dose = synthetic_dose(truth, 100, 3)
+    spec = dc.CurveSpec()
+    registered = dc.fit_dose_curve(dose, spec)
+    pooled = dc.fit_pooled_curve([dose], spec)
+    assert pooled.families == registered.families
+    grid = np.arange(0.0, 1300.0, 50.0)
+    np.testing.assert_allclose(pooled.value(grid), registered.value(grid), atol=1e-6)
+
+
+def test_pooled_counts_add_samples_level_by_level() -> None:
+    truth = {0: dc.TaskCurve(0.45, 420.0, 4.0)}
+    first = synthetic_dose(truth, 60, 4)
+    second = DoseResponse(
+        levels_ms=np.array([0.0, 500.0, 1000.0, 1250.0, 2000.0]),
+        seeds=tuple(range(40)),
+        groups=(0,) * 40,
+        outcomes=np.ones((5, 40)),
+    )
+    xs, wins, trials = dc.pooled_counts([first, second], dc.CurveSpec())[0]
+    assert xs.tolist() == X.tolist()  # 0 ms shares the first tick; 2 000 ms lies beyond the fit range
+    index = {float(x): i for i, x in enumerate(xs)}
+    assert trials[index[500.0]] == 100.0
+    assert trials[index[100.0]] == 60.0
+    assert wins[index[500.0]] == first.outcomes[4].sum() + 40.0
+    curve = dc.fit_pooled_curve([first, second], dc.CurveSpec())
+    assert set(curve.tasks) == {0}
+    with pytest.raises(PredictionError):
+        dc.pooled_counts([], dc.CurveSpec())
+    same_tick = DoseResponse(
+        levels_ms=np.array([0.0, 50.0, 100.0, 200.0]), seeds=(1,), groups=(0,), outcomes=np.ones((4, 1))
+    )
+    with pytest.raises(PredictionError, match="same control tick"):
+        dc.pooled_counts([same_tick], dc.CurveSpec())
+    short = DoseResponse(levels_ms=np.array([0.0, 500.0]), seeds=(1,), groups=(0,), outcomes=np.ones((2, 1)))
+    with pytest.raises(PredictionError, match="four levels"):
+        dc.pooled_counts([short], dc.CurveSpec())

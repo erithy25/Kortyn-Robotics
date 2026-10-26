@@ -40,3 +40,11 @@ retest:
   draws: 10000
 output: results/phase4/curves.json
 retest_output: results/phase4/retest.json
+# Supplement (not pre-registered; reports/phase4.md): the phase-3 runs at the levels phase 4 measured again,
+# pooled into the curve without RTC (python -m kortyn.phase4_steps sensitivity).
+sensitivity_phase3:
+  - {latency_ms: 0, run: results/phase3/libero/smolvla_libero/fest_0ms}
+  - {latency_ms: 500, run: results/phase3/libero/smolvla_libero/fest_500ms}
+  - {latency_ms: 1000, run: results/phase3/libero/smolvla_libero/fest_1000ms}
+  - {latency_ms: 1250, run: results/phase3/libero/smolvla_libero/fest_1250ms}
+sensitivity_output: results/phase4/sensitivity.json

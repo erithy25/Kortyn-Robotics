@@ -103,6 +103,10 @@ class AnalysisConfig:
     validation: ValidationSpec = field(default_factory=ValidationSpec)
     output: str = "results/phase4/curves.json"
     retest_output: str = "results/phase4/retest.json"
+    # Supplement (not pre-registered): phase-3 runs at levels phase 4 measured again, pooled into the
+    # condition without RTC; reported next to the pre-registered curve (R0 kept them out of it).
+    sensitivity_phase3: list[LevelSpec] = field(default_factory=list)
+    sensitivity_output: str = "results/phase4/sensitivity.json"
 
     def __post_init__(self) -> None:
         if self.bootstrap < 100 or not 0 < self.tolerance < 1:
@@ -413,6 +417,46 @@ def retest_document(config: AnalysisConfig, predictions: Sequence[EpisodePredict
     }
 
 
+def sensitivity_document(config: AnalysisConfig) -> dict[str, Any]:
+    """Supplement: the curve without RTC with the phase-3 episodes of re-measured levels pooled in.
+
+    Point estimate only (pooled level by level, same fitting rule); ``L*`` and the re-test of the phase-3
+    validation with this curve, next to the pre-registered curve.
+    """
+    if not config.sensitivity_phase3:
+        raise StepError("the analysis config lists no phase-3 levels for the sensitivity analysis")
+    libero = libero_layout(config.experiment)
+    main = load_condition(config.conditions[config.without], libero)
+    phase3 = load_condition(config.sensitivity_phase3, libero)
+    curves = {
+        "vorab": dc.fit_dose_curve(main, config.spec),
+        "gepoolt": dc.fit_pooled_curve([main, phase3], config.spec),
+    }
+    levels = []
+    for task, (xs, wins, trials) in dc.pooled_counts([main, phase3], config.spec).items():
+        for x, win, trial in zip(xs, wins, trials, strict=True):
+            levels.append(
+                {"task": task, "effective_ms": float(x), "successes": float(win), "trials": float(trial)}
+            )
+    document: dict[str, Any] = {"phase3_levels": [asdict(level) for level in config.sensitivity_phase3]}
+    document["levels"] = levels
+    for name, curve in curves.items():
+        point, censored = curve.tolerable_latency(config.tolerance)
+        retest = retest_document(config, retest_predictions(config, curve))
+        document[name] = {
+            "families": {str(task): family for task, family in curve.families.items()},
+            "lstar_ms": point,
+            "censored": censored,
+            "success_0ms": float(curve.value(0.0)),
+            "success_at_lstar": float(curve.value(point)),
+            "curve": {str(x): float(curve.value(x)) for x in (0.0, 250.0, 300.0, 500.0, 750.0, 1000.0)},
+            "retest_bias": retest["pooled"]["own"]["bias"],
+            "retest_interval": retest["pooled"]["own"]["interval"],
+            "retest_verdict": retest["verdict"],
+        }
+    return document
+
+
 # --------------------------------------------------------------------------------------------- validation
 @dataclass(frozen=True)
 class ValidationEpisode:
@@ -520,7 +564,7 @@ def validation_document(config: AnalysisConfig, curve: dc.DoseCurve) -> dict[str
 # --------------------------------------------------------------------------------------------- CLI
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Phase-4 evaluation steps.")
-    parser.add_argument("step", choices=["curves", "retest", "validate"])
+    parser.add_argument("step", choices=["curves", "retest", "validate", "sensitivity"])
     parser.add_argument("--config", default="kortyn/experiments/phase4/analysis.yaml")
     parser.add_argument(
         "--conditions", default=None, help="comma-separated condition names (default: all configured)"
@@ -554,6 +598,16 @@ def main(argv: list[str] | None = None) -> int:
             if "rtc_effect" in document:
                 effect = document["rtc_effect"]
                 LOG.info("H1: %s, H2: %s", effect["h1"]["verdict"], effect["h2"]["verdict"])
+        elif args.step == "sensitivity":
+            document = sensitivity_document(config)
+            out = Path(config.sensitivity_output)
+            for name in ("vorab", "gepoolt"):
+                LOG.info(
+                    "%s: L* %.0f ms, re-test bias %+.1f pp",
+                    name,
+                    document[name]["lstar_ms"],
+                    100 * document[name]["retest_bias"],
+                )
         elif args.step == "validate":
             libero = libero_layout(config.experiment)
             dose = load_condition(config.conditions[config.validation.condition], libero)

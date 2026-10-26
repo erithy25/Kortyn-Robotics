@@ -177,3 +177,52 @@ def test_validation_compares_rollouts_with_the_stage1_prediction(tmp_path: Path)
         p4.stage1_histograms(stage1, {**meta, "robots": 3, "replication": 0})
     with pytest.raises(ConfigError):
         p4.ValidationSpec(confidence=1.0)
+
+
+ROOT = Path(__file__).resolve().parents[1]
+needs_results = pytest.mark.skipif(
+    not (ROOT / "results/phase3/validation/a_n2/episodes.jsonl").exists()
+    or not (ROOT / "results/phase4/libero/smolvla_libero/fest_500ms/episodes.jsonl").exists(),
+    reason="phase-3 validation or phase-4 runs not in this checkout",
+)
+
+
+@needs_results
+def test_retest_predicts_every_phase3_validation_episode(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(ROOT)  # the analysis and fleet configs name repository paths
+    config = p4.load_analysis_config("kortyn/experiments/phase4/analysis.yaml")
+    flat = dc.DoseCurve(
+        spec=dc.CurveSpec(), tasks={8: dc.TaskCurve(0.4, 1e5, 2.0), 0: dc.TaskCurve(0.2, 1e5, 2.0)}
+    )
+    predictions = p4.retest_predictions(config, flat)
+    assert {p.case for p in predictions} == {"a_n2", "a_n4", "e_n2", "e_n4"}
+    assert len(predictions) == 240
+    for p in predictions:
+        assert p.task in (8, 0)
+        assert 0.0 <= p.phase3_own <= 1.0
+        if p.case != "a_n4":  # inside the budget the flat curve predicts its task level
+            assert p.own == pytest.approx(0.4 if p.task == 8 else 0.2, abs=0.01)
+    document = p4.retest_document(config, predictions)
+    informative = [p for p in predictions if p.case in config.retest.informative]
+    assert document["episodes"] == len(informative) == 180
+    expected = float(np.mean([p.measured - p.own for p in informative]))
+    assert document["pooled"]["own"]["bias"] == pytest.approx(expected)
+    low, high = document["pooled"]["own"]["interval"]
+    assert low <= expected <= high
+    assert document["verdict"] in ("verschwunden", "verkleinert", "nicht erklärt")
+
+
+@needs_results
+def test_sensitivity_pools_the_phase3_levels(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(ROOT)
+    config = p4.load_analysis_config("kortyn/experiments/phase4/analysis.yaml")
+    document = p4.sensitivity_document(config)
+    trials = {(row["task"], row["effective_ms"]): row["trials"] for row in document["levels"]}
+    assert trials[(8, 500.0)] == 100.0  # 50 seeds of task 8 in each phase
+    assert trials[(8, 300.0)] == 50.0  # measured in phase 4 only
+    for name in ("vorab", "gepoolt"):
+        assert document[name]["lstar_ms"] % 50.0 == 0.0
+        assert 0.0 <= document[name]["success_0ms"] <= 1.0
+        assert document[name]["retest_verdict"] in ("verschwunden", "verkleinert", "nicht erklärt")
+    with pytest.raises(StepError):
+        p4.sensitivity_document(p4.AnalysisConfig(conditions=config.conditions))

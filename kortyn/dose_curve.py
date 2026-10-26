@@ -361,6 +361,52 @@ def fit_dose_curve(
     return DoseCurve(spec=spec, tasks=tasks, families=chosen)
 
 
+def pooled_counts(doses: Sequence[DoseResponse], spec: CurveSpec) -> dict[int, tuple[Floats, Floats, Floats]]:
+    """Per task: the effective latencies inside the fit range with successes and trials summed over samples.
+
+    Each sample keeps its own seeds; levels of different samples on the same control tick are pooled.
+    """
+    if not doses:
+        raise PredictionError("no dose-response sample to pool")
+    table: dict[int, dict[float, list[float]]] = {}
+    for dose in doses:
+        x = effective_latency_ms(dose.levels_ms, spec.tick_ms)
+        if np.unique(x).size != x.size:
+            raise PredictionError("two levels of one sample fall on the same control tick")
+        for task in dose.group_ids:
+            wins, trials = _task_counts(dose, None, task)
+            levels = table.setdefault(task, {})
+            for latency, win, trial in zip(x, wins, trials, strict=True):
+                if latency <= spec.fit_max_ms + 1e-9:
+                    entry = levels.setdefault(float(latency), [0.0, 0.0])
+                    entry[0] += float(win)
+                    entry[1] += float(trial)
+    counts: dict[int, tuple[Floats, Floats, Floats]] = {}
+    for task in sorted(table):
+        xs = np.array(sorted(table[task]), dtype=float)
+        if xs.size < 4:
+            raise PredictionError("the smooth fit needs at least four levels inside the budget")
+        counts[task] = (
+            xs,
+            np.array([table[task][float(v)][0] for v in xs]),
+            np.array([table[task][float(v)][1] for v in xs]),
+        )
+    return counts
+
+
+def fit_pooled_curve(doses: Sequence[DoseResponse], spec: CurveSpec) -> DoseCurve:
+    """The rule of :func:`fit_dose_curve` on several samples pooled level by level (sensitivity analyses)."""
+    tasks: dict[int, TaskFunction] = {}
+    chosen: dict[int, str] = {}
+    for task, (xs, ws, ts) in pooled_counts(doses, spec).items():
+        curve, _ = fit_task_curve(xs, ws, ts)
+        if goodness_of_fit(curve, xs, ws, ts)[2] < spec.gof_alpha:
+            tasks[task], chosen[task] = isotonic_task_curve(xs, ws, ts), "isotonic"
+        else:
+            tasks[task], chosen[task] = curve, "loglogistic"
+    return DoseCurve(spec=spec, tasks=tasks, families=chosen)
+
+
 def fit_report(dose: DoseResponse, curve: DoseCurve) -> dict[int, dict[str, float | str]]:
     """Parameters and goodness of fit of every task of a fit on all data."""
     x, inside = _fit_levels(dose, curve.spec)
