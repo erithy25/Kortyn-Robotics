@@ -72,6 +72,8 @@ META_MATCHING_KEYS = ("profile", "profile_settings", "agent", "env")
 # stored run entry without such a key matches a current entry that has the key with exactly this value.
 BACKWARD_COMPATIBLE_DEFAULTS: dict[str, Any] = {
     "per_seed": False,  # phase 3a: empirical latency sources drawn per episode seed
+    "image_size": None,  # phase 3: camera resolution accepted by policies that resize images themselves
+    "libero": None,  # phase 3: LIBERO section of the env config
 }
 BRAIN_IDENTITY_KEYS = (
     "policy_type",

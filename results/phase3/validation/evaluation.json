@@ -1,0 +1,114 @@
+[
+ {
+  "case": "a_n2",
+  "episodes": 60,
+  "measured": 0.16666666666666666,
+  "predicted": 0.22066803278688524,
+  "difference": -0.05400136612021855,
+  "interval": [
+   -0.20652340121243187,
+   0.10086433145491809
+  ],
+  "passes": true,
+  "admitted": 2,
+  "robots": 2,
+  "predicted_own": 0.2449637872118022,
+  "difference_own": -0.07829712054513553,
+  "interval_own": [
+   -0.2316892918536508,
+   0.07475754395939448
+  ],
+  "latency_ms_stage1": [
+   465.0,
+   795.0
+  ],
+  "latency_ms_measured": [
+   458.77643432174864,
+   796.5808684075455
+  ]
+ },
+ {
+  "case": "a_n4",
+  "episodes": 60,
+  "measured": 0.0,
+  "predicted": 0.0,
+  "difference": 0.0,
+  "interval": [
+   0.0,
+   0.0
+  ],
+  "passes": true,
+  "admitted": 4,
+  "robots": 4,
+  "predicted_own": 0.004505608896287908,
+  "difference_own": -0.004505608896287908,
+  "interval_own": [
+   -0.015633991308147004,
+   0.0
+  ],
+  "latency_ms_stage1": [
+   1655.0,
+   1735.0
+  ],
+  "latency_ms_measured": [
+   1661.958379218106,
+   1737.9104585272103
+  ]
+ },
+ {
+  "case": "e_n2",
+  "episodes": 60,
+  "measured": 0.15,
+  "predicted": 0.22066803278688524,
+  "difference": -0.07066803278688522,
+  "interval": [
+   -0.2095640710382514,
+   0.07216111253415325
+  ],
+  "passes": true,
+  "admitted": 2,
+  "robots": 2,
+  "predicted_own": 0.22762885527068322,
+  "difference_own": -0.07762885527068322,
+  "interval_own": [
+   -0.21327641859349725,
+   0.06187894337531087
+  ],
+  "latency_ms_stage1": [
+   465.0,
+   795.0
+  ],
+  "latency_ms_measured": [
+   458.28525659069896,
+   757.9862743755541
+  ]
+ },
+ {
+  "case": "e_n4",
+  "episodes": 60,
+  "measured": 0.1,
+  "predicted": 0.1699845044386565,
+  "difference": -0.0699845044386565,
+  "interval": [
+   -0.19304029628693134,
+   0.05471845830324098
+  ],
+  "passes": true,
+  "admitted": 4,
+  "robots": 4,
+  "predicted_own": 0.16726680975950586,
+  "difference_own": -0.06726680975950589,
+  "interval_own": [
+   -0.19307913232091176,
+   0.061668222566711485
+  ],
+  "latency_ms_stage1": [
+   725.0,
+   945.0
+  ],
+  "latency_ms_measured": [
+   674.9655048170666,
+   917.2954391133032
+  ]
+ }
+]

@@ -11,13 +11,64 @@ führt ein deterministischer **Simulationszeit-Modus** dieselbe Regelschleife au
 | **1 – Baseline** | Wie stark leidet die ausgelagerte Policy unter Latenz, Jitter und Stalls? | Echtzeit kostet nichts, solange das Latenzbudget hält; danach sinkt die Qualität mit dem Planalter. | [`reports/phase1.md`](reports/phase1.md) |
 | **2 – Freshness Engine** | Holt ein jüngeres Planalter die Qualität zurück, ohne unnötige Brain-Last? | **Nein.** Häufigere Anfragen senken das Planalter, bringen aber keine Qualität und kosten bis zu 2× Brain-Last. Keine Strategie schlägt die Baseline signifikant. | [`reports/phase2.md`](reports/phase2.md) |
 | **3a – Simulationszeit + SmolVLA** | Lässt sich die Echtzeit-Messung durch eine deterministische Simulation ersetzen? Schadet Latenz einer VLA-Policy (SmolVLA) mehr, besonders bei dynamischen Aufgaben? | **Ja**, validiert gegen Phase 1, deterministisch reproduzierbar, ≈ 6× weniger Seeds für dieselbe Präzision. SmolVLA ist in Millisekunden empfindlicher (Budget 312 statt 700 ms), relativ zum Budget nicht. Nicht die Dynamik der Aufgabe entscheidet, sondern ihre Präzisionsanforderung (über Budget: push −30 pp, coffee-push −7 pp). | [`reports/phase3a.md`](reports/phase3a.md) |
+| **3 – Flotten-Brain** | Wie viele Roboter bedient ein Brain im Budget, welche Strategie maximiert das? | **Präregistriert: einer**, egal mit welcher Strategie, weil SmolVLA auf LIBERO-Long schon unter dem Budget steil Erfolg verliert (46 % → 20 % bei 500 ms). Ergänzend: Batching vervierfacht bis verfünffacht die Flotte im Budget; bei gleichem Erfolg wie ein Jetson Orin Nano Super kostet ein Roboter am Brain ≈ halb so viel. | [`reports/phase3.md`](reports/phase3.md) |
 
 - Aufgabe Phase 1–2: **PushT** (LeRobot/gym-pusht, 10 Hz, max. 300 Schritte)
 - Policy Phase 1–2: **`lerobot/diffusion_pusht`** (Diffusion Policy, Apache-2.0), lokal ins aktuelle
   LeRobot-Format migriert
 - Phase 3a: **Meta-World** (drawer-close, push, coffee-push; MuJoCo, 80 Hz, max. 500 Schritte) mit
   **`lerobot/smolvla_metaworld`** (SmolVLA, Apache-2.0)
-- Alles Open Source, keine Cloud, keine Telemetrie, läuft auf macOS (Apple Silicon, MPS) und Linux (CPU)
+- Phase 3: **LIBERO-Long** (LeRobot/LIBERO, 20 Hz, max. 520 Schritte, zwei Kameras) mit
+  **`lerobot/smolvla_libero`** (SmolVLA, Apache-2.0); LIBERO läuft in einer eigenen Umgebung (`.venv-libero`)
+- Alles Open Source, keine Cloud, keine Telemetrie. Läuft unter Linux (CPU oder NVIDIA-GPU mit CUDA) und unter
+  Windows 10/11 mit WSL2 (Ubuntu); die Messungen entstanden in einer Linux-Cloud-Umgebung ohne GPU
+
+---
+
+## Phase 3: Flotten-Brain – Ergebnisse auf einen Blick
+
+Messung vom 25.10.2026 in der Cloud (4-vCPU-Xeon, keine GPU, Simulationszeit). GPU-Servicezeiten sind
+benannte Annahmen aus der Literatur, bis das Benchmark-Skript auf einer echten Karte läuft. Vollständiger Report:
+**[`reports/phase3.md`](reports/phase3.md)**, Rohtabellen in [`reports/phase3_data.md`](reports/phase3_data.md),
+Anleitung für die Messung auf deiner RTX 3060 Ti: [`docs/benchmark_rtx3060ti.md`](docs/benchmark_rtx3060ti.md).
+
+**Frage:** Wie viele Roboter bedient ein Brain, ohne dass einer sein Latenzbudget reißt, und welche
+Scheduling-Strategie maximiert diese Zahl? Aufgabe: LIBERO-Long (zwei Aufgaben × 50 Init-States) mit
+`lerobot/smolvla_libero`, ein Plan alle 1,25 s, Budget 1 250 ms, Kaltstart.
+
+**Referenz:** Kortyn reproduziert LeRobots eigene Evaluation auf denselben 100 Episoden (54 % gegen 52 %,
+McNemar p = 0,82).
+
+**Dosis-Wirkung (ein Roboter, feste Latenz):**
+
+| Latenz | 0 ms | 500 ms | 1 000 ms | 1 250 ms | ≥ 1 500 ms |
+|---|---:|---:|---:|---:|---:|
+| Erfolg | 46 % | 20 % | 6 % | 2 % | 0 % |
+
+SmolVLA verliert schon weit unter dem Budget den größten Teil seines Erfolgs. Ursache ist sehr wahrscheinlich
+der Planwechsel (ein Plan startet erst L nach seiner Beobachtung), nicht Stillstand.
+
+**Kapazität (präregistriert): 1 Roboter je Brain**, für alle Strategien, GPUs und Batching-Annahmen. Der zweite
+Roboter verlängert die mittlere Wartezeit um einige Dutzend Millisekunden. Bei dieser Kurve ist das ein
+signifikanter Verlust, und das Kriterium hat keine Toleranz.
+
+**Ergänzungen (nicht präregistriert, Vorhersage):**
+
+| | ohne Batching (a, c) | mit Batching (b, d, e) |
+|---|---:|---:|
+| Roboter im Budget, RTX 3060 Ti (Kriterium 1; Raster, Scan) | 4; 5 | 16; 23–25 |
+| Roboter im Budget, RTX 4090 kompiliert (Raster, Scan) | 16; 24 | 32; 110–122 |
+| Erfolg des schlechtesten Roboters, RTX 3060 Ti, 16 Roboter | – | 19 % (1 Roboter: 33 %) |
+| Kosten je Roboter und Monat bei gleichem Erfolg wie ein Jetson Orin Nano Super (18 %, 18,16 €) | 21,95 € (4 Roboter) | **9,22 €** (16 Roboter) |
+
+- **Batching ist der Hebel, nicht die Reihenfolge:** EDF ohne Batching bringt nichts, mit Batching vervier- bis
+  verfünffacht sich die Flotte. Die Batching-Annahme allein verschiebt die Zahl um den Faktor 8–10 (RTX 3060 Ti,
+  d: 5 bis 50 Roboter im Scan).
+- **Validierung:** Echte Flotten mit 2 und 4 Robotern bestätigen das Warteschlangenmodell auf wenige
+  Millisekunden und erfüllen das präregistrierte Kriterium in allen vier Fällen. Der Erfolg liegt aber durchgängig
+  5–7 pp unter der Vorhersage (je Fall nicht signifikant).
+- **Nächster Schritt:** Real-Time Chunking für SmolVLA (macht die Kurve flacher und damit jede Kapazität größer),
+  parallel das Benchmark-Skript auf der RTX 3060 Ti.
 
 ---
 
@@ -190,14 +241,14 @@ Holm-p ≥ 0,92.
 - **Echtes RTC:** SmolVLA (Flow Matching, Chunk 50, 10 Flow-Schritte) bringt LeRobots RTC mit, also Guidance per
   Autograd statt unseres gradientenfreien Inpaintings. Damit lässt sich die Freshness-Frage neu stellen: RTC soll
   genau das leisten, was hier scheiterte, nämlich häufiger umplanen ohne Konsistenzverlust.
-- **Hardware:** RTC kostet einen Backward-Pass pro Flow-Schritt. Das Brain braucht dafür GPU oder MPS (Mac) und muss
+- **Hardware:** RTC kostet einen Backward-Pass pro Flow-Schritt. Das Brain braucht dafür eine GPU und muss
   vorher kalibriert werden; das CPU-Brain von hier reicht nicht.
 - **Payload:** 512²-Bilder statt 96² sind ≈ 28× mehr Pixel pro Kamera. Bandbreite und Serialisierung werden relevant:
   Bildkompression im Protokoll und Messungen mit dem Bandbreitenlimit des Proxys einplanen.
 - **Neue Baseline nötig:** Für PushT gibt es keinen offiziellen SmolVLA-Checkpoint. Zwei Wege:
   - SmolVLA auf PushT feinjustieren; dann bleibt die Aufgabe vergleichbar, es kostet aber Rechenzeit auf eigener
     Hardware.
-  - Auf Meta-World wechseln: offizieller Checkpoint `smolvla_metaworld`, MuJoCo, läuft auch auf macOS. Der
+  - Auf Meta-World wechseln: offizieller Checkpoint `smolvla_metaworld`, MuJoCo, läuft ohne GPU. Der
     80-Hz-Steuertakt verschärft dort allerdings das Latenzbudget.
 
 **Laufzeit:** Stufe 1 2 h 48 min, Stufe 2 4 h 25 min, Sync-Ablation 33 min, also 7 h 46 min statt der angepeilten
@@ -207,7 +258,7 @@ Holm-p ≥ 0,92.
 
 ## Phase 1: Ergebnisse auf einen Blick
 
-Messung vom 23./24.10.2026 auf der Entwicklungsmaschine: Linux, 4-vCPU-Xeon, **CPU statt MPS**, Brain auf
+Messung vom 23./24.10.2026 auf der Entwicklungsmaschine: Linux, 4-vCPU-Xeon, **CPU statt GPU**, Brain auf
 3 Kernen. Je Zeile 50 Episoden mit identischen Seeds. Vollständiger Report mit Konfidenzintervallen, Tests und
 Abbildungen: **[`reports/phase1.md`](reports/phase1.md)**.
 
@@ -245,8 +296,8 @@ Abbildungen: **[`reports/phase1.md`](reports/phase1.md)**.
   (DDPM-100: Ø Max-Reward 0,963 gegenüber 0,961 publiziert).
 - **Untergrenze:** PushT ist quasistatisch, Stillstand kostet hier nur Zeit. Für dynamische Aufgaben sind die
   gemessenen Verluste eine Untergrenze.
-- **Auf dem Mac:** Mit MPS ist die Inferenz schneller, das verschiebt die Budget-Grenze. Vorher `kortyn.calibrate`
-  ausführen.
+- **Mit GPU:** Auf einer NVIDIA-GPU (z. B. RTX 3060 Ti unter WSL2) ist die Inferenz schneller, das verschiebt die
+  Budget-Grenze. Vorher `kortyn.calibrate` ausführen.
 
 **Konsequenzen für Phase 2 (Reflex-Modus) und Phase 3 (mehrere Roboter):**
 - **Phase 2:**
@@ -268,8 +319,9 @@ Abbildungen: **[`reports/phase1.md`](reports/phase1.md)**.
 
 ## Schnellstart (≈ 5 Minuten + Downloads)
 
-Voraussetzungen: macOS mit Apple Silicon oder Linux x86_64, [`uv`](https://docs.astral.sh/uv/)
-(`brew install uv` bzw. `curl -LsSf https://astral.sh/uv/install.sh | sh`), Git, ~4 GB freier Platz.
+Voraussetzungen: Linux x86_64 oder Windows 10/11 mit WSL2 (Ubuntu; Einrichtung Schritt für Schritt in
+[`docs/benchmark_rtx3060ti.md`](docs/benchmark_rtx3060ti.md), Schritte 1–5), [`uv`](https://docs.astral.sh/uv/)
+(`curl -LsSf https://astral.sh/uv/install.sh | sh`), Git, ~4 GB freier Platz (LIBERO für Phase 3: ~15 GB).
 
 ```bash
 git clone https://github.com/erithy25/Kortyn-Robotics.git
@@ -284,7 +336,7 @@ das Brain den Checkpoint (~1 GB) von Hugging Face und migriert ihn nach `checkpo
 ```bash
 uv run python -m kortyn.run_experiment --profile kalibriert --run gut --episodes 2 --results-dir results_smoke
 uv run python -m kortyn.report --results-dir results_smoke --reports-dir reports_smoke
-open reports_smoke/phase1.md   # macOS; unter Linux: xdg-open
+xdg-open reports_smoke/phase1.md   # unter WSL2: explorer.exe reports_smoke
 ```
 
 ## Vollständige Reproduktion
@@ -294,8 +346,7 @@ open reports_smoke/phase1.md   # macOS; unter Linux: xdg-open
 uv run python -m kortyn.calibrate
 
 # 2. Alle Szenarien × 50 Episoden für beide Brain-Profile (fortsetzbar, Abbruch mit Ctrl-C ist sicher)
-caffeinate -i uv run python -m kortyn.run_experiment        # macOS: caffeinate verhindert App Nap/Sleep
-# Linux: uv run python -m kortyn.run_experiment
+uv run python -m kortyn.run_experiment
 
 # 3. Referenzen mit LeRobots offiziellem Eval-Skript (synchron, gleiche Seeds)
 uv run python -m kortyn.lerobot_reference --profile kalibriert
@@ -318,7 +369,7 @@ uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validati
 uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/validation_model.yaml --profile kalibriert \
     --run modell__gut --run modell__sehr_schlecht --episodes 10 --workers 1 --results-dir results/phase3a/determinism
 # Aufgabenwahl (Totzeit-Toleranz der Meta-World-Experten) und SmolVLA (Checkpoint ≈ 0,9 GB beim ersten Lauf).
-# MuJoCo rendert ohne Display: Standard EGL (Linux) bzw. CGL (macOS), überschreibbar mit MUJOCO_GL.
+# MuJoCo rendert ohne Display über EGL (Linux, WSL2), überschreibbar mit MUJOCO_GL.
 uv run python -m kortyn.expert_delay
 for task in drawer_close push coffee_push; do
   uv run python -m kortyn.run_virtual --config kortyn/experiments/phase3a/smolvla_${task}.yaml
@@ -328,17 +379,53 @@ uv run python -m kortyn.lerobot_reference --config kortyn/experiments/phase3a/sm
     --profile smolvla --episodes 50
 uv run python -m kortyn.bench_inference --config kortyn/experiments/phase3a/smolvla_push.yaml
 uv run python -m kortyn.report_phase3a      # reports/phase3a_data.md + reports/phase3a_*.png
+
+# 7. Phase 3: LIBERO-Long und Flotten-Brain. LIBERO braucht MuJoCo < 3.9 und läuft deshalb in einer eigenen
+#    Umgebung (.venv-libero); Assets (gepinnte Revision) lädt die Umgebung beim ersten Start.
+export UV_PROJECT_ENVIRONMENT=.venv-libero
+uv sync --no-group metaworld --group libero
+L="uv run --no-group metaworld --group libero python -m"
+$L kortyn.run_virtual --config kortyn/experiments/phase3/libero_pilot.yaml --run sync25 --run sync50 \
+    --workers 2 --share-model                       # Pilot: 10 Aufgaben x 10 Init-States
+for ids in 0,1,2,3,4 5,6,7,8,9; do                  # LeRobots eigene Evaluation, dieselben Episoden
+  $L kortyn.lerobot_reference --config kortyn/experiments/phase3/libero_pilot.yaml --profile smolvla_libero \
+      --threads 1 --task-ids $ids --name smolvla_libero_tasks${ids//,/}
+done
+unset UV_PROJECT_ENVIRONMENT
+uv run python -m kortyn.phase3_steps select-tasks --pilot-config kortyn/experiments/phase3/libero_pilot.yaml
+export UV_PROJECT_ENVIRONMENT=.venv-libero          # Hauptstichprobe: JPEG, Kaltstart, Dosis-Wirkung
+$L kortyn.run_virtual --config kortyn/experiments/phase3/libero_main.yaml --workers 3 --share-model
+unset UV_PROJECT_ENVIRONMENT
+uv run python -m kortyn.fleet --config kortyn/experiments/phase3/fleet.yaml          # Stufe 1: Warteschlange
+uv run python -m kortyn.fleet --config kortyn/experiments/phase3/fleet.yaml --scan --networks buero_wlan \
+    --out results/phase3/fleet/scan.jsonl                                            # jede Größe 1..128
+uv run python -m kortyn.fleet --config kortyn/experiments/phase3/fleet_p10.yaml      # 10 Aktionen je Plan
+uv run python -m kortyn.fleet_predict --config kortyn/experiments/phase3/fleet.yaml  # Stufe 2: Kapazität
+uv run python -m kortyn.fleet_predict --config kortyn/experiments/phase3/fleet.yaml \
+    --stage1 results/phase3/fleet/scan.jsonl --out results/phase3/fleet/capacity_scan.json
+uv run python -m kortyn.fleet_predict --config kortyn/experiments/phase3/fleet_p10.yaml --queue-only \
+    --out results/phase3/fleet/capacity_p10.json
+uv run python -m kortyn.fleet_rollout --config kortyn/experiments/phase3/fleet.yaml --select   # 4 Fälle
+export UV_PROJECT_ENVIRONMENT=.venv-libero          # Stufe 3: echte Flotten-Rollouts je Fall (hier: a/e x 2/4)
+for case in "a 2" "a 4" "e 2" "e 4"; do set -- $case
+  $L kortyn.fleet_rollout --config kortyn/experiments/phase3/fleet.yaml --strategy $1 --robots $2 --workers 3
+done
+unset UV_PROJECT_ENVIRONMENT
+uv run python -m kortyn.fleet_rollout --config kortyn/experiments/phase3/fleet.yaml --evaluate
+uv run python -m kortyn.report_phase3       # reports/phase3_data.md + reports/phase3_*.png
 ```
 
 Laufzeiten auf der Messmaschine (4-vCPU-Xeon, keine GPU): Kalibrierung ≈ 10 min, alle Läufe ≈ 4 h 40 min (650
 Episoden: `kalibriert` 400, `ddim10` 250), LeRobot-Referenz DDPM-100 ≈ 1 h; Phase 2: Stufe 1 ≈ 2 h 50 min,
 Stufe 2 ≈ 4 h 25 min, Sync-Ablation ≈ 35 min; Phase 3a: Validierung ≈ 6 h, SmolVLA ≈ 4,7 h mit 4 Workern
-(Aufschlüsselung in [`reports/phase3a.md`](reports/phase3a.md), Abschnitt 9). Auf Apple Silicon mit MPS ist die
+(Aufschlüsselung in [`reports/phase3a.md`](reports/phase3a.md), Abschnitt 9); Phase 3 ≈ 13 h mit 1–3 Workern
+(Pilot und `lerobot-eval` ≈ 3,7 h, Dosis-Wirkung ≈ 5,3 h, Validierung ≈ 2,6 h; Verlauf in
+[`reports/phase3.md`](reports/phase3.md), Abschnitt „Tatsächlicher Verlauf“). Mit einer NVIDIA-GPU ist die
 Inferenz schneller; die Echtzeit-Episoden dauern trotzdem ihre 10–30 s Simulationszeit.
 
-> **Mac-Hinweise:** Netzteil anschließen, `caffeinate -i` verwenden (sonst drosselt macOS lange Läufe),
-> Terminal nicht minimieren. Das Brain wählt automatisch `mps` (Fallback CPU); `PYTORCH_ENABLE_MPS_FALLBACK=1`
-> wird gesetzt. CPU-Pinning ist nur unter Linux aktiv und wird auf macOS ignoriert.
+> **Hinweise für Windows (WSL2):** Den aktuellen NVIDIA-Treiber unter Windows installieren, in Ubuntu keinen;
+> `nvidia-smi` muss in Ubuntu die Karte zeigen. Das Brain wählt automatisch `cuda` (Fallback CPU). Für lange Läufe
+> den Ruhezustand in den Windows-Energieeinstellungen ausschalten. CPU-Pinning ist nur unter Linux aktiv.
 
 ---
 
@@ -444,7 +531,7 @@ Diffusion Policy rechnet standardmäßig 100 DDPM-Schritte – auf der CPU ~6 s 
 `kortyn.calibrate` misst für mehrere DDIM-Schrittzahlen, ob „gut“ ohne Starvation läuft (p99-Latenz ≤ 5 Takte).
 Das Profil `kalibriert` nutzt die größte bestehende Schrittzahl (Eintrag in `kortyn/experiments/base.yaml`),
 das Profil `ddim10` die im Diffusion-Policy-Paper für Echtzeit verwendete Einstellung. Für vergleichbare Zahlen
-auf deinem Mac dieselben Profile verwenden; `calibrate` zeigt dir, ob dein Brain schneller ist.
+auf deinem Rechner dieselben Profile verwenden; `calibrate` zeigt dir, ob dein Brain schneller ist.
 
 ### Checkpoint-Migration
 

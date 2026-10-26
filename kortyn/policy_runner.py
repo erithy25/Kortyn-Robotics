@@ -19,7 +19,9 @@ the sampling loop; with all guide weights 0 it reproduces the unguided chunk bit
 Phase 3a adds vision-language-action policies (SmolVLA): the request's language instruction is passed as
 the batch's ``task`` (tokenized by the policy's own preprocessor, as in LeRobot's evaluation), the
 flow-matching noise comes from the same seeded CPU generator, and the profile's ``num_inference_steps``
-sets the number of flow-matching integration steps.
+sets the number of flow-matching integration steps. Phase 3: a profile can declare the camera resolution
+the Brain accepts (``image_size``), since SmolVLA resizes images itself and LeRobot's LIBERO evaluation feeds
+it frames of another size than its checkpoint features state.
 """
 
 from __future__ import annotations
@@ -30,7 +32,7 @@ import inspect
 import logging
 import statistics
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -156,6 +158,28 @@ def _apply_profile(config: PreTrainedConfig, profile: BrainProfile) -> int:
     return int(config.n_action_steps)
 
 
+def _with_image_size(
+    config: PreTrainedConfig, features: tuple[FeatureInfo, ...], image_size: Sequence[int]
+) -> tuple[FeatureInfo, ...]:
+    """Camera features at ``image_size`` (``[height, width]``), for policies that resize images themselves.
+
+    SmolVLA pads every image to ``resize_imgs_with_padding`` before its vision encoder, so any camera
+    resolution is a valid input; LeRobot's own evaluation feeds it whatever the environment renders.
+    """
+    any_config: Any = config
+    if config.type != "smolvla" or getattr(any_config, "resize_imgs_with_padding", None) is None:
+        raise ConfigError(
+            f"profile image_size needs a policy that resizes its images itself (SmolVLA), got {config.type}"
+        )
+    height, width = (int(d) for d in image_size)
+    return tuple(
+        dataclasses.replace(feature, shape=(feature.shape[0], height, width))
+        if feature.kind == "VISUAL"
+        else feature
+        for feature in features
+    )
+
+
 class PolicyRunner:
     """Owns one policy instance. Not thread-safe: call ``infer`` from a single thread."""
 
@@ -196,6 +220,8 @@ class PolicyRunner:
             for key, feature in config.input_features.items()
             if feature.type in _INPUT_KINDS
         )
+        if profile.image_size is not None:
+            self.features = _with_image_size(config, self.features, profile.image_size)
         accepts_noise = "noise" in inspect.signature(self.policy.predict_action_chunk).parameters
         horizon = getattr(config, "horizon", None)
         self._noise_shape: tuple[int, int, int] | None = None

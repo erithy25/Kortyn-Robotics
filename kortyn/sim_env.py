@@ -21,6 +21,7 @@ from kortyn.config import EnvConfig
 from kortyn.typing_utils import Array, FloatArray
 
 if TYPE_CHECKING:
+    from kortyn.libero_env import LiberoEnv
     from kortyn.metaworld_env import MetaWorldEnv
 
 Observation = dict[str, Array]
@@ -116,10 +117,14 @@ class SimEnv:
         self._env.close()
 
 
-def make_env(config: EnvConfig) -> SimEnv | MetaWorldEnv:
-    """Create the environment described by ``config`` (gym env, or a Meta-World task in phase 3a)."""
+def make_env(config: EnvConfig) -> SimEnv | MetaWorldEnv | LiberoEnv:
+    """Create the environment described by ``config`` (gym env, Meta-World (phase 3a) or LIBERO (phase 3))."""
     if config.kind == "metaworld":
         from kortyn.metaworld_env import MetaWorldEnv
 
         return MetaWorldEnv(config)
+    if config.kind == "libero":
+        from kortyn.libero_env import LiberoEnv
+
+        return LiberoEnv(config)
     return SimEnv(config)

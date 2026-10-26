@@ -1,0 +1,87 @@
+# Kortyn phase 3 – SmolVLA (lerobot/smolvla_libero) on LIBERO-Long (libero_10) in simulation time.
+# Shared settings of the phase-3 experiments (libero_*.yaml extend this file). Runs in the LIBERO environment:
+#   UV_PROJECT_ENVIRONMENT=.venv-libero uv run --no-group metaworld --group libero \
+#       python -m kortyn.run_virtual --config kortyn/experiments/phase3/<experiment>.yaml
+#
+# Policy: SmolVLA in-process on the CPU (bf16 as loaded by LeRobot), 10 flow-matching steps, chunk 50. The
+# environment is LeRobot's LIBERO evaluation env (360x360 cameras, fixed init states, 10 settling steps,
+# relative end-effector control at 20 Hz, 520 steps) with cameras rendered only when a request needs them.
+# Agent: a request whenever <= 24 actions remain (every 25 ticks = 1.25 s while plans arrive on time), so
+# the latency budget is (24 + 1) * 50 ms = 1250 ms. New standard of phase 3: cold start, i.e. the first
+# plan of an episode arrives with the same latency as every other plan (the robot holds still until then).
+# Starvation: the arm stands still (zero end-effector delta, gripper keeps its command).
+brain:
+  device: cpu
+  warmup_inferences: 1
+  checkpoint:
+    repo_id: lerobot/smolvla_libero
+    revision: a24f1f380461b665158d52acd140152c79e8b36d
+    local_dir: checkpoints/smolvla_libero
+
+agent:
+  client_id: kortyn-agent-0
+  actions_per_chunk: 50         # SmolVLA chunk_size
+  refill_threshold: 24          # request when <= 24 actions remain: a new plan every 25 ticks (LeRobot async: 50 %)
+  request_timeout_s: 10.0       # abandoned by the robot after 10 s (only reached in overload)
+  start_mode: cold              # phase-3 standard: no latency-free first plan
+  warmup_timeout_s: 60.0
+  sync_actions_per_chunk: 25    # matched sync reference: the observation steps of real time at zero latency
+  image_transport: {codec: raw} # LeRobot's evaluation input; JPEG q90 is tested in phase-3 step 1
+
+env:
+  kind: libero
+  fps: 20.0                     # robosuite's control rate (LeRobot: "must match control_freq")
+  max_episode_steps: 520        # LeRobot's TASK_SUITE_MAX_STEPS["libero_10"]
+  features_map: {}              # LIBERO maps its cameras and state itself (env.libero below)
+  hold_action_key: null
+  libero:
+    suite: libero_10
+    task_ids: [0]
+    episodes_per_task: 50
+    cameras:
+      agentview_image: observation.images.camera1         # LeRobot: image -> rename_map -> camera1
+      robot0_eye_in_hand_image: observation.images.camera2  # LeRobot: image2 -> camera2
+    observation_height: 360     # LeRobot's LiberoEnv default (the checkpoint was trained on 256x256 frames)
+    observation_width: 360
+
+strategies:
+  halten:
+    description: "Anfragen wie Phase 1 (Schwelle); ohne Plan steht der Arm still (Verschiebung 0, Greifer hält)"
+    guard: {mode: hold}
+
+profiles:
+  smolvla_libero:
+    num_inference_steps: 10     # flow-matching steps (checkpoint default)
+    image_size: [360, 360]      # SmolVLA pads every frame to 512x512 itself; LeRobot feeds it 360x360
+
+# Fixed end-to-end latencies (step 2, dose-response): no network, no queue, the plan arrives exactly L after
+# its observation. Service time = L, client and transport overhead 0 (TimingConfig defaults).
+hardware_profiles:
+  fest_0ms: {description: "feste Latenz 0 ms", service: {smolvla_libero: {kind: constant, value_ms: 0}}}
+  fest_250ms: {description: "feste Latenz 250 ms", service: {smolvla_libero: {kind: constant, value_ms: 250}}}
+  fest_500ms: {description: "feste Latenz 500 ms", service: {smolvla_libero: {kind: constant, value_ms: 500}}}
+  fest_1000ms: {description: "feste Latenz 1000 ms", service: {smolvla_libero: {kind: constant, value_ms: 1000}}}
+  fest_1250ms: {description: "feste Latenz 1250 ms (= Budget)", service: {smolvla_libero: {kind: constant, value_ms: 1250}}}
+  fest_1500ms: {description: "feste Latenz 1500 ms", service: {smolvla_libero: {kind: constant, value_ms: 1500}}}
+  fest_2000ms: {description: "feste Latenz 2000 ms", service: {smolvla_libero: {kind: constant, value_ms: 2000}}}
+  jitter_500_1500ms:
+    description: "Latenz je Anfrage gleichverteilt in [500, 1500] ms (Mittel 1000 ms)"
+    service: {smolvla_libero: {kind: uniform, low_ms: 500, high_ms: 1500}}
+
+timings:
+  fest_0ms: {description: "feste Latenz 0 ms", latency: model, hardware: fest_0ms}
+  fest_250ms: {description: "feste Latenz 250 ms", latency: model, hardware: fest_250ms}
+  fest_500ms: {description: "feste Latenz 500 ms", latency: model, hardware: fest_500ms}
+  fest_1000ms: {description: "feste Latenz 1000 ms", latency: model, hardware: fest_1000ms}
+  fest_1250ms: {description: "feste Latenz 1250 ms (= Budget)", latency: model, hardware: fest_1250ms}
+  fest_1500ms: {description: "feste Latenz 1500 ms", latency: model, hardware: fest_1500ms}
+  fest_2000ms: {description: "feste Latenz 2000 ms", latency: model, hardware: fest_2000ms}
+  jitter_500_1500ms: {description: "Jitter 500–1500 ms", latency: model, hardware: jitter_500_1500ms}
+
+experiment:
+  results_dir: results/phase3/libero
+  seed_start: 1000              # run episode i = seed - 1000 (task and init state: env.libero)
+  episodes: 50
+  workers: 4
+  torch_threads: 1
+  suites: []

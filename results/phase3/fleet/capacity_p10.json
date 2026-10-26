@@ -1,0 +1,8909 @@
+{
+ "queue_only": true,
+ "configurations": [
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "kein_gewinn",
+   "strategy": "b",
+   "capacity": 4,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3616,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4382115186661486,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7215,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0376283729704832,
+     "busy_share": 0.8754464792739717,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 8168,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9904485201584246,
+     "busy_share": 0.99409799462312,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 8164,
+     "misses": 7534,
+     "miss_share": 0.9228319451249387,
+     "criterion_1": false,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.9467366784672335,
+     "busy_share": 0.9969772519311654,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 8118,
+     "misses": 8118,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.834825483326846,
+     "busy_share": 0.9962561484359244,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 8083,
+     "misses": 8083,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.38331165389989,
+     "busy_share": 0.996154415901166,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "kein_gewinn",
+   "strategy": "d",
+   "capacity": 4,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4383226634430189,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7225,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8767877732804732,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 8165,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9897513105797993,
+     "busy_share": 0.9941491050624195,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 8165,
+     "misses": 7530,
+     "miss_share": 0.9222290263319045,
+     "criterion_1": false,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.918379529897578,
+     "busy_share": 0.9973510299957384,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 8136,
+     "misses": 8136,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.807463234898836,
+     "busy_share": 0.9980170365839015,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 8096,
+     "misses": 8096,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.347829805993237,
+     "busy_share": 0.9975147387127383,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "kein_gewinn",
+   "strategy": "e",
+   "capacity": 2,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4383226634430189,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7225,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8767877732804732,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 7227,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8792549113295062,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 7226,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8818872819924867,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 7222,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8820226621483459,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 7227,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8837641637698632,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "optimistisch",
+   "strategy": "b",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3616,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4382115186661486,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7230,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.1170723236662787,
+     "busy_share": 0.7930442565827865,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14440,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9186107650486743,
+     "busy_share": 0.9549399021313235,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28441,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.97655076239573,
+     "busy_share": 0.9975663897304438,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 48444,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.945224431686866,
+     "busy_share": 0.9984339866441502,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 74678,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.83606629688443,
+     "busy_share": 0.9992211910341848,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "optimistisch",
+   "strategy": "d",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4383226634430189,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7225,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8767877732804732,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14432,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9163248602808913,
+     "busy_share": 0.9557498570810036,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28442,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.976285995259866,
+     "busy_share": 0.9976498294914262,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 48442,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.9449104103687676,
+     "busy_share": 0.9983971599584661,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 74670,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.834475173433752,
+     "busy_share": 0.9993875767443768,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "optimistisch",
+   "strategy": "e",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4383226634430189,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7225,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8767877732804732,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14432,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9163248602808913,
+     "busy_share": 0.9557498570810036,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28442,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.976285995259866,
+     "busy_share": 0.9976498294914262,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 48442,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.9449104103687676,
+     "busy_share": 0.9983971599584661,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 52515,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 18.0,
+     "mean_batch": 8.959783918298127,
+     "busy_share": 0.9994392097728175,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "pessimistisch",
+   "strategy": "b",
+   "capacity": 8,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3616,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4382115186661486,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7228,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.095025068287246,
+     "busy_share": 0.8356227530459207,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 11268,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.992379754743128,
+     "busy_share": 0.9944111239563931,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 13901,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.96300803993744,
+     "busy_share": 0.9973294905682759,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 15708,
+     "misses": 14491,
+     "miss_share": 0.9225235548764961,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.890561517100863,
+     "busy_share": 0.9973700659278606,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 16768,
+     "misses": 16768,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.607551502313884,
+     "busy_share": 0.9980785424523475,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "pessimistisch",
+   "strategy": "d",
+   "capacity": 8,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4383226634430189,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7225,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8767877732804732,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 11270,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9922133697099182,
+     "busy_share": 0.9944578403870591,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 13906,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.9621988463144575,
+     "busy_share": 0.9975494846721524,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 15711,
+     "misses": 14501,
+     "miss_share": 0.9229838966329323,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.861382710304851,
+     "busy_share": 0.9979996048816915,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 16784,
+     "misses": 16784,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.55401353194967,
+     "busy_share": 0.9991302894232202,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "pessimistisch",
+   "strategy": "e",
+   "capacity": 2,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4383226634430189,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7225,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8767877732804732,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 10007,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 3.0,
+     "mean_batch": 1.497418469497753,
+     "busy_share": 0.994614586749158,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 10006,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 3.0,
+     "mean_batch": 1.4983578242408424,
+     "busy_share": 0.9975354061644385,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 10009,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 3.0,
+     "mean_batch": 1.4989304344604524,
+     "busy_share": 0.9985111345677419,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 10005,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 3.0,
+     "mean_batch": 1.4988588740898434,
+     "busy_share": 0.99960216468923,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "realistisch",
+   "strategy": "a",
+   "capacity": 4,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4383226634430189,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7225,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8767877732804732,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 8170,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9944634127850459,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 8158,
+     "misses": 7526,
+     "miss_share": 0.9225300318705565,
+     "criterion_1": false,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9977348350475242,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 8134,
+     "misses": 8134,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9986447320668246,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 8082,
+     "misses": 8082,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9995692722892048,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "realistisch",
+   "strategy": "b",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3616,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4382115186661486,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7230,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.1019583748793085,
+     "busy_share": 0.8098178596310772,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14216,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9934092617377086,
+     "busy_share": 0.994258397967808,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 22544,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.973856596124468,
+     "busy_share": 0.9975602592696186,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 31874,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.928476530750871,
+     "busy_share": 0.9985082535753648,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 40154,
+     "misses": 37675,
+     "miss_share": 0.9382626886487025,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.764870300303372,
+     "busy_share": 0.9992788639494562,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "realistisch",
+   "strategy": "c",
+   "capacity": 4,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4383226634430189,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7225,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8767877732804732,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 8171,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9944634127850459,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 8158,
+     "misses": 7537,
+     "miss_share": 0.923878401569012,
+     "criterion_1": false,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9977348350475242,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 8133,
+     "misses": 8133,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9986447320668246,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 8082,
+     "misses": 8082,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9995692722892048,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "realistisch",
+   "strategy": "d",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4383226634430189,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7225,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8767877732804732,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14212,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9932781991498267,
+     "busy_share": 0.9945297884730002,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 22544,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.9736881608878165,
+     "busy_share": 0.9975441653906164,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 31872,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.928239113846787,
+     "busy_share": 0.9984531285376125,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 37915,
+     "misses": 33107,
+     "miss_share": 0.8731900303310035,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 12.879530671432883,
+     "busy_share": 0.9991444639829418,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3060ti_schaetzung",
+   "batching": "realistisch",
+   "strategy": "e",
+   "capacity": 4,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.4383226634430189,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7225,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8767877732804732,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14212,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9932781991498267,
+     "busy_share": 0.9945297884730002,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 20797,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 7.0,
+     "mean_batch": 3.4814317656189675,
+     "busy_share": 0.9975245510768552,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 20806,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 7.0,
+     "mean_batch": 3.491679582402249,
+     "busy_share": 0.9983911628815031,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 20802,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 7.0,
+     "mean_batch": 3.493438792082417,
+     "busy_share": 0.9994916807562229,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "kein_gewinn",
+   "strategy": "b",
+   "capacity": 4,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35862763372610607,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7233,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0538907842796668,
+     "busy_share": 0.7177645418152463,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 9983,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9904610103802878,
+     "busy_share": 0.9939157066987391,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 9971,
+     "misses": 9344,
+     "miss_share": 0.9371176411593621,
+     "criterion_1": false,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.950269146697718,
+     "busy_share": 0.996320154895772,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 9945,
+     "misses": 9945,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.843794315985328,
+     "busy_share": 0.9979554069316681,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 9904,
+     "misses": 9904,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.414972821186595,
+     "busy_share": 0.9974926884031076,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "kein_gewinn",
+   "strategy": "d",
+   "capacity": 4,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3619,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35881755256696657,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7186156279762339,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 9978,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9902675689045868,
+     "busy_share": 0.9937840075509973,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 9969,
+     "misses": 8337,
+     "miss_share": 0.8362925067709901,
+     "criterion_1": false,
+     "admitted_mean": 8.0,
+     "mean_batch": 2.359796942444456,
+     "busy_share": 0.9972760526692235,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 9945,
+     "misses": 9945,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.797643289047332,
+     "busy_share": 0.9974814828703685,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 9904,
+     "misses": 9904,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.339791507754894,
+     "busy_share": 0.9983388020300646,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "kein_gewinn",
+   "strategy": "e",
+   "capacity": 2,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3619,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35881755256696657,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7186156279762339,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 7236,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7202393048770143,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 7239,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7227822102988736,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 7235,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7229941892005769,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 7238,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7242542812539309,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "optimistisch",
+   "strategy": "b",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35862763372610607,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.091300876646003,
+     "busy_share": 0.661460365214435,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14458,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.6710771356644993,
+     "busy_share": 0.8876777393736409,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28912,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.2648990355608785,
+     "busy_share": 0.9797644918250733,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57649,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.6468088891527515,
+     "busy_share": 0.9980584104353752,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 91296,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.83136614292296,
+     "busy_share": 0.9992824372282363,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "optimistisch",
+   "strategy": "d",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3619,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35881755256696657,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7186156279762339,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14459,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.580292848134172,
+     "busy_share": 0.9346121708179801,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28915,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.2027002138310388,
+     "busy_share": 0.9956264994945015,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57642,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.644695212640229,
+     "busy_share": 0.9981791626303741,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 91296,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.830038864764056,
+     "busy_share": 0.9992462849551241,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "optimistisch",
+   "strategy": "e",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3619,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35881755256696657,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7186156279762339,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14459,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.580292848134172,
+     "busy_share": 0.9346121708179801,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28915,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.2027002138310388,
+     "busy_share": 0.9956264994945015,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57642,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.644695212640229,
+     "busy_share": 0.9981791626303741,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 73228,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 22.0,
+     "mean_batch": 10.929254500877041,
+     "busy_share": 0.9992479589473903,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "pessimistisch",
+   "strategy": "b",
+   "capacity": 8,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35862763372610607,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7236,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0584337333710174,
+     "busy_share": 0.6968776211017351,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 13778,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.991275360522657,
+     "busy_share": 0.9935972487062955,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 16995,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.965459597003267,
+     "busy_share": 0.9970260651779786,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 19206,
+     "misses": 17966,
+     "miss_share": 0.9354368426533375,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.8985761281947084,
+     "busy_share": 0.9980206370946917,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 20553,
+     "misses": 20553,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.616868757179851,
+     "busy_share": 0.9989288269188639,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "pessimistisch",
+   "strategy": "d",
+   "capacity": 8,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3619,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35881755256696657,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7186156279762339,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 13779,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9908651017078032,
+     "busy_share": 0.9939692644150862,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 16997,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.9647893557164036,
+     "busy_share": 0.9970383351185622,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 18583,
+     "misses": 16924,
+     "miss_share": 0.9107248560512297,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 6.3344531101993935,
+     "busy_share": 0.9976408275222152,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 20512,
+     "misses": 20512,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.561139477505392,
+     "busy_share": 0.998444814932368,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "pessimistisch",
+   "strategy": "e",
+   "capacity": 4,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3619,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35881755256696657,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7186156279762339,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 13779,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9908651017078032,
+     "busy_share": 0.9939692644150862,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 13781,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9958530264074719,
+     "busy_share": 0.9970760639692893,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 13783,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9976517214609866,
+     "busy_share": 0.9983205147206932,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 13772,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.9973756135912915,
+     "busy_share": 0.99931407192158,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "realistisch",
+   "strategy": "a",
+   "capacity": 4,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3619,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35881755256696657,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7186156279762339,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 9988,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9939934625959163,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 9972,
+     "misses": 9347,
+     "miss_share": 0.9373245086241476,
+     "criterion_1": false,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9972599160677147,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 9952,
+     "misses": 9952,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9984642485871563,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 9900,
+     "misses": 9900,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9993832007864311,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "realistisch",
+   "strategy": "b",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3617,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35862763372610607,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0680291956727024,
+     "busy_share": 0.6796760970406277,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14456,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.6727916398902927,
+     "busy_share": 0.9443067821078029,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 27563,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.971975666371153,
+     "busy_share": 0.9969357907323934,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 38975,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.932119145654969,
+     "busy_share": 0.9979474911061331,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 49152,
+     "misses": 36,
+     "miss_share": 0.000732421875,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.763384894547201,
+     "busy_share": 0.9993101356028934,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "realistisch",
+   "strategy": "c",
+   "capacity": 4,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3619,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35881755256696657,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7186156279762339,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 9990,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9939934625959163,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 9972,
+     "misses": 9346,
+     "miss_share": 0.9372242278379462,
+     "criterion_1": false,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9972599160677147,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 9951,
+     "misses": 9951,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9984642485871563,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 9900,
+     "misses": 9900,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9993832007864311,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "realistisch",
+   "strategy": "d",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3619,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35881755256696657,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7186156279762339,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14454,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.677235467895607,
+     "busy_share": 0.9428275226407735,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 27566,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.9718412515747716,
+     "busy_share": 0.9970458182450946,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 38981,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.931744366638512,
+     "busy_share": 0.9980846924357523,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 45559,
+     "misses": 14131,
+     "miss_share": 0.3101692311069163,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 12.616363899089913,
+     "busy_share": 0.9992915018253788,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx3090",
+   "batching": "realistisch",
+   "strategy": "e",
+   "capacity": 8,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3619,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.35881755256696657,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7237,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.7186156279762339,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14454,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.677235467895607,
+     "busy_share": 0.9428275226407735,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 27566,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.9718412515747716,
+     "busy_share": 0.9970458182450946,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 32807,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 11.0,
+     "mean_batch": 5.474988306611151,
+     "busy_share": 0.9981946842221797,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 32789,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 11.0,
+     "mean_batch": 5.481356466087571,
+     "busy_share": 0.9993459700393709,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "kein_gewinn",
+   "strategy": "b",
+   "capacity": 8,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7243,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0583737641001918,
+     "busy_share": 0.4592241176971368,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14452,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.4263358975176372,
+     "busy_share": 0.9158933467263393,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 15629,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.9453079989596938,
+     "busy_share": 0.9957886865125611,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 15591,
+     "misses": 14375,
+     "miss_share": 0.9220062856776345,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.860088794937643,
+     "busy_share": 0.9971248886049838,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 15520,
+     "misses": 15520,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.463300256081945,
+     "busy_share": 0.9973614481971526,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "kein_gewinn",
+   "strategy": "d",
+   "capacity": 8,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7247,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.45966128310652676,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14450,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.3478651184845898,
+     "busy_share": 0.9157727802287301,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 15628,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.941743173206787,
+     "busy_share": 0.9957987605386102,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 15597,
+     "misses": 14384,
+     "miss_share": 0.9222286337116112,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.776034712305898,
+     "busy_share": 0.9971255093566577,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 15536,
+     "misses": 15536,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.353320569957944,
+     "busy_share": 0.9977023216720116,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "kein_gewinn",
+   "strategy": "e",
+   "capacity": 2,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7247,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.45966128310652676,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 10860,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 3.0,
+     "mean_batch": 1.04780173647435,
+     "busy_share": 0.6896298073712143,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 10864,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 3.0,
+     "mean_batch": 1.060508171993298,
+     "busy_share": 0.6925080192434451,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 10864,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 3.0,
+     "mean_batch": 1.0580307866074141,
+     "busy_share": 0.6930948036028882,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 10863,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 3.0,
+     "mean_batch": 1.0540267480662735,
+     "busy_share": 0.694201796588542,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "optimistisch",
+   "strategy": "b",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7244,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0769531279288251,
+     "busy_share": 0.4285405319963447,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14479,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.2451297846209084,
+     "busy_share": 0.7464628403022525,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28969,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 2.0387626872018814,
+     "busy_share": 0.9486244165530463,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57907,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 4.308806867289315,
+     "busy_share": 0.9940702866844436,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 115685,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 11.04173729056005,
+     "busy_share": 0.9988235828617799,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "optimistisch",
+   "strategy": "d",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7247,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.45966128310652676,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14479,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.1798029197956248,
+     "busy_share": 0.7861148304704152,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28969,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.9963394746378944,
+     "busy_share": 0.966888284158597,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57911,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 4.301259413477705,
+     "busy_share": 0.9956395522265705,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 115691,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 11.04091058288676,
+     "busy_share": 0.9989227707680485,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "optimistisch",
+   "strategy": "e",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7247,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.45966128310652676,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14479,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.1798029197956248,
+     "busy_share": 0.7861148304704152,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28969,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.9963394746378944,
+     "busy_share": 0.966888284158597,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57911,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 4.301259413477705,
+     "busy_share": 0.9956395522265705,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 115691,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 11.04091058288676,
+     "busy_share": 0.9989227707680485,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "pessimistisch",
+   "strategy": "b",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7243,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0541781797931609,
+     "busy_share": 0.4463697630599881,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14473,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.2609351698318103,
+     "busy_share": 0.8139625606086055,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 26621,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.9564450737277497,
+     "busy_share": 0.9957126538080839,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 30104,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.89688788890495,
+     "busy_share": 0.9972820932501513,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 32160,
+     "misses": 29682,
+     "miss_share": 0.9229477611940299,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.62384501782291,
+     "busy_share": 0.9981679504696185,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "pessimistisch",
+   "strategy": "d",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7247,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.45966128310652676,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14477,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.162342137156268,
+     "busy_share": 0.8476938063367797,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 26616,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 3.9553113748249884,
+     "busy_share": 0.9957265053039155,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 30097,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.892679732111257,
+     "busy_share": 0.997352075253103,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 32150,
+     "misses": 29671,
+     "miss_share": 0.9228926905132193,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.448491805265908,
+     "busy_share": 0.9984198962205273,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "pessimistisch",
+   "strategy": "e",
+   "capacity": 4,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7247,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.45966128310652676,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14477,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.162342137156268,
+     "busy_share": 0.8476938063367797,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 25256,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 7.0,
+     "mean_batch": 3.221015853402998,
+     "busy_share": 0.9957574331350173,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 25246,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 7.0,
+     "mean_batch": 3.234349184383134,
+     "busy_share": 0.9977017750992533,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 25249,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 7.0,
+     "mean_batch": 3.2432995599202665,
+     "busy_share": 0.9990678655932265,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "realistisch",
+   "strategy": "a",
+   "capacity": 8,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7247,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.45966128310652676,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14473,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9175746897836015,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 15628,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9961174459066275,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 15604,
+     "misses": 14390,
+     "miss_share": 0.9221994360420405,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9978171300683317,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 15557,
+     "misses": 15557,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9990555301926615,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "realistisch",
+   "strategy": "b",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7244,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0734594495343706,
+     "busy_share": 0.4328721963868402,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14478,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.2596581835089127,
+     "busy_share": 0.7570332389489716,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28958,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 2.254970185442123,
+     "busy_share": 0.9685154957007889,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57765,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 6.969500605681169,
+     "busy_share": 0.9973137461826083,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 76922,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.7505079664585,
+     "busy_share": 0.9987804481702433,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "realistisch",
+   "strategy": "c",
+   "capacity": 8,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7247,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.45966128310652676,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14473,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9175746897836015,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 15629,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9961174459066275,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 15604,
+     "misses": 14366,
+     "miss_share": 0.9206613688797745,
+     "criterion_1": false,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9978171300683317,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 15557,
+     "misses": 15557,
+     "miss_share": 1.0,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9990555301926615,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "realistisch",
+   "strategy": "d",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7247,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.45966128310652676,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14478,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.1545107990879862,
+     "busy_share": 0.8146367069558199,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28957,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 2.207401915154811,
+     "busy_share": 0.983444037030079,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57759,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 6.963631202080575,
+     "busy_share": 0.9974933512741019,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 76917,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.746048809253928,
+     "busy_share": 0.9987603961274755,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090",
+   "batching": "realistisch",
+   "strategy": "e",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3620,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.22930376905965774,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7247,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.45966128310652676,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14478,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.1545107990879862,
+     "busy_share": 0.8146367069558199,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28957,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 2.207401915154811,
+     "busy_share": 0.983444037030079,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57759,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 6.963631202080575,
+     "busy_share": 0.9974933512741019,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 65272,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 19.0,
+     "mean_batch": 9.426846445103626,
+     "busy_share": 0.9989681407836063,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "kein_gewinn",
+   "strategy": "b",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0439452167887129,
+     "busy_share": 0.19989060504000436,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14492,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.1673328394909308,
+     "busy_share": 0.399466975914004,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28987,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.5524384814324639,
+     "busy_share": 0.7999700999484688,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 35940,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.854728132505257,
+     "busy_share": 0.9957419332573703,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 35856,
+     "misses": 33396,
+     "miss_share": 0.9313922356091031,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.488763106708697,
+     "busy_share": 0.9971231737683999,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "kein_gewinn",
+   "strategy": "d",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.19993106538957325,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0381634231722645,
+     "busy_share": 0.39943876408957185,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28995,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.2793330348086618,
+     "busy_share": 0.7999353217602505,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 35948,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 7.816800994006031,
+     "busy_share": 0.9959100809752447,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 35884,
+     "misses": 33230,
+     "miss_share": 0.926039460483781,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 10.2136324527302,
+     "busy_share": 0.99745254278882,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "kein_gewinn",
+   "strategy": "e",
+   "capacity": 8,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.19993106538957325,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0381634231722645,
+     "busy_share": 0.39943876408957185,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28995,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.2793330348086618,
+     "busy_share": 0.7999353217602505,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 32600,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 9.0,
+     "mean_batch": 1.4547286416712775,
+     "busy_share": 0.9026671447805484,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 32588,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 9.0,
+     "mean_batch": 1.4816490089217362,
+     "busy_share": 0.9039162632633556,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "optimistisch",
+   "strategy": "b",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0438335837459978,
+     "busy_share": 0.191963784115587,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.1473096463009114,
+     "busy_share": 0.3509515566437377,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 29002,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.4142264658222399,
+     "busy_share": 0.5781175646821596,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57984,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 2.05637746215287,
+     "busy_share": 0.8194783759814189,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 115931,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 3.7490883172176104,
+     "busy_share": 0.96975528860981,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "optimistisch",
+   "strategy": "d",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.19993106538957325,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0390785098205724,
+     "busy_share": 0.385287334729167,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 29003,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.1929176063286346,
+     "busy_share": 0.677224811482778,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57983,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.8283785371999077,
+     "busy_share": 0.9115829242106629,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 115932,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 3.6495381345462423,
+     "busy_share": 0.9918983703023289,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "optimistisch",
+   "strategy": "e",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.19993106538957325,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0390785098205724,
+     "busy_share": 0.385287334729167,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 29003,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.1929176063286346,
+     "busy_share": 0.677224811482778,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57983,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.8283785371999077,
+     "busy_share": 0.9115829242106629,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 115932,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 3.6495381345462423,
+     "busy_share": 0.9918983703023289,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "pessimistisch",
+   "strategy": "b",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0448393769928146,
+     "busy_share": 0.19520124546558817,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.1658313867527648,
+     "busy_share": 0.36824649118470426,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 28998,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.4664808638127944,
+     "busy_share": 0.6600630150630776,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57934,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 3.343090180778775,
+     "busy_share": 0.982460373256716,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 74190,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.5526951152019,
+     "busy_share": 0.9972617805324212,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "pessimistisch",
+   "strategy": "d",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.19993106538957325,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0388669029791844,
+     "busy_share": 0.39129472940154564,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 29002,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.2008924780826313,
+     "busy_share": 0.7264467358674466,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57935,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 3.23195417832711,
+     "busy_share": 0.9920318924396083,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 74170,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 15.504023572098482,
+     "busy_share": 0.9975435878540214,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "pessimistisch",
+   "strategy": "e",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.19993106538957325,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0388669029791844,
+     "busy_share": 0.39129472940154564,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 29002,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.2008924780826313,
+     "busy_share": 0.7264467358674466,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57935,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 3.23195417832711,
+     "busy_share": 0.9920318924396083,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 65094,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 18.0,
+     "mean_batch": 5.317068225100004,
+     "busy_share": 0.9975377292991502,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": false,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "realistisch",
+   "strategy": "a",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.19993106538957325,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.39944859477925343,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 29000,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8002055039383591,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 35947,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9960493108679334,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 35926,
+     "misses": 33467,
+     "miss_share": 0.9315537493737126,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9979456728265238,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "realistisch",
+   "strategy": "b",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0438335837459978,
+     "busy_share": 0.1928007500938184,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.14378972711423,
+     "busy_share": 0.3570000530068118,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 29000,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.393360691012431,
+     "busy_share": 0.6085900599728835,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57980,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 2.2037551937686115,
+     "busy_share": 0.8574880806816602,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 115889,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 5.2752530232234065,
+     "busy_share": 0.9940823885058588,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "realistisch",
+   "strategy": "c",
+   "capacity": 16,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.19993106538957325,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.39944859477925343,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 29000,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.8001793156392966,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 35949,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9960493108679334,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 35925,
+     "misses": 33419,
+     "miss_share": 0.9302435629784273,
+     "criterion_1": false,
+     "admitted_mean": 32.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.9979456728265238,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "realistisch",
+   "strategy": "d",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.19993106538957325,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0390785098205724,
+     "busy_share": 0.38677890967260686,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 29002,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.1941448253506017,
+     "busy_share": 0.6895238727567318,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57980,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.9485099239012513,
+     "busy_share": 0.9381681539100865,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 115891,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 5.246212936871558,
+     "busy_share": 0.9970499220325281,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  },
+  {
+   "network": "buero_wlan",
+   "gpu": "rtx4090_kompiliert",
+   "batching": "realistisch",
+   "strategy": "e",
+   "capacity": 32,
+   "sizes": [
+    {
+     "robots": 1,
+     "replications": 3,
+     "requests": 3623,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 1.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.09977728298342274,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 2,
+     "replications": 3,
+     "requests": 7250,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 2.0,
+     "mean_batch": 1.0,
+     "busy_share": 0.19993106538957325,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 4,
+     "replications": 3,
+     "requests": 14491,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 4.0,
+     "mean_batch": 1.0390785098205724,
+     "busy_share": 0.38677890967260686,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 8,
+     "replications": 3,
+     "requests": 29002,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 8.0,
+     "mean_batch": 1.1941448253506017,
+     "busy_share": 0.6895238727567318,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 16,
+     "replications": 3,
+     "requests": 57980,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 16.0,
+     "mean_batch": 1.9485099239012513,
+     "busy_share": 0.9381681539100865,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    },
+    {
+     "robots": 32,
+     "replications": 3,
+     "requests": 115891,
+     "misses": 0,
+     "miss_share": 0.0,
+     "criterion_1": true,
+     "admitted_mean": 32.0,
+     "mean_batch": 5.246212936871558,
+     "busy_share": 0.9970499220325281,
+     "fleet_mean": NaN,
+     "worst": NaN,
+     "worst_ci": [
+      NaN,
+      NaN
+     ],
+     "single": NaN,
+     "difference": NaN,
+     "difference_ci": [
+      NaN,
+      NaN
+     ],
+     "criterion_2": true,
+     "extrapolated_share": 0.0
+    }
+   ]
+  }
+ ]
+}

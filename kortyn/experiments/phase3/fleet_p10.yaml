@@ -1,0 +1,50 @@
+# Phase 3, sensitivity: LeRobot's recommended 10 actions per plan for smolvla_libero instead of 25. Queue only
+# (criterion 1): there is no dose-response curve for this operating point (sync10 was cut, see report).
+#
+#   python -m kortyn.fleet --config kortyn/experiments/phase3/fleet_p10.yaml
+#   python -m kortyn.fleet_predict --config kortyn/experiments/phase3/fleet_p10.yaml --queue-only \
+#       --out results/phase3/fleet/capacity_p10.json
+description: "Phase 3, Sensitivität: 10 Aktionen je Plan (alle 0,5 s), nur Warteschlange"
+
+agent:
+  fps: 20.0
+  actions_per_chunk: 50
+  refill_threshold: 39          # a plan every 10 ticks (0.5 s); budget (39 + 1) x 50 ms = 2.0 s
+  request_timeout_s: 10.0
+  client_overhead_ms: 1.0
+  transport_overhead_ms: 5.0
+
+episode_lengths:                # approximation: episode lengths of the 25-action operating point (0-ms level)
+  paths: [results/phase3/libero/smolvla_libero/fest_0ms/episodes.jsonl]
+
+gpus:                           # s1: one inference, LIBERO input (two 360x360 cameras), 10 flow steps, eager PyTorch
+  rtx3060ti_schaetzung: {s1_ms: 220.0}   # estimate until the benchmark (docs/benchmark_rtx3060ti.md) measures it
+  rtx3090: {s1_ms: 180.0}
+  rtx4090: {s1_ms: 115.0}
+  rtx4090_kompiliert: {s1_ms: 50.0}      # sensitivity: torch.compile instead of eager
+
+batching:                       # s(b) = s1 * (1 + beta * (b - 1)); the first entry also labels a/c (no batching)
+  realistisch: {beta: 0.15}
+  optimistisch: {beta: 0.05}
+  pessimistisch: {beta: 0.45}
+  kein_gewinn: {beta: 1.0}
+
+strategies:
+  a: {scheduler: fifo}
+  b: {scheduler: fifo_batch, max_batch: 16, max_wait_ms: 25.0}
+  c: {scheduler: edf}
+  d: {scheduler: edf_batch, max_batch: 16}
+  e: {scheduler: edf_batch, max_batch: 16, admission: true, max_utilization: 0.9}
+
+networks:
+  buero_wlan: {scenario: buero_wlan, margin_ms: 15.0}
+
+fleet_sizes: [1, 2, 4, 8, 16, 32]
+replications: 3
+start_spread_s: 10.0
+window_start_s: 30.0
+horizon_s: 630.0
+service_cv: 0.05
+batch_limit: 32
+seed: 3000
+results_path: results/phase3/fleet/stage1_p10.jsonl

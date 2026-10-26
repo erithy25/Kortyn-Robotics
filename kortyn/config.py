@@ -122,12 +122,18 @@ class BrainProfile:
     num_inference_steps: int = 10
     # Actions returned per request. ``None`` = maximum the checkpoint supports (horizon - n_obs_steps + 1).
     n_action_steps: int | None = None
+    # Camera resolution the Brain accepts ``[height, width]``; ``None`` = the checkpoint's input features.
+    # Only for policies that resize images themselves (SmolVLA pads them to its VLM resolution): LeRobot's
+    # LIBERO evaluation renders 360x360 frames for a checkpoint whose features say 256x256 (phase 3).
+    image_size: list[int] | None = None
 
     def __post_init__(self) -> None:
         if self.num_inference_steps < 1:
             raise ConfigError(f"num_inference_steps must be >= 1, got {self.num_inference_steps}")
         if self.n_action_steps is not None and self.n_action_steps < 1:
             raise ConfigError(f"n_action_steps must be >= 1, got {self.n_action_steps}")
+        if self.image_size is not None and (len(self.image_size) != 2 or min(self.image_size) < 8):
+            raise ConfigError(f"image_size must be [height, width] with both >= 8, got {self.image_size}")
 
     @property
     def sampler_label(self) -> str:
@@ -210,13 +216,69 @@ class MetaWorldEnvConfig:
 
 
 @dataclass
+class LiberoEnvConfig:
+    """LIBERO tasks, built like LeRobot's ``LiberoEnv`` evaluation (phase 3).
+
+    A run's episode ``i`` (its seed minus ``seed_base``, modulo the number of episodes) plays task
+    ``task_ids[i // episodes_per_task]`` from init state ``init_state_offset + i % episodes_per_task`` and
+    seeds the simulator with ``env_seed_start + i % episodes_per_task``: exactly the episode LeRobot's
+    ``lerobot-eval`` runs as episode ``j = i % episodes_per_task`` of that task (batch size 1, its default
+    seed 1000). Defaults are LeRobot's ``LiberoEnv`` config.
+    """
+
+    suite: str = "libero_10"
+    task_ids: list[int] = field(default_factory=lambda: [0])
+    episodes_per_task: int = 50
+    init_state_offset: int = 0
+    seed_base: int = 1000
+    env_seed_start: int = 1000
+    # Simulator cameras (observation keys) and the LeRobot feature keys they map to, in that order.
+    cameras: dict[str, str] = field(
+        default_factory=lambda: {
+            "agentview_image": "observation.images.camera1",
+            "robot0_eye_in_hand_image": "observation.images.camera2",
+        }
+    )
+    state_key: str = "observation.state"
+    observation_height: int = 360
+    observation_width: int = 360
+    control_mode: Literal["relative", "absolute"] = "relative"
+    # No-op steps after every reset so objects settle (LeRobot: num_steps_wait = 10, not counted).
+    num_steps_wait: int = 10
+    hard_reset: bool = True
+    # Pinned revision of the object meshes (Hub dataset ``lerobot/libero-assets``) LIBERO downloads.
+    assets_revision: str = "0b3ea86be5fe169d0fd036ae63d1070ec09e90f6"
+
+    def __post_init__(self) -> None:
+        if not self.task_ids or min(self.task_ids) < 0:
+            raise ConfigError(f"libero.task_ids must be non-empty task indices, got {self.task_ids}")
+        if len(set(self.task_ids)) != len(self.task_ids):
+            raise ConfigError(f"libero.task_ids contains duplicates: {self.task_ids}")
+        if self.episodes_per_task < 1 or self.init_state_offset < 0:
+            raise ConfigError("libero.episodes_per_task must be >= 1 and init_state_offset >= 0")
+        if min(self.observation_height, self.observation_width) < 8:
+            raise ConfigError("libero observation size must be >= 8 pixels")
+        if self.num_steps_wait < 0:
+            raise ConfigError(f"libero.num_steps_wait must be >= 0, got {self.num_steps_wait}")
+        if not self.cameras:
+            raise ConfigError("libero.cameras must map at least one simulator camera")
+        if len(set(self.cameras.values())) != len(self.cameras) or self.state_key in self.cameras.values():
+            raise ConfigError("libero.cameras and libero.state_key must map to distinct feature keys")
+
+    @property
+    def episodes(self) -> int:
+        return len(self.task_ids) * self.episodes_per_task
+
+
+@dataclass
 class EnvConfig:
     """Simulation environment. Defaults mirror LeRobot's ``PushtEnv`` config (checked by a unit test).
 
-    ``kind: metaworld`` (phase 3a) uses the ``metaworld`` section instead of the gym fields.
+    ``kind: metaworld`` (phase 3a) and ``kind: libero`` (phase 3) use their own sections instead of the gym
+    fields.
     """
 
-    kind: Literal["gym", "metaworld"] = "gym"
+    kind: Literal["gym", "metaworld", "libero"] = "gym"
     gym_id: str = "gym_pusht/PushT-v0"
     # Module that registers ``gym_id`` with gymnasium on import.
     package: str = "gym_pusht"
@@ -234,6 +296,7 @@ class EnvConfig:
     # zero action (Meta-World: actions are end-effector displacements).
     hold_action_key: str | None = "observation.state"
     metaworld: MetaWorldEnvConfig | None = None
+    libero: LiberoEnvConfig | None = None
 
     def __post_init__(self) -> None:
         if self.fps <= 0:
@@ -244,6 +307,8 @@ class EnvConfig:
             raise ConfigError(f"env.hold_action_key {self.hold_action_key!r} is not a mapped feature key")
         if self.kind == "metaworld" and self.metaworld is None:
             raise ConfigError("env.kind 'metaworld' needs an env.metaworld section")
+        if self.kind == "libero" and self.libero is None:
+            raise ConfigError("env.kind 'libero' needs an env.libero section")
 
 
 @dataclass
@@ -573,6 +638,7 @@ class RunSpec:
     # Per-run agent overrides (phase 3a, virtual time; give the run an explicit label):
     sync_actions_per_chunk: int | None = None  # executed actions per plan in sync mode
     image_transport: ImageTransportConfig | None = None  # camera images on the wire
+    start_mode: Literal["warm", "cold"] | None = None  # phase 3: first plan latency-free (warm) or not
 
     def __post_init__(self) -> None:
         if self.sync_actions_per_chunk is not None and self.sync_actions_per_chunk < 1:

@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import ctypes
+import ctypes.util
 import hashlib
 import json
 import logging
@@ -30,7 +32,7 @@ import time
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from kortyn.config import (
     AgentConfig,
@@ -76,6 +78,7 @@ class VirtualRunPlan:
     replay_run: str | None
     sync_actions_per_chunk: int | None = None
     image_transport: ImageTransportConfig | None = None
+    start_mode: Literal["warm", "cold"] | None = None
 
     @property
     def network(self) -> NetworkConfig:
@@ -88,6 +91,8 @@ class VirtualRunPlan:
             config = replace(config, sync_actions_per_chunk=self.sync_actions_per_chunk)
         if self.image_transport is not None:
             config = replace(config, image_transport=self.image_transport)
+        if self.start_mode is not None:
+            config = replace(config, start_mode=self.start_mode)
         return config
 
 
@@ -124,6 +129,7 @@ def select_virtual_plans(config: KortynConfig, profile: str, runs: list[str] | N
                 replay_run=(spec.replay_run or spec.scenario) if timing.latency == "replay" else None,
                 sync_actions_per_chunk=spec.sync_actions_per_chunk,
                 image_transport=spec.image_transport,
+                start_mode=spec.start_mode,
             )
         )
     return plans
@@ -149,6 +155,8 @@ def virtual_run_entry(config: KortynConfig, profile: str, plan: VirtualRunPlan) 
         entry["sync_actions_per_chunk"] = plan.sync_actions_per_chunk
     if plan.image_transport is not None:
         entry["image_transport"] = draccus.encode(plan.image_transport)
+    if plan.start_mode is not None:
+        entry["start_mode"] = plan.start_mode
     if plan.strategy_name is not None:
         entry["strategy"] = plan.strategy_name
         entry["strategy_settings"] = (plan.strategy or StrategyConfig()).to_dict()
@@ -174,29 +182,70 @@ class _WorkerState:
 
 
 _STATE: _WorkerState | None = None
+# Policies loaded in the parent before forking the workers (``share_model``): profile -> PolicyRunner.
+# The forked workers inherit the weights copy-on-write instead of loading a private copy each.
+_PRELOADED: dict[str, Any] = {}
+
+
+def _limit_threads(torch_threads: int) -> None:
+    threads = str(torch_threads)
+    for variable in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+        os.environ[variable] = threads
+    os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")  # forked workers: no tokenizer thread pools
+
+
+def _load_runner(config: KortynConfig, profile: str, torch_threads: int, device: str) -> Any:
+    from kortyn.checkpoint import ensure_checkpoint
+    from kortyn.policy_runner import PolicyRunner
+
+    return PolicyRunner(
+        ensure_checkpoint(config.brain.checkpoint),
+        config.profile(profile),
+        device=device,
+        torch_threads=torch_threads,
+    )
+
+
+def preload_policy(config: KortynConfig, profile: str, torch_threads: int, device: str) -> None:
+    """Load the policy of ``profile`` in this process, for workers forked afterwards (``share_model``)."""
+    if profile in _PRELOADED:
+        return
+    _limit_threads(torch_threads)
+    _PRELOADED[profile] = _load_runner(config, profile, torch_threads, device)
+    release_memory()
+
+
+def release_memory() -> bool:
+    """Return freed heap pages to the operating system (glibc ``malloc_trim``).
+
+    Loading a VLA leaves about 1 GB of freed but resident heap behind; workers are memory-bound, so they
+    trim after loading and after every seed. Returns whether a trim ran (False without glibc).
+    """
+    name = ctypes.util.find_library("c")
+    if name is None:
+        return False
+    try:
+        libc = ctypes.CDLL(name)
+        trim = libc.malloc_trim
+    except (OSError, AttributeError):
+        return False
+    trim(0)
+    return True
 
 
 def _init_worker(setup: WorkerSetup) -> None:
     """Load the policy, the environment and the timing models once per worker process."""
     global _STATE
-    threads = str(setup.torch_threads)
-    for variable in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
-        os.environ[variable] = threads
+    _limit_threads(setup.torch_threads)
     logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    from kortyn.checkpoint import ensure_checkpoint
-    from kortyn.policy_runner import PolicyRunner
     from kortyn.sim_env import make_env
     from kortyn.virtual_agent import LocalBrain, VirtualTimeAgent
     from kortyn.virtual_time import ReplayLog
 
     config = load_config(setup.config_path)
-    profile = config.profile(setup.profile)
-    runner = PolicyRunner(
-        ensure_checkpoint(config.brain.checkpoint),
-        profile,
-        device=setup.device,
-        torch_threads=setup.torch_threads,
-    )
+    runner = _PRELOADED.get(setup.profile)
+    if runner is None:
+        runner = _load_runner(config, setup.profile, setup.torch_threads, setup.device)
     compute = LocalBrain(runner)
     env = make_env(config.env)
     agents: dict[str, Any] = {}
@@ -216,6 +265,7 @@ def _init_worker(setup: WorkerSetup) -> None:
         )
     raw = dict(compute.spec.raw)
     _STATE = _WorkerState(agents=agents, plans={p.label: p for p in setup.plans}, brain_raw=raw, env=env)
+    release_memory()
 
 
 def timing_samplers(config: KortynConfig, timing: TimingConfig, profile: str) -> Any:
@@ -262,6 +312,7 @@ def _run_seed(seed: int, labels: list[str], profile: str) -> SeedResult:
         )
         outcome = _STATE.agents[label].run_episode(ctx, plan.strategy, network=plan.network)
         outcomes.append((label, outcome.episode.to_json(), [r.to_json() for r in outcome.requests]))
+    release_memory()
     return SeedResult(seed, _STATE.brain_raw, outcomes, time.perf_counter() - started)
 
 
@@ -296,6 +347,7 @@ class VirtualSuiteRunner:
         workers: int,
         torch_threads: int,
         stop_file: Path | None = None,
+        share_model: bool = False,
     ) -> None:
         self.config = config
         self.config_path = config_path
@@ -307,6 +359,7 @@ class VirtualSuiteRunner:
         self.workers = workers
         self.torch_threads = torch_threads
         self.stop_file = stop_file
+        self.share_model = share_model
         self.stopped = False
 
     def pending(self) -> dict[int, list[str]]:
@@ -341,7 +394,13 @@ class VirtualSuiteRunner:
             torch_threads=self.torch_threads,
             device=self.config.brain.device if self.config.brain.device != "auto" else "cpu",
         )
-        context = multiprocessing.get_context("spawn")
+        context: multiprocessing.context.BaseContext
+        if self.share_model:
+            # load once here, fork the workers: they share the weights copy-on-write (memory-bound hosts)
+            preload_policy(self.config, self.profile_name, self.torch_threads, setup.device)
+            context = multiprocessing.get_context("fork")
+        else:
+            context = multiprocessing.get_context("spawn")
         started = time.monotonic()
         finished = 0
         meta_written = False
@@ -436,6 +495,7 @@ class VirtualSuiteRunner:
             "seeds": [self.seeds[0], self.seeds[-1]],
             "workers": self.workers,
             "torch_threads": self.torch_threads,
+            "share_model": self.share_model,
             "host": host_info(),
             "git_commit": git_commit(),
             "started_utc": datetime.now(UTC).isoformat(timespec="seconds"),
@@ -498,6 +558,11 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="stop gracefully once this file exists (seeds in progress are finished and written)",
     )
+    parser.add_argument(
+        "--share-model",
+        action="store_true",
+        help="load the policy once and fork the workers (shared weights; Linux; for memory-bound hosts)",
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
     logging.basicConfig(
@@ -544,7 +609,16 @@ def main(argv: list[str] | None = None) -> int:
                 for plan in plans[profile]:
                     shutil.rmtree(results_dir / profile / plan.label, ignore_errors=True)
             runner = VirtualSuiteRunner(
-                config, config_path, profile, plans[profile], seeds, results_dir, workers, threads, stop_file
+                config,
+                config_path,
+                profile,
+                plans[profile],
+                seeds,
+                results_dir,
+                workers,
+                threads,
+                stop_file,
+                share_model=args.share_model,
             )
             runner.run()
             if runner.stopped:

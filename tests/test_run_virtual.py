@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -10,7 +11,7 @@ import pytest
 
 from kortyn.config import DEFAULT_BASE_CONFIG, ConfigError, RunSpec, load_config
 from kortyn.metrics import read_jsonl
-from kortyn.run_virtual import main, run_digest, select_virtual_plans
+from kortyn.run_virtual import main, release_memory, run_digest, select_virtual_plans
 
 PUSHT_IMAGE = (3, 96, 96)
 
@@ -148,6 +149,21 @@ def test_runs_are_reproducible_independent_of_worker_count_and_resumable(tmp_pat
 
 
 @pytest.mark.timeout(600)
+@pytest.mark.skipif(sys.platform != "linux", reason="forked workers: Linux only")
+def test_shared_model_workers_reproduce_spawned_workers_exactly(tmp_path, pusht_tiny_checkpoint):
+    """``--share-model`` loads the policy once and forks the workers; results are bit-identical."""
+    spawned, forked = tmp_path / "spawned", tmp_path / "forked"
+    config = write_config(tmp_path, pusht_tiny_checkpoint, spawned)
+    assert main(["--config", str(config), "--episodes", "2", "--log-level", "WARNING"]) == 0
+    arguments = ["--config", str(config), "--episodes", "2", "--results-dir", str(forked), "--share-model"]
+    assert main([*arguments, "--workers", "2", "--log-level", "WARNING"]) == 0
+    for run in ("modell__referenz_sync", "modell__gut", "modell__sehr_schlecht"):
+        assert run_digest(spawned / "kalibriert" / run) == run_digest(forked / "kalibriert" / run), run
+    meta = json.loads((forked / "kalibriert" / "run_meta.json").read_text())
+    assert meta["share_model"] is True
+
+
+@pytest.mark.timeout(600)
 def test_a_stop_file_ends_the_run_after_complete_seeds_and_the_run_resumes(tmp_path, pusht_tiny_checkpoint):
     straight, stopped = tmp_path / "straight", tmp_path / "stopped"
     config = write_config(tmp_path, pusht_tiny_checkpoint, straight)
@@ -281,3 +297,20 @@ def test_smolvla_experiment_configs_stand_still_when_starved():
                 assert plan.strategy_name == "halten"
                 assert plan.label == f"{plan.timing_name}__{plan.scenario.name}"
     assert tasks == {"push-v3", "drawer-close-v3", "coffee-push-v3"}
+
+
+def test_release_memory_trims_the_heap_or_reports_that_it_cannot() -> None:
+    import ctypes.util
+    import sys
+
+    trimmed = release_memory()
+    assert isinstance(trimmed, bool)
+    if sys.platform == "linux" and ctypes.util.find_library("c") is not None:
+        assert trimmed  # glibc: malloc_trim exists
+
+
+def test_release_memory_without_libc(monkeypatch: pytest.MonkeyPatch) -> None:
+    import ctypes.util
+
+    monkeypatch.setattr(ctypes.util, "find_library", lambda name: None)
+    assert release_memory() is False

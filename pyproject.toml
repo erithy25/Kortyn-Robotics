@@ -5,8 +5,9 @@ description = "Kortyn: robot policy offloaded to a network 'Brain', simulated ro
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    # LeRobot: policy classes, processor pipelines, PushT env extra, diffusion policy extra.
-    "lerobot[pusht,diffusion,smolvla,metaworld]==0.6.1",
+    # LeRobot: policy classes, processor pipelines, PushT env extra, diffusion policy extra, SmolVLA.
+    # The MuJoCo benchmarks live in the dependency groups `metaworld` (default) and `libero` below.
+    "lerobot[pusht,diffusion,smolvla]==0.6.1",
     "torch==2.11.0",
     "torchvision==0.26.0",
     "diffusers==0.39.0",
@@ -27,11 +28,8 @@ dependencies = [
     "numpy==2.2.6",
     "pyyaml==6.0.3",
     "matplotlib==3.11.2",
-    # Phase 3a: SmolVLA (transformers backbone) and Meta-World (MuJoCo) via the LeRobot extras above.
+    # Phase 3a: SmolVLA (transformers backbone) via the LeRobot extra above.
     "transformers==5.5.4",
-    "metaworld==3.0.0",
-    # metaworld 3.0.0 writes 11 weld parameters per equality constraint; MuJoCo >= 3.17 expects 12.
-    "mujoco==3.16.0",
 ]
 
 [project.scripts]
@@ -48,6 +46,18 @@ dev = [
     "ruff==0.17.2",
     "mypy==2.4.0",
     "types-PyYAML==6.0.12.20260906",
+]
+# Meta-World (phase 3a). Installed by default, so every phase-1 to phase-3a command runs unchanged.
+metaworld = [
+    "lerobot[metaworld]==0.6.1",
+    "metaworld==3.0.0",
+    # metaworld 3.0.0 writes 11 weld parameters per equality constraint; MuJoCo >= 3.17 expects 12.
+    "mujoco==3.16.0",
+]
+# LIBERO (phase 3). hf-libero requires MuJoCo < 3.9, which conflicts with the Meta-World pin above, so it
+# lives in its own environment:  UV_PROJECT_ENVIRONMENT=.venv-libero uv run --no-group metaworld --group libero …
+libero = [
+    "lerobot[libero]==0.6.1",
 ]
 
 [build-system]
@@ -66,6 +76,8 @@ environments = [
 # gym-pusht depends on the GUI build `opencv-python`; it only uses cv2.resize/drawMarker, which the
 # headless build provides. The never-true marker removes the requirement from the resolution.
 override-dependencies = ["opencv-python ; sys_platform == 'never'"]
+default-groups = ["dev", "metaworld"]
+conflicts = [[{ group = "metaworld" }, { group = "libero" }]]
 
 [tool.uv.sources]
 # Linux: CPU-only PyTorch wheels (avoids ~3 GB of CUDA libraries). macOS: PyPI wheels with MPS support.
@@ -120,6 +132,9 @@ module = [
     "matplotlib.*",
     "cv2.*",
     "torchvision.*",
+    "libero.*",
+    "robosuite.*",
+    "mujoco.*",
 ]
 ignore_missing_imports = true
 follow_untyped_imports = false
