@@ -1,0 +1,50 @@
+# Phase 4, step 4: one Brain, many LIBERO robots - stage 1 (queue simulation) for the capacity with the 3-pp /
+# 1-% definition (reports/phase4_preregistration.md, section 7.3). Same model as phase 3 (agent, episode
+# lengths, batching profiles, schedulers, network, seed: common random numbers with phase 3), but strategies
+# a, b, d, e only and the RTX 3060 Ti with and without the RTC overhead.
+#
+#   python -m kortyn.fleet --config kortyn/experiments/phase4/fleet.yaml --scan --scan-replications 5 \
+#       --scan-stop-on-rejection --gpus rtx3060ti_schaetzung --out results/phase4/fleet/scan.jsonl
+#   python -m kortyn.fleet_capacity --stage1 results/phase4/fleet/scan.jsonl \
+#       --curve rtx3060ti_schaetzung=ohne_rtc --curve rtx3060ti_schaetzung_rtc=mit_rtc \
+#       --out results/phase4/fleet/capacity.json
+description: "Phase 4: ein Brain, viele LIBERO-Roboter (SmolVLA, Kapazität mit 3-pp-Toleranz, ohne/mit RTC)"
+
+agent:                          # as phase 3 (must match the rollout agent)
+  fps: 20.0
+  actions_per_chunk: 50
+  refill_threshold: 24
+  request_timeout_s: 10.0
+  client_overhead_ms: 1.0
+  transport_overhead_ms: 5.0
+
+episode_lengths:
+  paths: [results/phase3/libero/smolvla_libero/fest_0ms/episodes.jsonl]
+
+gpus:
+  rtx3060ti_schaetzung: {s1_ms: 220.0}   # estimate (no measurement file from docs/benchmark_rtx3060ti.md)
+
+batching:
+  realistisch: {beta: 0.15}
+  optimistisch: {beta: 0.05}
+  pessimistisch: {beta: 0.45}
+  kein_gewinn: {beta: 1.0}
+
+strategies:
+  a: {scheduler: fifo}
+  b: {scheduler: fifo_batch, max_batch: 16, max_wait_ms: 25.0}
+  d: {scheduler: edf_batch, max_batch: 16}
+  e: {scheduler: edf_batch, max_batch: 16, admission: true, max_utilization: 0.9}
+
+networks:
+  buero_wlan: {scenario: buero_wlan, margin_ms: 15.0}
+
+fleet_sizes: [1, 2, 4, 8, 16, 32]   # grid mode only; the capacity uses the scan (every size, see above)
+replications: 5
+start_spread_s: 10.0
+window_start_s: 30.0
+horizon_s: 630.0
+service_cv: 0.05
+batch_limit: 32
+seed: 3000
+results_path: results/phase4/fleet/stage1.jsonl

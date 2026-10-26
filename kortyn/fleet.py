@@ -64,6 +64,7 @@ from kortyn.virtual_time import (
     stream_rng,
     stream_seed,
 )
+from kortyn.wlan import SharedMedium, SharedMediumLink
 
 LOG = logging.getLogger("kortyn.fleet")
 
@@ -177,14 +178,25 @@ class StrategyConfig:
 
 @dataclass
 class NetworkChoice:
-    """A network scenario (``kortyn/experiments/<name>.yaml``) and the Brain's return-trip margin for it."""
+    """A network scenario (``kortyn/experiments/<name>.yaml``) and the Brain's return-trip margin for it.
+
+    ``wlan_mbit_s`` (phase 4) adds one radio medium shared by all robots of a run (:mod:`kortyn.wlan`): every
+    request occupies it for ``request_bytes * 8 / rate``, every response for ``response_bytes * 8 / rate``.
+    """
 
     scenario: str = "buero_wlan"
     margin_ms: float = 15.0
+    wlan_mbit_s: float | None = None
+    request_bytes: int = 0
+    response_bytes: int = 0
 
     def __post_init__(self) -> None:
         if self.margin_ms < 0:
             raise ConfigError("network margin_ms must be >= 0")
+        if self.request_bytes < 0 or self.response_bytes < 0:
+            raise ConfigError("network payload sizes must be >= 0 bytes")
+        if self.wlan_mbit_s is not None and (self.wlan_mbit_s <= 0 or self.request_bytes <= 0):
+            raise ConfigError("a shared WLAN needs wlan_mbit_s > 0 and the request payload in bytes")
 
 
 @dataclass
@@ -428,6 +440,8 @@ class TimingRobot:
         stats: RobotStats,
         horizon_s: float,
         compute: _ZeroCompute,
+        medium: SharedMedium | None = None,
+        payload: tuple[int, int] = (0, 0),
     ) -> None:
         self.index = index
         self._sim = sim
@@ -440,6 +454,8 @@ class TimingRobot:
         self._horizon_s = horizon_s
         self._timing = _timing(agent)
         self._compute = compute
+        self._medium = medium
+        self._payload = payload  # (request, response) bytes on the shared medium
 
     def run(self) -> Generator[Command, Any, None]:
         yield WakeAt(self.stats.start_time, Priority.TICK)
@@ -458,7 +474,11 @@ class TimingRobot:
         threshold = agent.refill_threshold
         sim = self._sim
         episode_seed = stream_seed("fleet-link", self._seed, self.index, episode)
-        link = VirtualLink(sim, self._network, episode_seed % (2**31))
+        link = (
+            VirtualLink(sim, self._network, episode_seed % (2**31))
+            if self._medium is None
+            else SharedMediumLink(sim, self._network, episode_seed % (2**31), self._medium, *self._payload)
+        )
         channel = ModelChannel(sim, self._brain, link, self._timing, episode_seed, 0, f"robot-{self.index}")
         t0 = sim.now
         channel.arm()
@@ -566,6 +586,7 @@ class RunResult:
     busy_share: float
     robots: list[RobotSummary]
     wall_s: float
+    medium_busy_share: float | None = None  # shared WLAN (phase 4): share of the horizon the medium was busy
 
     def to_json(self) -> dict[str, Any]:
         data = asdict(self)
@@ -611,6 +632,8 @@ def run_fleet(config: FleetSimConfig, key: RunKey, lengths: Sequence[int]) -> Ru
         else None
     )
     compute = _ZeroCompute(agent.actions_per_chunk)
+    medium = None if network.wlan_mbit_s is None else SharedMedium(network.wlan_mbit_s)
+    payload = (network.request_bytes, network.response_bytes)
     stats: list[RobotStats] = []
     admitted = 0
     run_seed = stream_seed("fleet-run", config.seed, key.network, key.robots, key.replication) % (2**31)
@@ -632,6 +655,8 @@ def run_fleet(config: FleetSimConfig, key: RunKey, lengths: Sequence[int]) -> Ru
             robot_stats,
             config.horizon_s,
             compute,
+            medium,
+            payload,
         )
         sim.process(robot.run())
     sim.run(until=config.horizon_s)
@@ -686,6 +711,7 @@ def run_fleet(config: FleetSimConfig, key: RunKey, lengths: Sequence[int]) -> Ru
         busy_share=counters.busy_ms / (1000.0 * config.horizon_s),
         robots=summaries,
         wall_s=time.perf_counter() - started,
+        medium_busy_share=None if medium is None else medium.busy_s / config.horizon_s,
     )
 
 
