@@ -15,7 +15,7 @@ experiment:
         - {scenario: gut, timing: fest_500ms, strategy: rtc, label: rtc_500ms}
         - {scenario: gut, timing: fest_750ms, strategy: rtc, label: rtc_750ms}
         - {scenario: gut, timing: fest_1000ms, strategy: rtc, label: rtc_1000ms}
-        - {scenario: gut, timing: fest_1250ms, strategy: rtc, label: rtc_1250ms}
+        # rtc_1250ms dropped: pre-registered cut 1 (reports/phase4.md, deviations)
 
 profiles:
   smolvla_libero_rtc:
