@@ -119,3 +119,61 @@ def test_analysis_config_validation(tmp_path: Path) -> None:
     loaded = p4.load_analysis_config(path)
     assert loaded.bootstrap == 300
     assert loaded.conditions["a"][0].run == "r"
+
+
+def test_validation_compares_rollouts_with_the_stage1_prediction(tmp_path: Path) -> None:
+    case = tmp_path / "validation" / "d_n2"
+    case.mkdir(parents=True)
+    meta = {"network": "buero_wlan", "gpu": "g", "batching": "b", "strategy": "d", "robots": 2}
+    (case / "meta.json").write_text(json.dumps(meta), encoding="utf-8")
+    episodes, requests = [], []
+    for index, seed in enumerate((1000, 1050, 1001, 1051)):
+        robot, robot_episode = index % 2, index // 2
+        episodes.append(
+            {
+                "seed": seed,
+                "robot": robot,
+                "robot_episode": robot_episode,
+                "counted": True,
+                "success": index < 2,
+            }
+        )
+        for request in range(3):
+            requests.append(
+                {
+                    "robot": robot,
+                    "robot_episode": robot_episode,
+                    "t_obs_s": request * 1.25,
+                    "t_resp_s": request * 1.25 + 0.22,
+                }
+            )
+    episodes.append({"seed": 1002, "robot": 0, "robot_episode": 2, "counted": False, "success": True})
+    (case / "episodes.jsonl").write_text("\n".join(json.dumps(e) for e in episodes) + "\n", encoding="utf-8")
+    (case / "requests.jsonl").write_text("\n".join(json.dumps(r) for r in requests) + "\n", encoding="utf-8")
+    stage1 = tmp_path / "scan.jsonl"
+    record = {
+        "key": {**meta, "replication": 0},
+        "robots": [{"admitted": True, "histogram": {"22": 10}}, {"admitted": True, "histogram": {"42": 10}}],
+    }
+    stage1.write_text(json.dumps(record) + "\n", encoding="utf-8")
+    curve = dc.DoseCurve(
+        spec=dc.CurveSpec(), tasks={8: dc.TaskCurve(0.6, 500.0, 3.0), 0: dc.TaskCurve(0.4, 500.0, 3.0)}
+    )
+    rows = p4.validation_episodes(case, curve, stage1, LIBERO)
+    assert len(rows) == 4  # the uncounted episode is left out
+    first = rows[0]  # seed 1000 = task 8, robot 0: stage-1 latency bin 22 -> 225 ms -> 250 ms
+    assert first.predicted == pytest.approx(float(curve.task_value(8, 225.0)))
+    assert first.predicted_own == pytest.approx(float(curve.task_value(8, 220.0)))
+    config = p4.AnalysisConfig(
+        conditions={"mit_rtc": [p4.LevelSpec(0.0, "x")]},
+        validation=p4.ValidationSpec(stage1=str(stage1), results_dir=str(tmp_path / "validation"), draws=500),
+    )
+    document = p4.validation_document(config, curve)
+    result = document["cases"]["d_n2"]
+    assert result["episodes"] == 4
+    assert result["measured"] == 0.5
+    assert result["interval"][0] <= result["difference"] <= result["interval"][1]
+    with pytest.raises(StepError, match="no run"):
+        p4.stage1_histograms(stage1, {**meta, "robots": 3, "replication": 0})
+    with pytest.raises(ConfigError):
+        p4.ValidationSpec(confidence=1.0)

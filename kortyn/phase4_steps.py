@@ -8,9 +8,13 @@
 * ``retest``: the phase-3 validation episodes predicted again with the new curve without RTC (each episode:
   the curve of its task over its own measured latencies, and over the stage-1 latencies of its robot), the
   pooled bias against the phase-3 rule on the same episodes (cluster bootstrap over seeds).
+* ``validate``: the phase-4 fleet rollouts with RTC (``kortyn.fleet_rollout``) against the capacity
+  prediction: per counted episode the RTC curve of its task over the stage-1 latencies of its robot
+  (replication 0 of the scan); per case the Bonferroni interval of measured - predicted (episode bootstrap).
 
     python -m kortyn.phase4_steps curves --config kortyn/experiments/phase4/analysis.yaml
     python -m kortyn.phase4_steps retest --config kortyn/experiments/phase4/analysis.yaml
+    python -m kortyn.phase4_steps validate --config kortyn/experiments/phase4/analysis.yaml
 """
 
 from __future__ import annotations
@@ -66,6 +70,22 @@ class RetestConfig:
 
 
 @dataclass
+class ValidationSpec:
+    """The phase-4 fleet rollouts (stage 3) and the stage-1 scan they are predicted from."""
+
+    stage1: str = "results/phase4/fleet/scan_rtc.jsonl"
+    results_dir: str = "results/phase4/validation"
+    condition: str = "mit_rtc"
+    confidence: float = 0.975  # Bonferroni over the two cases
+    draws: int = 10_000
+    output: str = "results/phase4/validation/evaluation.json"
+
+    def __post_init__(self) -> None:
+        if not 0.5 < self.confidence < 1.0 or self.draws < 100:
+            raise ConfigError("validation needs a confidence in (0.5, 1) and at least 100 draws")
+
+
+@dataclass
 class AnalysisConfig:
     experiment: str = "kortyn/experiments/phase3/libero_main.yaml"  # episode layout: task of every seed
     bootstrap: int = 2000
@@ -80,6 +100,7 @@ class AnalysisConfig:
     conditions: dict[str, list[LevelSpec]] = field(default_factory=dict)
     reference_sync: str = "results/phase3/libero/smolvla_libero/sync25"
     retest: RetestConfig = field(default_factory=RetestConfig)
+    validation: ValidationSpec = field(default_factory=ValidationSpec)
     output: str = "results/phase4/curves.json"
     retest_output: str = "results/phase4/retest.json"
 
@@ -392,10 +413,114 @@ def retest_document(config: AnalysisConfig, predictions: Sequence[EpisodePredict
     }
 
 
+# --------------------------------------------------------------------------------------------- validation
+@dataclass(frozen=True)
+class ValidationEpisode:
+    case: str
+    seed: int
+    robot: int
+    measured: float
+    predicted: float  # task curve over the stage-1 latencies of the robot (replication 0)
+    predicted_own: float  # task curve over the episode's own measured latencies (diagnosis)
+
+
+def stage1_histograms(path: Path, key: Mapping[str, Any]) -> list[tuple[list[float], list[float]] | None]:
+    """Latency histogram of every robot of one stage-1 run (``None``: rejected or silent robot)."""
+    from kortyn.fleet_predict import histogram_latencies
+    from kortyn.metrics import read_jsonl
+
+    for record in read_jsonl(path):
+        if all(record["key"][name] == value for name, value in key.items()):
+            return [
+                histogram_latencies(robot["histogram"]) if robot["admitted"] and robot["histogram"] else None
+                for robot in record["robots"]
+            ]
+    raise StepError(f"stage 1 ({path}) has no run {dict(key)}")
+
+
+def validation_episodes(
+    case_dir: Path, curve: dc.DoseCurve, stage1: Path, libero: LiberoEnvConfig
+) -> list[ValidationEpisode]:
+    from kortyn.fleet_rollout import episode_latencies
+    from kortyn.metrics import read_jsonl
+
+    meta = json.loads((case_dir / "meta.json").read_text(encoding="utf-8"))
+    key = {
+        "network": meta["network"],
+        "gpu": meta["gpu"],
+        "batching": meta["batching"],
+        "strategy": meta["strategy"],
+        "robots": int(meta["robots"]),
+        "replication": 0,
+    }
+    histograms = stage1_histograms(stage1, key)
+    latencies = episode_latencies(case_dir / "requests.jsonl")
+    episodes = []
+    for episode in read_jsonl(case_dir / "episodes.jsonl"):
+        if not episode["counted"]:
+            continue
+        robot, seed = int(episode["robot"]), int(episode["seed"])
+        task = episode_slot(libero, seed)[0]
+        histogram = histograms[robot]
+        own = latencies.get((robot, int(episode["robot_episode"])), [])
+        if histogram is None or not own:
+            raise StepError(f"{case_dir.name}: robot {robot} has no latencies to predict from")
+        episodes.append(
+            ValidationEpisode(
+                case=case_dir.name,
+                seed=seed,
+                robot=robot,
+                measured=float(bool(episode["success"])),
+                predicted=curve.mean_over(histogram[0], histogram[1], task=task),
+                predicted_own=curve.mean_over(own, [1.0] * len(own), task=task),
+            )
+        )
+    return episodes
+
+
+def validation_document(config: AnalysisConfig, curve: dc.DoseCurve) -> dict[str, Any]:
+    from kortyn.fleet_predict import paired_difference_interval
+
+    spec = config.validation
+    libero = libero_layout(config.experiment)
+    root = Path(spec.results_dir)
+    cases: dict[str, Any] = {}
+    for case_dir in sorted(p for p in root.iterdir() if (p / "meta.json").exists()):
+        episodes = validation_episodes(case_dir, curve, Path(spec.stage1), libero)
+        if not episodes:
+            raise StepError(f"{case_dir.name}: no counted episode")
+        measured = [e.measured for e in episodes]
+        difference, interval = paired_difference_interval(
+            measured, [e.predicted for e in episodes], spec.confidence, spec.draws, config.seed
+        )
+        own, own_interval = paired_difference_interval(
+            measured, [e.predicted_own for e in episodes], spec.confidence, spec.draws, config.seed
+        )
+        cases[case_dir.name] = {
+            "episodes": len(episodes),
+            "measured": float(np.mean(measured)),
+            "predicted": float(np.mean([e.predicted for e in episodes])),
+            "difference": difference,
+            "interval": list(interval),
+            "passes": interval[0] <= 0.0 <= interval[1],
+            "predicted_own": float(np.mean([e.predicted_own for e in episodes])),
+            "difference_own": own,
+            "interval_own": list(own_interval),
+        }
+    if not cases:
+        raise StepError(f"no validation case in {root}")
+    return {
+        "condition": spec.condition,
+        "confidence": spec.confidence,
+        "cases": cases,
+        "passes": all(case["passes"] for case in cases.values()),
+    }
+
+
 # --------------------------------------------------------------------------------------------- CLI
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Phase-4 evaluation steps.")
-    parser.add_argument("step", choices=["curves", "retest"])
+    parser.add_argument("step", choices=["curves", "retest", "validate"])
     parser.add_argument("--config", default="kortyn/experiments/phase4/analysis.yaml")
     parser.add_argument(
         "--conditions", default=None, help="comma-separated condition names (default: all configured)"
@@ -429,6 +554,21 @@ def main(argv: list[str] | None = None) -> int:
             if "rtc_effect" in document:
                 effect = document["rtc_effect"]
                 LOG.info("H1: %s, H2: %s", effect["h1"]["verdict"], effect["h2"]["verdict"])
+        elif args.step == "validate":
+            libero = libero_layout(config.experiment)
+            dose = load_condition(config.conditions[config.validation.condition], libero)
+            document = validation_document(config, dc.fit_dose_curve(dose, config.spec))
+            out = Path(config.validation.output)
+            for name, case in document["cases"].items():
+                LOG.info(
+                    "%s: measured %.3f, predicted %.3f, difference %+.3f [%+.3f, %+.3f] -> %s",
+                    name,
+                    case["measured"],
+                    case["predicted"],
+                    case["difference"],
+                    *case["interval"],
+                    "pass" if case["passes"] else "FAIL",
+                )
         else:
             libero = libero_layout(config.experiment)
             dose = load_condition(config.conditions[config.without], libero)
