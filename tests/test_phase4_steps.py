@@ -226,3 +226,33 @@ def test_sensitivity_pools_the_phase3_levels(monkeypatch: pytest.MonkeyPatch) ->
         assert document[name]["retest_verdict"] in ("verschwunden", "verkleinert", "nicht erklärt")
     with pytest.raises(StepError):
         p4.sensitivity_document(p4.AnalysisConfig(conditions=config.conditions))
+
+
+def test_fresh_process_runs_are_paired_with_the_dose_response(tmp_path: Path) -> None:
+    rng = np.random.default_rng(5)
+    reference = {s: bool(rng.random() < 0.4) for s in range(1000, 1050)}
+    stream_a = write_run(tmp_path / "s0", {s: reference[s] for s in range(1000, 1025)})
+    stream_b = write_run(tmp_path / "s1", {s: False for s in range(1025, 1050)})
+    block = write_run(tmp_path / "block", {**reference, **{s: True for s in range(1050, 1100)}})
+    config = p4.AnalysisConfig(
+        conditions={"ohne_rtc": [p4.LevelSpec(0.0, "x")]},
+        fresh=p4.FreshSpec(runs=[str(stream_a), str(stream_b)], compare={"block_a": str(block)}),
+    )
+    document = p4.fresh_document(config)
+    assert document["episodes"] == 50
+    assert document["seeds"] == [1000, 1049]
+    comparison = document["comparisons"]["block_a"]
+    assert comparison["pairs"] == 50  # only the seeds of the fresh runs
+    expected_reference = np.mean([reference[s] for s in range(1000, 1050)])
+    expected_fresh = np.mean([reference[s] for s in range(1000, 1025)] + [False] * 25)
+    assert comparison["rate_a"] == pytest.approx(expected_reference)
+    assert comparison["rate_b"] == pytest.approx(expected_fresh)
+    assert comparison["difference"] == pytest.approx(expected_fresh - expected_reference)
+    assert comparison["only_b"] == 0  # the fresh runs never succeed where the reference failed
+    twice = p4.AnalysisConfig(
+        conditions=config.conditions, fresh=p4.FreshSpec(runs=[str(stream_a), str(stream_a)])
+    )
+    with pytest.raises(StepError, match="more than one"):
+        p4.fresh_document(twice)
+    with pytest.raises(StepError, match="no fresh"):
+        p4.fresh_document(p4.AnalysisConfig(conditions=config.conditions))

@@ -86,6 +86,19 @@ class ValidationSpec:
 
 
 @dataclass
+class FreshSpec:
+    """Supplement (not pre-registered): one level, every episode in a fresh process (``libero_fresh.yaml``).
+
+    ``runs`` are the run directories of the independent streams (merged; a seed may appear only once),
+    ``compare`` names the dose-response runs of the same level it is paired with, per seed.
+    """
+
+    runs: list[str] = field(default_factory=list)
+    compare: dict[str, str] = field(default_factory=dict)
+    output: str = "results/phase4/fresh.json"
+
+
+@dataclass
 class AnalysisConfig:
     experiment: str = "kortyn/experiments/phase3/libero_main.yaml"  # episode layout: task of every seed
     bootstrap: int = 2000
@@ -107,6 +120,7 @@ class AnalysisConfig:
     # condition without RTC; reported next to the pre-registered curve (R0 kept them out of it).
     sensitivity_phase3: list[LevelSpec] = field(default_factory=list)
     sensitivity_output: str = "results/phase4/sensitivity.json"
+    fresh: FreshSpec = field(default_factory=FreshSpec)
 
     def __post_init__(self) -> None:
         if self.bootstrap < 100 or not 0 < self.tolerance < 1:
@@ -457,6 +471,32 @@ def sensitivity_document(config: AnalysisConfig) -> dict[str, Any]:
     return document
 
 
+def fresh_document(config: AnalysisConfig) -> dict[str, Any]:
+    """Supplement: success with one episode per fresh process against the same seeds in dose-response runs.
+
+    ``difference`` in every comparison is fresh minus reference (paired over the common seeds).
+    """
+    spec = config.fresh
+    if not spec.runs:
+        raise StepError("the analysis config lists no fresh-process runs")
+    fresh: dict[int, bool] = {}
+    for run in spec.runs:
+        for seed, success in successes(load_episodes(Path(run))).items():
+            if seed in fresh:
+                raise StepError(f"seed {seed} appears in more than one fresh-process run")
+            fresh[seed] = success
+    comparisons = {
+        label: asdict(paired_comparison(successes(load_episodes(Path(run))), fresh, seed=config.seed))
+        for label, run in spec.compare.items()
+    }
+    return {
+        "episodes": len(fresh),
+        "seeds": [min(fresh), max(fresh)],
+        "success": float(np.mean(list(fresh.values()))),
+        "comparisons": comparisons,
+    }
+
+
 # --------------------------------------------------------------------------------------------- validation
 @dataclass(frozen=True)
 class ValidationEpisode:
@@ -564,7 +604,7 @@ def validation_document(config: AnalysisConfig, curve: dc.DoseCurve) -> dict[str
 # --------------------------------------------------------------------------------------------- CLI
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Phase-4 evaluation steps.")
-    parser.add_argument("step", choices=["curves", "retest", "validate", "sensitivity"])
+    parser.add_argument("step", choices=["curves", "retest", "validate", "sensitivity", "fresh"])
     parser.add_argument("--config", default="kortyn/experiments/phase4/analysis.yaml")
     parser.add_argument(
         "--conditions", default=None, help="comma-separated condition names (default: all configured)"
@@ -607,6 +647,19 @@ def main(argv: list[str] | None = None) -> int:
                     name,
                     document[name]["lstar_ms"],
                     100 * document[name]["retest_bias"],
+                )
+        elif args.step == "fresh":
+            document = fresh_document(config)
+            out = Path(config.fresh.output)
+            for label, comparison in document["comparisons"].items():
+                LOG.info(
+                    "fresh %.3f vs %s %.3f on %d seeds: %+.3f, McNemar p %.3f",
+                    comparison["rate_b"],
+                    label,
+                    comparison["rate_a"],
+                    comparison["pairs"],
+                    comparison["difference"],
+                    comparison["p_value"],
                 )
         elif args.step == "validate":
             libero = libero_layout(config.experiment)

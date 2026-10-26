@@ -1,0 +1,14 @@
+# Phase 4, supplement (not pre-registered; reports/phase4.md): does the order of the dose-response runs shift
+# the success rate? In block A every seed played all eight levels in a row in one LIBERO process, and LIBERO
+# carries simulator state from one episode to the next (R0). Here task 8 (seeds 1000-1049) runs at 500 ms with
+# every episode in a fresh process: one run_virtual call per seed, four independent streams, same code state as
+# block A. Compared per seed with block A (and phase 3) at 500 ms. Run in the LIBERO environment:
+#   for s in $(seq 1000 1049); do python -m kortyn.run_virtual --config kortyn/experiments/phase4/libero_fresh.yaml \
+#       --seed-start $s --episodes 1 --workers 1 --results-dir results/phase4/fresh/stream$((s % 4)); done
+extends: libero_dose.yaml
+experiment:
+  results_dir: results/phase4/fresh
+  suites:
+    - profile: smolvla_libero
+      runs:
+        - {scenario: gut, timing: fest_500ms, strategy: halten, label: fest_500ms}

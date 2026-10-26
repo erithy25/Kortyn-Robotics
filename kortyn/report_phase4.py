@@ -160,6 +160,8 @@ class Inputs:
     rtc: dict[str, Any] | None
     curves: dict[str, Any] | None
     retest: dict[str, Any] | None
+    sensitivity: dict[str, Any] | None
+    fresh: dict[str, Any] | None
     capacity: dict[str, Any] | None
     wlan: dict[str, Any] | None
     validation: dict[str, Any] | None
@@ -176,6 +178,8 @@ def load_inputs(args: argparse.Namespace) -> Inputs:
         rtc=load_json(Path(args.rtc_overhead)),
         curves=load_json(Path(analysis.output)),
         retest=load_json(Path(analysis.retest_output)),
+        sensitivity=load_json(Path(analysis.sensitivity_output)),
+        fresh=load_json(Path(analysis.fresh.output)),
         capacity=load_json(Path(args.capacity)),
         wlan=load_json(Path(args.wlan_capacity)),
         validation=load_json(Path(analysis.validation.output)),
@@ -427,6 +431,79 @@ def curves_section(curves: Mapping[str, Any], names: Sequence[str]) -> list[str]
             ],
         )
     return lines
+
+
+def sensitivity_section(sensitivity: Mapping[str, Any]) -> list[str]:
+    """Supplement: the curve without RTC with and without the pooled phase-3 levels."""
+    names = {"vorab": "präregistriert (nur Phase 4)", "gepoolt": "mit Phase-3-Stufen gepoolt"}
+    rows = []
+    for key, label in names.items():
+        entry = sensitivity[key]
+        curve = entry["curve"]
+        rows.append(
+            [
+                label,
+                ", ".join(f"{task}: {family}" for task, family in sorted(entry["families"].items())),
+                f"{'≥ ' if entry['censored'] else ''}{ms(float(entry['lstar_ms']))}",
+                pct(float(entry["success_0ms"])),
+                " / ".join(pct(float(curve[x])) for x in ("250.0", "500.0", "750.0")),
+                f"{pp(float(entry['retest_bias']))} {interval(entry['retest_interval'])}",
+                str(entry["retest_verdict"]),
+            ]
+        )
+    levels = ", ".join(ms(float(level["latency_ms"])) for level in sensitivity["phase3_levels"])
+    return [
+        f"Ergänzung (nicht präregistriert): Die Phase-3-Episoden der wieder gemessenen Stufen ({levels}) "
+        "gepoolt in die Kurve ohne RTC; Punktschätzung mit derselben Anpassungsregel.",
+        "",
+        *table(
+            [
+                "Kurve ohne RTC",
+                "Familie je Aufgabe",
+                "L*",
+                "Erfolg bei 0 ms",
+                "250 / 500 / 750 ms",
+                "Re-Test-Bias [95-%-KI]",
+                "Urteil",
+            ],
+            rows,
+        ),
+    ]
+
+
+def fresh_section(fresh: Mapping[str, Any]) -> list[str]:
+    """Supplement: one episode per fresh process against the dose-response runs of the same level."""
+    names = {"block_a": "Block A (alle Stufen eines Seeds nacheinander)", "phase3": "Phase 3"}
+    rows = [
+        [
+            names.get(label, label),
+            str(comparison["pairs"]),
+            pct(float(comparison["rate_a"])),
+            pct(float(comparison["rate_b"])),
+            f"{pp(float(comparison['difference']), 0)} {interval(comparison['interval'], 0)}",
+            f"{comparison['only_a']} / {comparison['only_b']}",
+            p_text(float(comparison["p_value"])),
+        ]
+        for label, comparison in fresh["comparisons"].items()
+    ]
+    return [
+        f"Ergänzung (nicht präregistriert): Seeds {fresh['seeds'][0]}–{fresh['seeds'][1]} bei 500 ms, jede "
+        f"Episode in einem frischen Prozess ({fresh['episodes']} Episoden, "
+        f"Erfolg {pct(float(fresh['success']))}).",
+        "",
+        *table(
+            [
+                "Vergleich",
+                "Paare",
+                "Referenz",
+                "frischer Prozess",
+                "Differenz [95-%-KI]",
+                "nur Referenz / nur frisch",
+                "McNemar p",
+            ],
+            rows,
+        ),
+    ]
 
 
 def retest_section(retest: Mapping[str, Any]) -> list[str]:
@@ -1238,6 +1315,15 @@ def build(inputs: Inputs, out_dir: Path) -> list[str]:
         lines += ["![Dosis-Wirkung](phase4_kurven.png)", ""]
     if inputs.retest is not None:
         lines += ["### Re-Test des Phase-3-Validierungsbias", "", *retest_section(inputs.retest), ""]
+    if inputs.fresh is not None:
+        lines += ["### Reihenfolge der Läufe: frische Prozesse", "", *fresh_section(inputs.fresh), ""]
+    if inputs.sensitivity is not None:
+        lines += [
+            "### Sensitivität: Phase-3-Stufen gepoolt",
+            "",
+            *sensitivity_section(inputs.sensitivity),
+            "",
+        ]
     if inputs.capacity is not None:
         lines += ["## Schritt 4: Kapazität", "", *capacity_section(inputs.capacity, inputs.fleet, names), ""]
         figure_capacity(inputs.capacity, inputs.fleet, names, out_dir / "phase4_kapazitaet.png")

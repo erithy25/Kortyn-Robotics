@@ -244,6 +244,45 @@ def retest_document() -> dict[str, Any]:
     }
 
 
+def fresh_document() -> dict[str, Any]:
+    comparison = {
+        "pairs": 50,
+        "rate_a": 0.44,
+        "rate_b": 0.3,
+        "only_a": 12,
+        "only_b": 5,
+        "difference": -0.14,
+        "interval": [-0.28, 0.0],
+        "p_value": 0.14,
+    }
+    return {
+        "episodes": 50,
+        "seeds": [1000, 1049],
+        "success": 0.3,
+        "comparisons": {"block_a": comparison, "phase3": {**comparison, "rate_a": 0.26, "difference": 0.04}},
+    }
+
+
+def sensitivity_document() -> dict[str, Any]:
+    entry = {
+        "families": {"0": "loglogistic", "8": "loglogistic"},
+        "lstar_ms": 200.0,
+        "censored": False,
+        "success_0ms": 0.45,
+        "success_at_lstar": 0.44,
+        "curve": {"0.0": 0.45, "250.0": 0.42, "300.0": 0.39, "500.0": 0.27, "750.0": 0.17, "1000.0": 0.05},
+        "retest_bias": -0.196,
+        "retest_interval": [-0.268, -0.117],
+        "retest_verdict": "nicht erklärt",
+    }
+    return {
+        "phase3_levels": [{"latency_ms": 0.0, "run": "x"}, {"latency_ms": 500.0, "run": "y"}],
+        "levels": [],
+        "vorab": entry,
+        "gepoolt": {**entry, "lstar_ms": 250.0, "retest_bias": -0.17},
+    }
+
+
 @pytest.fixture
 def inputs(tmp_path: Path) -> rp.Inputs:
     curves, sync = curves_document(tmp_path)
@@ -261,6 +300,8 @@ def inputs(tmp_path: Path) -> rp.Inputs:
         rtc=rtc_document(),
         curves=curves,
         retest=retest_document(),
+        sensitivity=sensitivity_document(),
+        fresh=fresh_document(),
         capacity=capacity,
         wlan=wlan,
         validation=validation_document(),
@@ -276,6 +317,8 @@ def test_build_writes_every_section_and_figure(inputs: rp.Inputs, tmp_path: Path
         "## Schritt 2",
         "## Schritt 3",
         "### Re-Test",
+        "### Sensitivität",
+        "### Reihenfolge der Läufe",
         "## Schritt 4",
         "### WLAN",
         "### Validierung",
@@ -300,6 +343,8 @@ def test_build_skips_missing_inputs(inputs: rp.Inputs, tmp_path: Path) -> None:
         rtc=None,
         curves=None,
         retest=None,
+        sensitivity=None,
+        fresh=None,
         capacity=None,
         wlan=inputs.wlan,
         validation=None,

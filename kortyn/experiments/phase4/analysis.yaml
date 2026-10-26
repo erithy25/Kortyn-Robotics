@@ -48,3 +48,15 @@ sensitivity_phase3:
   - {latency_ms: 1000, run: results/phase3/libero/smolvla_libero/fest_1000ms}
   - {latency_ms: 1250, run: results/phase3/libero/smolvla_libero/fest_1250ms}
 sensitivity_output: results/phase4/sensitivity.json
+# Supplement (not pre-registered): task 8 at 500 ms with every episode in a fresh process (libero_fresh.yaml),
+# paired per seed with block A and phase 3 (python -m kortyn.phase4_steps fresh).
+fresh:
+  runs:
+    - results/phase4/fresh/stream0/smolvla_libero/fest_500ms
+    - results/phase4/fresh/stream1/smolvla_libero/fest_500ms
+    - results/phase4/fresh/stream2/smolvla_libero/fest_500ms
+    - results/phase4/fresh/stream3/smolvla_libero/fest_500ms
+  compare:
+    block_a: results/phase4/libero/smolvla_libero/fest_500ms
+    phase3: results/phase3/libero/smolvla_libero/fest_500ms
+  output: results/phase4/fresh.json
