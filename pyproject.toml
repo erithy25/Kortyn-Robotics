@@ -139,6 +139,7 @@ module = [
     "libero.*",
     "robosuite.*",
     "mujoco.*",
+    "scipy.*",
 ]
 ignore_missing_imports = true
 follow_untyped_imports = false
