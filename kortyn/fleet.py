@@ -722,6 +722,7 @@ def grid(
     networks: Iterable[str] | None = None,
     gpus: Iterable[str] | None = None,
     batching: Iterable[str] | None = None,
+    strategies: Iterable[str] | None = None,
 ) -> list[RunKey]:
     """All runs of a config (optionally a subset). Strategies without batching run once per GPU.
 
@@ -731,9 +732,10 @@ def grid(
     chosen_networks = _subset("networks", config.networks, networks)
     chosen_gpus = _subset("gpus", config.gpus, gpus)
     chosen_batching = _subset("batching", config.batching, batching)
+    chosen_strategies = _subset("strategies", config.strategies, strategies)
     keys: list[RunKey] = []
     first_batching = next(iter(config.batching))
-    for network, gpu, strategy_name in itertools.product(chosen_networks, chosen_gpus, config.strategies):
+    for network, gpu, strategy_name in itertools.product(chosen_networks, chosen_gpus, chosen_strategies):
         strategy = config.strategies[strategy_name]
         if config.gpus[gpu].table is not None:
             profiles = ["gemessen"]
@@ -924,6 +926,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--networks", default=None, help="comma-separated subset of the config's networks")
     parser.add_argument("--gpus", default=None, help="comma-separated subset of the config's GPU profiles")
     parser.add_argument("--batching", default=None, help="comma-separated subset of the batching profiles")
+    parser.add_argument("--strategies", default=None, help="comma-separated subset of the strategies")
     parser.add_argument("--out", default=None, help="results file (default: from config)")
     parser.add_argument(
         "--scan", action="store_true", help="every fleet size 1..--scan-max per configuration"
@@ -948,7 +951,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         config = load_fleet_config(args.config)
         sizes = None if args.sizes is None else [int(s) for s in args.sizes.split(",") if s.strip()]
-        keys = grid(config, sizes, _names(args.networks), _names(args.gpus), _names(args.batching))
+        keys = grid(
+            config,
+            sizes,
+            _names(args.networks),
+            _names(args.gpus),
+            _names(args.batching),
+            _names(args.strategies),
+        )
         workers = args.workers if args.workers is not None else (config.workers or os.cpu_count() or 1)
         if args.scan:
             if args.out is None:

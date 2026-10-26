@@ -24,7 +24,13 @@ def fit(x50: float) -> dc.BootstrapFit:
     return dc.BootstrapFit(point=curve(x50), draws=(curve(x50 * 0.9), curve(x50), curve(x50 * 1.1)))
 
 
-def record(robots: int, replication: int, latencies_ms: list[float], admitted: int | None = None) -> dict:
+def record(
+    robots: int,
+    replication: int,
+    latencies_ms: list[float],
+    admitted: int | None = None,
+    medium: float | None = None,
+) -> dict:
     admitted = robots if admitted is None else admitted
     fleet = []
     for index in range(robots):
@@ -44,6 +50,7 @@ def record(robots: int, replication: int, latencies_ms: list[float], admitted: i
         "misses": 0,
         "mean_batch": 1.0,
         "busy_share": 0.5,
+        "medium_busy_share": medium,
         "robots": fleet,
     }
 
@@ -116,3 +123,20 @@ def test_predictions_need_curves_as_long_as_the_histograms(tmp_path: Path) -> No
     assert np.isclose(
         fc.predictions(runs[0], fc.bin_curves(fit(400.0), 100))[0][0], curve(400.0).value(920.0)
     )
+
+
+def test_medium_busy_share_is_averaged_over_replications(tmp_path: Path) -> None:
+    records = [
+        record(1, 0, [120.0], medium=0.1),
+        record(1, 1, [120.0], medium=0.3),
+        record(2, 0, [120.0, 220.0], medium=0.4),
+        record(2, 1, [120.0, 220.0], medium=None),  # a run without the medium: no mean
+    ]
+    runs = fc.read_runs(write(tmp_path / "s.jsonl", records))
+    [result] = fc.evaluate(runs, {"c": fc.bin_curves(fit(600.0), 50)}, {"gpu": "c"}, 0.03)
+    by_size = {s.robots: s for s in result.sizes}
+    assert by_size[1].medium_busy_share == pytest.approx(0.2)
+    assert by_size[2].medium_busy_share is None
+    legacy = record(1, 0, [120.0])
+    del legacy["medium_busy_share"]  # phase-3 records carry no medium
+    assert fc.read_runs(write(tmp_path / "legacy.jsonl", [legacy]))[0].medium_busy_share is None

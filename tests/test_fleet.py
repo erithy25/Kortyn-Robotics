@@ -273,6 +273,11 @@ def test_grid_subsets(tmp_path: Path) -> None:
         grid(config, gpus=["unknown"])
     with pytest.raises(ConfigError):
         grid(config, networks=[])
+    only_d = grid(config, strategies=["d"])
+    assert {k.strategy for k in only_d} == {"d"}
+    assert len(only_d) == len([k for k in grid(config) if k.strategy == "d"])
+    with pytest.raises(ConfigError):
+        grid(config, strategies=["z"])
 
 
 def test_phase3_fleet_config_loads() -> None:

@@ -88,6 +88,7 @@ class Run:
     mean_batch: float
     busy_share: float
     fleet: tuple[Robot, ...]
+    medium_busy_share: float | None = None  # shared WLAN medium (phase 4, section 7.4)
 
 
 def read_runs(path: Path) -> list[Run]:
@@ -117,9 +118,14 @@ def read_runs(path: Path) -> list[Run]:
                 mean_batch=float(record["mean_batch"]),
                 busy_share=float(record["busy_share"]),
                 fleet=tuple(fleet),
+                medium_busy_share=_optional_float(record.get("medium_busy_share")),
             )
         )
     return runs
+
+
+def _optional_float(value: Any) -> float | None:
+    return None if value is None else float(value)
 
 
 def predictions(run: Run, curves: BinCurves) -> tuple[Floats, Floats]:
@@ -157,6 +163,7 @@ class SizeResult:
     loss_upper: float  # 97.5-% bootstrap quantile of single - worst
     criterion_2: bool
     criterion_2_conservative: bool
+    medium_busy_share: float | None = None  # mean over replications; None without a shared WLAN medium
 
     @property
     def passes(self) -> bool:
@@ -207,7 +214,13 @@ def evaluate_size(
         loss_upper=loss_upper,
         criterion_2=single - worst <= tolerance + 1e-12,
         criterion_2_conservative=loss_upper <= tolerance + 1e-12,
+        medium_busy_share=_mean_or_none([run.medium_busy_share for run in runs]),
     )
+
+
+def _mean_or_none(values: Sequence[float | None]) -> float | None:
+    present = [value for value in values if value is not None]
+    return float(np.mean(present)) if present and len(present) == len(values) else None
 
 
 def capacity_of(sizes: Sequence[SizeResult], conservative: bool = False) -> int:
