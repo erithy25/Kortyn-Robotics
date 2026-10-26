@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -14,6 +15,23 @@ from kortyn.metrics import read_jsonl
 from kortyn.run_virtual import main, release_memory, run_digest, select_virtual_plans
 
 PUSHT_IMAGE = (3, 96, 96)
+
+
+def run_cli(module: str, *arguments: str, timeout_s: float = 600.0) -> None:
+    """Run ``python -m <module>`` in a fresh interpreter, as from the command line.
+
+    Commands that fork workers (``--share-model``, the validation rollouts) must fork from a process without
+    foreign threads. The test process holds threads left by earlier tests (torch, gRPC, executors); a forked
+    child that needs a lock one of them held at the fork waits forever.
+    """
+    completed = subprocess.run(
+        [sys.executable, "-m", module, *arguments],
+        capture_output=True,
+        text=True,
+        timeout=timeout_s,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout[-3000:] + completed.stderr[-3000:]
 
 
 @pytest.fixture(scope="module")
@@ -156,7 +174,7 @@ def test_shared_model_workers_reproduce_spawned_workers_exactly(tmp_path, pusht_
     config = write_config(tmp_path, pusht_tiny_checkpoint, spawned)
     assert main(["--config", str(config), "--episodes", "2", "--log-level", "WARNING"]) == 0
     arguments = ["--config", str(config), "--episodes", "2", "--results-dir", str(forked), "--share-model"]
-    assert main([*arguments, "--workers", "2", "--log-level", "WARNING"]) == 0
+    run_cli("kortyn.run_virtual", *arguments, "--workers", "2", "--log-level", "WARNING")
     for run in ("modell__referenz_sync", "modell__gut", "modell__sehr_schlecht"):
         assert run_digest(spawned / "kalibriert" / run) == run_digest(forked / "kalibriert" / run), run
     meta = json.loads((forked / "kalibriert" / "run_meta.json").read_text())
