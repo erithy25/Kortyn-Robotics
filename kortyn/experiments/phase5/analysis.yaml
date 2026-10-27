@@ -1,0 +1,42 @@
+# Phase 5 evaluation (kortyn.phase5_steps), pre-registered in reports/phase5_preregistration.md.
+#   python -m kortyn.phase5_steps gate           # sections 3.3-3.4 -> results/phase5/gate.json
+#   python -m kortyn.phase5_steps curves         # section 3.7, only after a passed gate -> results/phase5/curves.json
+#   python -m kortyn.phase5_steps gpu-decision   # section 5 -> results/phase5/gpu_decision.json
+experiment: kortyn/experiments/phase5/libero_rtc_kurz.yaml
+phase4_analysis: kortyn/experiments/phase4/analysis.yaml
+gate:
+  reference: results/phase5/libero/smolvla_libero_rtc/sync25
+  control: results/phase5/libero/smolvla_libero_rtc/async_0ms
+  test: results/phase5/libero/smolvla_libero_rtc/rtc_kurz_0ms
+  phase4_async: results/phase4/libero/smolvla_libero/fest_0ms
+  phase3_sync: results/phase3/libero/smolvla_libero/sync25
+  phase4_rtc: results/phase4/libero/smolvla_libero_rtc/rtc_0ms
+  margin: 0.15
+  draws: 10000
+  seed: 5000
+  output: results/phase5/gate.json
+curves:
+  seeds: [1000, 1099]
+  levels:
+    - {latency_ms: 0, run: results/phase5/libero/smolvla_libero_rtc/rtc_kurz_0ms}
+    - {latency_ms: 200, run: results/phase5/libero/smolvla_libero_rtc/rtc_kurz_200ms}
+    - {latency_ms: 500, run: results/phase5/libero/smolvla_libero_rtc/rtc_kurz_500ms}
+    - {latency_ms: 1000, run: results/phase5/libero/smolvla_libero_rtc/rtc_kurz_1000ms}
+  stage1: results/phase4/fleet/scan_rtc.jsonl
+  gpu: rtx3060ti_schaetzung_rtc
+  output: results/phase5/curves.json
+gpu_decision:
+  measurements: results/phase5/gpu
+  dose_response: examples/capacity/smolvla_libero_long.json   # phase-4 curve without RTC
+  network: {scenario: buero_wlan, margin_ms: 15.0}
+  wlan_mbit_s: [100.0, 200.0]          # secondary: one shared Wi-Fi medium, zstd images (phase 4)
+  request_bytes: 292133
+  response_bytes: 1424
+  agent: {fps: 20.0, actions_per_chunk: 50, refill_threshold: 24, request_timeout_s: 10.0, client_overhead_ms: 1.0, transport_overhead_ms: 5.0}
+  episode_lengths: {paths: [results/phase3/libero/smolvla_libero/fest_0ms/episodes.jsonl]}
+  latency_slo: {quantile: 0.99, max_ms: 150.0, robots: 10}
+  tolerance_pp: 3.0
+  fleet: {max_robots: 32, replications: 5, horizon_s: 630.0, window_start_s: 30.0, start_spread_s: 10.0, seed: 3000}
+  bootstrap: 200
+  assumption_s1_ms: 220.0
+  output: results/phase5/gpu_decision.json
