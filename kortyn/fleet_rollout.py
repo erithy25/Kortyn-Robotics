@@ -92,6 +92,11 @@ def _pool_init(profile: str) -> None:
     _POOL_BRAIN = LocalBrain(runner)
 
 
+def _pool_ready() -> bool:
+    """No-op task of a fresh pool: its first submission forks every worker (see :class:`PoolCompute`)."""
+    return _POOL_BRAIN is not None
+
+
 def _pool_infer(payload: bytes) -> ComputeResult:
     if _POOL_BRAIN is None:
         raise RuntimeError("inference worker not initialized")
@@ -115,6 +120,11 @@ class PoolCompute:
             initializer=_pool_init,
             initargs=(profile,),
         )
+        # A fork pool starts all its workers at its first submission. Do that now, while this process holds
+        # only the policy: once the robots' simulators exist, it reserves tens of GB of address space (render
+        # contexts), and under the kernel's heuristic overcommit forking it can fail with ENOMEM.
+        if not self._pool.submit(_pool_ready).result():
+            raise RuntimeError("inference worker started without a policy")
         self._pending: dict[bytes, concurrent.futures.Future[ComputeResult]] = {}
         self.cache_hits = 0
         self.inferences = 0
