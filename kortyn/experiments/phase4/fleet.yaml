@@ -66,3 +66,22 @@ service_cv: 0.05
 batch_limit: 32
 seed: 3000
 results_path: results/phase4/fleet/stage1.jsonl
+
+# Stage 3 (section 7.5): real rollouts of the best strategy with RTC (largest capacity, realistic batching;
+# b, d and e tie at 5 robots, tie order d, e, b, a -> d) at n1 = max(2, min(K, 8)) = 5 and n2 = min(2 n1, 16)
+# = 10 robots; 60 counted robot episodes per case (cut 2), compared with stage 1 by kortyn.phase4_steps validate.
+#   python -m kortyn.fleet_rollout --config kortyn/experiments/phase4/fleet.yaml --strategy d --robots 5 --workers 4
+#   python -m kortyn.fleet_rollout --config kortyn/experiments/phase4/fleet.yaml --strategy d --robots 10 --workers 4
+validation:
+  experiment: kortyn/experiments/phase4/libero_rtc.yaml
+  template_run: rtc_0ms           # agent, strategy (rtc) and images (zstd_9) of the RTC dose-response robots
+  gpu: rtx3060ti_schaetzung_rtc
+  batching: realistisch
+  network: buero_wlan
+  profile: smolvla_libero_rtc
+  results_dir: results/phase4/validation
+  episodes: 60
+  workers: 4
+  confidence: 0.975
+  bootstrap: 10000
+  seed: 5150
