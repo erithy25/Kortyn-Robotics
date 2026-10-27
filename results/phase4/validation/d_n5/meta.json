@@ -1,0 +1,32 @@
+{
+ "case": "d_n5",
+ "strategy": "d",
+ "robots": 5,
+ "admitted": 5,
+ "gpu": "rtx3060ti_schaetzung_rtc",
+ "batching": "realistisch",
+ "network": "buero_wlan",
+ "template_run": "rtc_0ms",
+ "episodes_counted": 60,
+ "simulated_s": 334.0966059368887,
+ "wall_s": 2592.4986192200013,
+ "inferences": 1264,
+ "cache_hits": 0,
+ "wait_s": 1531.9471409849975,
+ "batches": 1086,
+ "batch_sizes": {
+  "1": 942,
+  "2": 113,
+  "3": 28,
+  "4": 3
+ },
+ "busy_share": 0.7399117442401043,
+ "starts": [
+  0.04518316420266455,
+  5.995349279306108,
+  7.26885074702507,
+  8.43230046423274,
+  9.839640094014202
+ ],
+ "inference_workers": 4
+}
