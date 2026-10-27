@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 
 os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")  # tiny fits: threads only oversubscribe a busy CPU
 
 from pathlib import Path
 

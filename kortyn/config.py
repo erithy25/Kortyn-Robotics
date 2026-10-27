@@ -115,6 +115,25 @@ class CheckpointConfig:
 
 
 @dataclass
+class RtcSettings:
+    """LeRobot's real-time chunking (RTC) for flow-matching policies such as SmolVLA (phase 4).
+
+    With RTC the Brain steers every plan towards the rest of the previous plan the agent sends with its
+    request (smoothing mode ``rtc``): the actions executed before the new plan arrives are frozen, the rest of
+    the overlap is pulled towards the old plan with decaying weights (``lerobot.policies.rtc``, unmodified).
+    The execution horizon and the inference delay come from each request; requests without a previous plan
+    run unguided.
+    """
+
+    prefix_attention_schedule: Literal["exp", "linear", "ones", "zeros"] = "exp"  # LeRobot's recommendation
+    max_guidance_weight: float = 10.0  # LeRobot's default for 10 flow-matching steps
+
+    def __post_init__(self) -> None:
+        if not self.max_guidance_weight > 0:
+            raise ConfigError(f"rtc.max_guidance_weight must be > 0, got {self.max_guidance_weight}")
+
+
+@dataclass
 class BrainProfile:
     """Sampler settings of the diffusion policy. Profiles are selected per experiment suite."""
 
@@ -126,6 +145,8 @@ class BrainProfile:
     # Only for policies that resize images themselves (SmolVLA pads them to its VLM resolution): LeRobot's
     # LIBERO evaluation renders 360x360 frames for a checkpoint whose features say 256x256 (phase 3).
     image_size: list[int] | None = None
+    # Real-time chunking (phase 4; flow-matching policies only). ``None`` = off, as in phases 1-3.
+    rtc: RtcSettings | None = None
 
     def __post_init__(self) -> None:
         if self.num_inference_steps < 1:
@@ -311,17 +332,26 @@ class EnvConfig:
             raise ConfigError("env.kind 'libero' needs an env.libero section")
 
 
+# Effort levels of the lossless codecs (phase 4): png zlib level, webp method, zstd level.
+_CODEC_LEVELS: dict[str, tuple[int, int]] = {"png": (0, 9), "webp": (0, 6), "zstd": (1, 22)}
+
+
 @dataclass
 class ImageTransportConfig:
     """How camera images travel to the Brain (phase 3a). The default sends raw frames at camera resolution.
 
     ``height`` / ``width`` scale the frames down before sending (the Brain scales them back to the policy's
-    input size, so the policy sees a blurrier image); ``codec`` compresses them (``jpeg`` with ``quality``,
-    lossless ``png``) or sends raw bytes.
+    input size, so the policy sees a blurrier image); ``codec`` compresses them or sends raw bytes:
+
+    * ``jpeg`` (lossy, ``quality``),
+    * lossless (phase 4): ``png`` (OpenCV, ``level`` = zlib compression 0-9, default OpenCV's 1), ``webp``
+      (Pillow, lossless, ``level`` = method 0-6, default 4) and ``zstd`` (zstandard on the raw bytes,
+      ``level`` 1-22, default 3).
     """
 
-    codec: Literal["raw", "jpeg", "png"] = "raw"
+    codec: Literal["raw", "jpeg", "png", "webp", "zstd"] = "raw"
     quality: int = 90
+    level: int | None = None
     height: int | None = None
     width: int | None = None
 
@@ -331,11 +361,26 @@ class ImageTransportConfig:
         for name, value in (("height", self.height), ("width", self.width)):
             if value is not None and value < 8:
                 raise ConfigError(f"image_transport.{name} must be >= 8 or null, got {value}")
+        if self.level is not None:
+            limits = _CODEC_LEVELS.get(self.codec)
+            if limits is None:
+                raise ConfigError(f"image_transport.level does not apply to codec {self.codec!r}")
+            if not limits[0] <= self.level <= limits[1]:
+                raise ConfigError(
+                    f"image_transport.level for {self.codec} must be in [{limits[0]}, {limits[1]}], "
+                    f"got {self.level}"
+                )
 
     @property
     def is_identity(self) -> bool:
         """Raw frames at camera resolution: the phase-1 wire format."""
         return self.codec == "raw" and self.height is None and self.width is None
+
+    @property
+    def is_lossless(self) -> bool:
+        """The decoded frames equal the camera frames bit for bit (lossless codec, no scaling)."""
+        unscaled = self.height is None and self.width is None
+        return unscaled and (self.codec == "raw" or self.codec in _CODEC_LEVELS)
 
 
 @dataclass
@@ -430,8 +475,11 @@ class SmoothingConfig:
     # none:    the new plan simply replaces the old one where they overlap (phase 1).
     # inpaint: the Brain inpaints the new plan: actions that are executed while it computes are frozen to
     #          the old plan, the rest of the overlap is pulled towards the old plan with decaying weights
-    #          (gradient-free variant of real-time chunking, see kortyn/inpainting.py).
-    mode: Literal["none", "inpaint"] = "none"
+    #          (gradient-free variant of real-time chunking, see kortyn/inpainting.py; diffusion policies).
+    # rtc:     the same guide (frozen part and overlap of the old plan) for LeRobot's real-time chunking in
+    #          a flow-matching Brain (phase 4, BrainProfile.rtc); ``schedule`` is unused, the Brain's RTC
+    #          settings weigh the overlap.
+    mode: Literal["none", "inpaint", "rtc"] = "none"
     # Weights over the overlap after the frozen part, as in LeRobot's RTC: linear | exp | zeros (= frozen
     # part only, "hard" inpainting).
     schedule: Literal["linear", "exp", "zeros"] = "linear"

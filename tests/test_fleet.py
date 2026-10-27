@@ -273,6 +273,11 @@ def test_grid_subsets(tmp_path: Path) -> None:
         grid(config, gpus=["unknown"])
     with pytest.raises(ConfigError):
         grid(config, networks=[])
+    only_d = grid(config, strategies=["d"])
+    assert {k.strategy for k in only_d} == {"d"}
+    assert len(only_d) == len([k for k in grid(config) if k.strategy == "d"])
+    with pytest.raises(ConfigError):
+        grid(config, strategies=["z"])
 
 
 def test_phase3_fleet_config_loads() -> None:
@@ -307,6 +312,29 @@ def test_scan_stops_after_consecutive_overload(tmp_path: Path) -> None:
     )
     with pytest.raises(ConfigError):
         ScanSettings(max_size=0)
+
+
+def test_scan_can_stop_at_the_first_rejected_robot(tmp_path: Path) -> None:
+    from kortyn.fleet import ScanSettings, run_scan
+
+    config = small_config(
+        tmp_path, gpus={"slow": GpuConfig(s1_ms=400.0)}, horizon_s=60.0, window_start_s=10.0
+    )
+    base = RunKey("buero_wlan", "slow", "keiner", "e", 1, 0)
+    phase3 = tmp_path / "phase3.jsonl"
+    run_scan(config, [base], ScanSettings(max_size=10, replications=1, stop_after=2), phase3, workers=1)
+    phase4 = tmp_path / "phase4.jsonl"
+    settings = ScanSettings(max_size=10, replications=1, stop_after=2, stop_on_rejection=True)
+    run_scan(config, [base], settings, phase4, workers=1)
+    records = [json.loads(line) for line in phase4.read_text().splitlines()]
+    sizes = sorted(record["key"]["robots"] for record in records)
+    # admission control never misses the budget, so phase 3 scans to the end; phase 4 stops at the first
+    # size whose fleet it cannot fully admit
+    assert max(json.loads(line)["key"]["robots"] for line in phase3.read_text().splitlines()) == 10
+    largest = max(records, key=lambda record: record["key"]["robots"])
+    assert largest["admitted"] < largest["key"]["robots"]
+    assert all(record["admitted"] == record["key"]["robots"] for record in records if record is not largest)
+    assert sizes == list(range(1, max(sizes) + 1))
 
 
 def test_timing_robots_reproduce_agents_sharing_an_edf_batching_brain() -> None:

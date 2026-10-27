@@ -74,7 +74,7 @@ Prüfe mit `uv --version`: Es erscheint eine Versionsnummer.
 ## Schritt 6: Das Benchmark-Skript holen
 
 1. Öffne im Browser unter Windows die Datei im Repository:
-   <https://github.com/erithy25/Kortyn-Robotics/blob/phase-3-fleet-brain/kortyn/bench_batch.py>
+   <https://github.com/erithy25/Kortyn-Robotics/blob/phase-4-rtc/kortyn/bench_batch.py>
    (Das Repository ist privat: Melde dich bei GitHub mit dem Konto an, das Zugriff hat.)
 2. Klicke rechts oben über dem Code auf das Symbol **„Download raw file“** (Pfeil nach unten). Die Datei
    `bench_batch.py` landet in deinem Windows-Ordner „Downloads“.
@@ -114,6 +114,16 @@ Prüfe mit `uv --version`: Es erscheint eine Versionsnummer.
 4. Am Ende steht: `Fertig. Ergebnis gespeichert in: /home/…/smolvla_batch_rtx3060ti_JJJJMMTT.json`.
 
 Nur zum Ausprobieren (dauert etwa zwei Minuten): `uv run bench_batch.py --sizes 1-4 --repeats 5`.
+
+**Zweite Messung mit Real-Time Chunking (Phase 4):** Starte danach noch
+
+```
+uv run bench_batch.py --rtc
+```
+
+Das misst dieselben Batchgrößen mit LeRobots Real-Time Chunking, so wie das Phase-4-Brain rechnet. Jede
+Anfrage bringt dabei den Rest des vorigen Plans mit. Die Datei heißt dann `smolvla_batch_rtc_rtx3060ti_JJJJMMTT.json`.
+Gib beide Dateien zurück (Schritt 8). Aus dem Unterschied ergibt sich der RTC-Aufschlag auf deiner Karte.
 
 ## Schritt 8: Ergebnis zurückgeben
 

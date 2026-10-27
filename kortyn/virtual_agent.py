@@ -35,7 +35,9 @@ from kortyn.agent import (
     Environment,
     EpisodeContext,
     EpisodeOutcome,
-    IncompatibleBrainError,
+    check_guidance,
+    continues_plan,
+    sends_guides,
 )
 from kortyn.brain import BrainServicer, policy_info_to_proto
 from kortyn.codec import CodecError, decode_observation
@@ -210,15 +212,8 @@ class VirtualTimeAgent(AgentCore):
     ) -> EpisodeOutcome:
         """Run one episode in virtual time; ``network`` is the scenario's link (real-time mode only)."""
         strategy = strategy or StrategyConfig()
-        if (
-            ctx.mode == "realtime"
-            and strategy.smoothing.mode == "inpaint"
-            and not self.spec.supports_guidance
-        ):
-            raise IncompatibleBrainError(
-                f"strategy {ctx.strategy!r} inpaints transitions, but the Brain ({self.spec.policy_type}) "
-                "does not support guides"
-            )
+        if ctx.mode == "realtime":
+            check_guidance(self.spec, strategy.smoothing.mode, ctx.strategy)
         if ctx.mode not in ("realtime", "sync"):
             raise ValueError(f"unknown mode {ctx.mode!r}")
         started = time.perf_counter()
@@ -319,7 +314,7 @@ class VirtualTimeAgent(AgentCore):
         policy = make_request_policy(strategy.request, cfg.refill_threshold, dt)
         latency = LatencyEstimator(strategy.latency)
         guard = strategy.guard
-        inpaint = strategy.smoothing.mode == "inpaint"
+        inpaint = sends_guides(strategy.smoothing.mode)
         observation = env.reset(seed=ctx.seed)
         history = self._new_history(observation)
         actions = ActionQueue()
@@ -487,16 +482,17 @@ class VirtualTimeAgent(AgentCore):
                 dt,
             )
             if decision.send:
+                queued = actions.peek(k + 1, cfg.actions_per_chunk)
                 guide = (
                     build_guide(
                         step=k,
                         previous_action=previous_action,
                         current_action=action,
-                        queued=actions.peek(k + 1, cfg.actions_per_chunk),
+                        queued=queued,
                         expected_delay_ticks=decision.expected_delay_ticks,
                         config=strategy.smoothing,
                     )
-                    if inpaint
+                    if inpaint and continues_plan(strategy.smoothing.mode, queued)
                     else None
                 )
                 request = self._build_request(history, k, ctx.seed, guide)

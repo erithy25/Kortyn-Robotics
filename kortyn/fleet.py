@@ -64,6 +64,7 @@ from kortyn.virtual_time import (
     stream_rng,
     stream_seed,
 )
+from kortyn.wlan import SharedMedium, SharedMediumLink
 
 LOG = logging.getLogger("kortyn.fleet")
 
@@ -177,14 +178,25 @@ class StrategyConfig:
 
 @dataclass
 class NetworkChoice:
-    """A network scenario (``kortyn/experiments/<name>.yaml``) and the Brain's return-trip margin for it."""
+    """A network scenario (``kortyn/experiments/<name>.yaml``) and the Brain's return-trip margin for it.
+
+    ``wlan_mbit_s`` (phase 4) adds one radio medium shared by all robots of a run (:mod:`kortyn.wlan`): every
+    request occupies it for ``request_bytes * 8 / rate``, every response for ``response_bytes * 8 / rate``.
+    """
 
     scenario: str = "buero_wlan"
     margin_ms: float = 15.0
+    wlan_mbit_s: float | None = None
+    request_bytes: int = 0
+    response_bytes: int = 0
 
     def __post_init__(self) -> None:
         if self.margin_ms < 0:
             raise ConfigError("network margin_ms must be >= 0")
+        if self.request_bytes < 0 or self.response_bytes < 0:
+            raise ConfigError("network payload sizes must be >= 0 bytes")
+        if self.wlan_mbit_s is not None and (self.wlan_mbit_s <= 0 or self.request_bytes <= 0):
+            raise ConfigError("a shared WLAN needs wlan_mbit_s > 0 and the request payload in bytes")
 
 
 @dataclass
@@ -428,6 +440,8 @@ class TimingRobot:
         stats: RobotStats,
         horizon_s: float,
         compute: _ZeroCompute,
+        medium: SharedMedium | None = None,
+        payload: tuple[int, int] = (0, 0),
     ) -> None:
         self.index = index
         self._sim = sim
@@ -440,6 +454,8 @@ class TimingRobot:
         self._horizon_s = horizon_s
         self._timing = _timing(agent)
         self._compute = compute
+        self._medium = medium
+        self._payload = payload  # (request, response) bytes on the shared medium
 
     def run(self) -> Generator[Command, Any, None]:
         yield WakeAt(self.stats.start_time, Priority.TICK)
@@ -458,7 +474,11 @@ class TimingRobot:
         threshold = agent.refill_threshold
         sim = self._sim
         episode_seed = stream_seed("fleet-link", self._seed, self.index, episode)
-        link = VirtualLink(sim, self._network, episode_seed % (2**31))
+        link = (
+            VirtualLink(sim, self._network, episode_seed % (2**31))
+            if self._medium is None
+            else SharedMediumLink(sim, self._network, episode_seed % (2**31), self._medium, *self._payload)
+        )
         channel = ModelChannel(sim, self._brain, link, self._timing, episode_seed, 0, f"robot-{self.index}")
         t0 = sim.now
         channel.arm()
@@ -566,6 +586,7 @@ class RunResult:
     busy_share: float
     robots: list[RobotSummary]
     wall_s: float
+    medium_busy_share: float | None = None  # shared WLAN (phase 4): share of the horizon the medium was busy
 
     def to_json(self) -> dict[str, Any]:
         data = asdict(self)
@@ -611,6 +632,8 @@ def run_fleet(config: FleetSimConfig, key: RunKey, lengths: Sequence[int]) -> Ru
         else None
     )
     compute = _ZeroCompute(agent.actions_per_chunk)
+    medium = None if network.wlan_mbit_s is None else SharedMedium(network.wlan_mbit_s)
+    payload = (network.request_bytes, network.response_bytes)
     stats: list[RobotStats] = []
     admitted = 0
     run_seed = stream_seed("fleet-run", config.seed, key.network, key.robots, key.replication) % (2**31)
@@ -632,6 +655,8 @@ def run_fleet(config: FleetSimConfig, key: RunKey, lengths: Sequence[int]) -> Ru
             robot_stats,
             config.horizon_s,
             compute,
+            medium,
+            payload,
         )
         sim.process(robot.run())
     sim.run(until=config.horizon_s)
@@ -686,6 +711,7 @@ def run_fleet(config: FleetSimConfig, key: RunKey, lengths: Sequence[int]) -> Ru
         busy_share=counters.busy_ms / (1000.0 * config.horizon_s),
         robots=summaries,
         wall_s=time.perf_counter() - started,
+        medium_busy_share=None if medium is None else medium.busy_s / config.horizon_s,
     )
 
 
@@ -696,6 +722,7 @@ def grid(
     networks: Iterable[str] | None = None,
     gpus: Iterable[str] | None = None,
     batching: Iterable[str] | None = None,
+    strategies: Iterable[str] | None = None,
 ) -> list[RunKey]:
     """All runs of a config (optionally a subset). Strategies without batching run once per GPU.
 
@@ -705,9 +732,10 @@ def grid(
     chosen_networks = _subset("networks", config.networks, networks)
     chosen_gpus = _subset("gpus", config.gpus, gpus)
     chosen_batching = _subset("batching", config.batching, batching)
+    chosen_strategies = _subset("strategies", config.strategies, strategies)
     keys: list[RunKey] = []
     first_batching = next(iter(config.batching))
-    for network, gpu, strategy_name in itertools.product(chosen_networks, chosen_gpus, config.strategies):
+    for network, gpu, strategy_name in itertools.product(chosen_networks, chosen_gpus, chosen_strategies):
         strategy = config.strategies[strategy_name]
         if config.gpus[gpu].table is not None:
             profiles = ["gemessen"]
@@ -792,11 +820,16 @@ MISS_SHARE_LIMIT = 0.01  # capacity criterion (1), also the stop rule of the sca
 
 @dataclass(frozen=True)
 class ScanSettings:
-    """Fleet sizes 1, 2, 3, ... per configuration, until criterion (1) fails ``stop_after`` times in a row."""
+    """Fleet sizes 1, 2, 3, ... per configuration, until criterion (1) fails ``stop_after`` times in a row.
+
+    ``stop_on_rejection`` (phase 4) also ends the scan at the first size where admission control turns a
+    robot away: a rejected robot counts as failed, so no larger size can raise the capacity.
+    """
 
     max_size: int = 128
     replications: int = 3
     stop_after: int = 3
+    stop_on_rejection: bool = False
 
     def __post_init__(self) -> None:
         if self.max_size < 1 or self.replications < 1 or self.stop_after < 1:
@@ -804,11 +837,11 @@ class ScanSettings:
 
 
 def _scan_config(
-    base: RunKey, settings: ScanSettings, stored: Mapping[RunKey, tuple[int, int]]
+    base: RunKey, settings: ScanSettings, stored: Mapping[RunKey, tuple[int, int, int]]
 ) -> list[dict[str, Any]]:
     """One configuration's scan (``base.robots`` and ``base.replication`` are ignored); runs in a worker.
 
-    ``stored``: (requests, misses) of runs already in the results file (a resumed scan counts them).
+    ``stored``: (requests, misses, admitted) of runs already in the results file (a resumed scan counts them).
     """
     if _WORKER_CONFIG is None:
         raise RuntimeError("fleet worker not initialized")
@@ -816,16 +849,21 @@ def _scan_config(
     failures = 0
     for robots in range(1, settings.max_size + 1):
         requests = misses = 0
+        rejected = False
         for replication in range(settings.replications):
             key = replace(base, robots=robots, replication=replication)
             if key in stored:
                 requests += stored[key][0]
                 misses += stored[key][1]
+                rejected = rejected or stored[key][2] < robots
                 continue
             record = run_fleet(_WORKER_CONFIG, key, _WORKER_LENGTHS).to_json()
             results.append(record)
             requests += int(record["requests"])
             misses += int(record["misses"])
+            rejected = rejected or int(record["admitted"]) < robots
+        if settings.stop_on_rejection and rejected:
+            break
         if requests == 0:
             continue
         failures = failures + 1 if misses / requests > MISS_SHARE_LIMIT else 0
@@ -838,10 +876,14 @@ def run_scan(
     config: FleetSimConfig, bases: Sequence[RunKey], settings: ScanSettings, out_path: Path, workers: int
 ) -> int:
     """Scan every configuration of ``bases`` in parallel (one configuration per task); append the runs."""
-    stored: dict[RunKey, tuple[int, int]] = {}
+    stored: dict[RunKey, tuple[int, int, int]] = {}
     if out_path.exists():
         for record in read_jsonl(out_path):
-            stored[RunKey(**record["key"])] = (int(record["requests"]), int(record["misses"]))
+            stored[RunKey(**record["key"])] = (
+                int(record["requests"]),
+                int(record["misses"]),
+                int(record["admitted"]),
+            )
     lengths = load_episode_lengths(config.episode_lengths)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     written = 0
@@ -884,6 +926,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--networks", default=None, help="comma-separated subset of the config's networks")
     parser.add_argument("--gpus", default=None, help="comma-separated subset of the config's GPU profiles")
     parser.add_argument("--batching", default=None, help="comma-separated subset of the batching profiles")
+    parser.add_argument("--strategies", default=None, help="comma-separated subset of the strategies")
     parser.add_argument("--out", default=None, help="results file (default: from config)")
     parser.add_argument(
         "--scan", action="store_true", help="every fleet size 1..--scan-max per configuration"
@@ -892,6 +935,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--scan-replications", type=int, default=3)
     parser.add_argument(
         "--scan-stop-after", type=int, default=3, help="consecutive sizes failing criterion (1)"
+    )
+    parser.add_argument(
+        "--scan-stop-on-rejection",
+        action="store_true",
+        help="also stop at the first size where admission control rejects a robot (phase 4)",
     )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
@@ -903,13 +951,22 @@ def main(argv: list[str] | None = None) -> int:
     try:
         config = load_fleet_config(args.config)
         sizes = None if args.sizes is None else [int(s) for s in args.sizes.split(",") if s.strip()]
-        keys = grid(config, sizes, _names(args.networks), _names(args.gpus), _names(args.batching))
+        keys = grid(
+            config,
+            sizes,
+            _names(args.networks),
+            _names(args.gpus),
+            _names(args.batching),
+            _names(args.strategies),
+        )
         workers = args.workers if args.workers is not None else (config.workers or os.cpu_count() or 1)
         if args.scan:
             if args.out is None:
                 raise ConfigError("--scan needs --out (a results file of its own)")
             bases = list(dict.fromkeys(replace(key, robots=1, replication=0) for key in keys))
-            settings = ScanSettings(args.scan_max, args.scan_replications, args.scan_stop_after)
+            settings = ScanSettings(
+                args.scan_max, args.scan_replications, args.scan_stop_after, args.scan_stop_on_rejection
+            )
             run_scan(config, bases, settings, Path(args.out), max(1, workers))
         else:
             run_grid(config, keys, Path(args.out or config.results_path), max(1, workers))

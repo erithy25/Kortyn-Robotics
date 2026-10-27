@@ -1,0 +1,11 @@
+# Phase 4, reuse check before the first new run: the current code must reproduce phase-3 episodes bit for
+# bit (same seeds, same settings), otherwise phase-3 levels may not be pooled with the new ones. Four episodes
+# of the 500-ms level (seeds 1000-1003); compared with results/phase3/libero/smolvla_libero/fest_500ms.
+extends: ../phase3/libero_main.yaml
+experiment:
+  results_dir: results/phase4/repro
+  episodes: 4
+  suites:
+    - profile: smolvla_libero
+      runs:
+        - {scenario: gut, timing: fest_500ms, strategy: halten, label: fest_500ms}

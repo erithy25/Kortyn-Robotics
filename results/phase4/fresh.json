@@ -1,0 +1,36 @@
+{
+ "episodes": 50,
+ "seeds": [
+  1000,
+  1049
+ ],
+ "success": 0.46,
+ "comparisons": {
+  "block_a": {
+   "pairs": 50,
+   "rate_a": 0.44,
+   "rate_b": 0.46,
+   "only_a": 8,
+   "only_b": 9,
+   "difference": 0.020000000000000018,
+   "interval": [
+    -0.14,
+    0.18
+   ],
+   "p_value": 1.0
+  },
+  "phase3": {
+   "pairs": 50,
+   "rate_a": 0.26,
+   "rate_b": 0.46,
+   "only_a": 4,
+   "only_b": 14,
+   "difference": 0.2,
+   "interval": [
+    0.04,
+    0.36
+   ],
+   "p_value": 0.0308837890625
+  }
+ }
+}

@@ -1,0 +1,35 @@
+# Phase 4, step 3: dense dose-response of SmolVLA on LIBERO-Long without and with Real-Time Chunking (RTC).
+# Same sample, agent and settings as the phase-3 dose-response (libero_main.yaml: tasks 8 and 0 x init
+# states 0-49 = 100 episodes, seeds 1000-1099, cold start, strategy "halten", 10 flow steps, chunk 50, a plan
+# every 25 ticks). All levels inside the budget are measured anew with the phase-4 run code: the reuse check R0
+# failed (reports/phase4.md, deviations), so phase-3 levels are not pooled; 1 500 and 2 000 ms stay
+# descriptive phase-3 values outside the smooth fit. Run in the LIBERO environment:
+#   UV_PROJECT_ENVIRONMENT=.venv-libero uv run --no-group metaworld --group libero \
+#       python -m kortyn.run_virtual --config kortyn/experiments/phase4/libero_dose.yaml --share-model
+extends: ../phase3/libero_main.yaml
+experiment:
+  results_dir: results/phase4/libero
+  suites:
+    - profile: smolvla_libero
+      runs:
+        # without RTC: every level inside the budget (0, 500, 1000, 1250 ms re-measured after R0 failed)
+        - {scenario: gut, timing: fest_0ms, strategy: halten, label: fest_0ms}
+        - {scenario: gut, timing: fest_100ms, strategy: halten, label: fest_100ms}
+        - {scenario: gut, timing: fest_200ms, strategy: halten, label: fest_200ms}
+        - {scenario: gut, timing: fest_300ms, strategy: halten, label: fest_300ms}
+        - {scenario: gut, timing: fest_500ms, strategy: halten, label: fest_500ms}
+        - {scenario: gut, timing: fest_750ms, strategy: halten, label: fest_750ms}
+        - {scenario: gut, timing: fest_1000ms, strategy: halten, label: fest_1000ms}
+        - {scenario: gut, timing: fest_1250ms, strategy: halten, label: fest_1250ms}
+
+hardware_profiles:
+  fest_100ms: {description: "feste Latenz 100 ms", service: {smolvla_libero: {kind: constant, value_ms: 100}}}
+  fest_200ms: {description: "feste Latenz 200 ms", service: {smolvla_libero: {kind: constant, value_ms: 200}}}
+  fest_300ms: {description: "feste Latenz 300 ms", service: {smolvla_libero: {kind: constant, value_ms: 300}}}
+  fest_750ms: {description: "feste Latenz 750 ms", service: {smolvla_libero: {kind: constant, value_ms: 750}}}
+
+timings:
+  fest_100ms: {description: "feste Latenz 100 ms", latency: model, hardware: fest_100ms}
+  fest_200ms: {description: "feste Latenz 200 ms", latency: model, hardware: fest_200ms}
+  fest_300ms: {description: "feste Latenz 300 ms", latency: model, hardware: fest_300ms}
+  fest_750ms: {description: "feste Latenz 750 ms", latency: model, hardware: fest_750ms}

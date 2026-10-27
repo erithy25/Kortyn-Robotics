@@ -12,6 +12,7 @@ führt ein deterministischer **Simulationszeit-Modus** dieselbe Regelschleife au
 | **2 – Freshness Engine** | Holt ein jüngeres Planalter die Qualität zurück, ohne unnötige Brain-Last? | **Nein.** Häufigere Anfragen senken das Planalter, bringen aber keine Qualität und kosten bis zu 2× Brain-Last. Keine Strategie schlägt die Baseline signifikant. | [`reports/phase2.md`](reports/phase2.md) |
 | **3a – Simulationszeit + SmolVLA** | Lässt sich die Echtzeit-Messung durch eine deterministische Simulation ersetzen? Schadet Latenz einer VLA-Policy (SmolVLA) mehr, besonders bei dynamischen Aufgaben? | **Ja**, validiert gegen Phase 1, deterministisch reproduzierbar, ≈ 6× weniger Seeds für dieselbe Präzision. SmolVLA ist in Millisekunden empfindlicher (Budget 312 statt 700 ms), relativ zum Budget nicht. Nicht die Dynamik der Aufgabe entscheidet, sondern ihre Präzisionsanforderung (über Budget: push −30 pp, coffee-push −7 pp). | [`reports/phase3a.md`](reports/phase3a.md) |
 | **3 – Flotten-Brain** | Wie viele Roboter bedient ein Brain im Budget, welche Strategie maximiert das? | **Präregistriert: einer**, egal mit welcher Strategie, weil SmolVLA auf LIBERO-Long schon unter dem Budget steil Erfolg verliert (46 % → 20 % bei 500 ms). Ergänzend: Batching vervierfacht bis verfünffacht die Flotte im Budget; bei gleichem Erfolg wie ein Jetson Orin Nano Super kostet ein Roboter am Brain ≈ halb so viel. | [`reports/phase3.md`](reports/phase3.md) |
+| **4 – Real-Time Chunking** | Macht RTC SmolVLA so verzögerungstolerant, dass ein Brain viele Roboter ohne nennenswerten Qualitätsverlust bedient? | **Nein.** LeRobots RTC streckt die Kurve nicht, es kappt sie: mittlerer Gewinn im Budget −1,6 pp (nicht nachweisbar). Eine RTX 3060 Ti bedient 2–3 Roboter ohne und 5 mit RTC; absolut bringt RTC etwa einen Roboter. Bei gleichem Erfolg ist das Brain trotzdem 2–3,5-mal günstiger je Roboter als langsame Jetsons, den Erfolg eines Thor erreicht es nicht. Die korrigierte Validierung mit 5 und 10 Robotern besteht, liegt aber gepoolt ≈ 10 pp unter der Vorhersage; mit diesem Abschlag bleibt gegen den Orin Nano Super nur Faktor 1–1,5. | [`reports/phase4.md`](reports/phase4.md) |
 
 - Aufgabe Phase 1–2: **PushT** (LeRobot/gym-pusht, 10 Hz, max. 300 Schritte)
 - Policy Phase 1–2: **`lerobot/diffusion_pusht`** (Diffusion Policy, Apache-2.0), lokal ins aktuelle
@@ -20,8 +21,58 @@ führt ein deterministischer **Simulationszeit-Modus** dieselbe Regelschleife au
   **`lerobot/smolvla_metaworld`** (SmolVLA, Apache-2.0)
 - Phase 3: **LIBERO-Long** (LeRobot/LIBERO, 20 Hz, max. 520 Schritte, zwei Kameras) mit
   **`lerobot/smolvla_libero`** (SmolVLA, Apache-2.0); LIBERO läuft in einer eigenen Umgebung (`.venv-libero`)
+- Phase 4: wie Phase 3, dazu LeRobots **Real-Time Chunking** (RTC, unverändert eingebunden) und verlustfreie
+  Bildübertragung (zstd)
 - Alles Open Source, keine Cloud, keine Telemetrie. Läuft unter Linux (CPU oder NVIDIA-GPU mit CUDA) und unter
   Windows 10/11 mit WSL2 (Ubuntu); die Messungen entstanden in einer Linux-Cloud-Umgebung ohne GPU
+
+---
+
+## Phase 4: Real-Time Chunking – Ergebnisse auf einen Blick
+
+Messung vom 26./27.10.2026 in der Cloud (4-vCPU-Xeon, keine GPU, Simulationszeit), vor dem ersten Lauf
+präregistriert ([`reports/phase4_preregistration.md`](reports/phase4_preregistration.md)). GPU-Servicezeiten sind
+benannte Annahmen. Vollständiger Report: **[`reports/phase4.md`](reports/phase4.md)**, Rohtabellen in
+[`reports/phase4_data.md`](reports/phase4_data.md).
+
+**Frage:** Kann Real-Time Chunking (RTC) SmolVLA so verzögerungstolerant machen, dass ein Brain viele Roboter
+ohne nennenswerten Qualitätsverlust bedient (schlechtester Roboter höchstens 3 pp unter einem einzelnen)?
+
+**Antwort: Nein. LeRobots RTC streckt die Kurve nicht, es kappt sie.**
+
+| Latenz (ein Roboter, 100 Episoden je Stufe) | 0 ms | 200 ms | 300 ms | 500 ms | 1 000 ms |
+|---|---:|---:|---:|---:|---:|
+| ohne RTC | 47 % | 47 % | 30 % | 29 % | 5 % |
+| mit RTC | 42 % | 38 % | 33 % | 30 % | 5 % |
+
+| RTX 3060 Ti, Batching realistisch | ohne RTC | mit RTC |
+|---|---:|---:|
+| L* (≤ 3 pp Verlust gegenüber 0 ms derselben Bedingung) | 200 ms | 450 ms |
+| Mittlerer Erfolgsgewinn im Budget (H1) | – | −1,6 pp [−6,1; +3,4] |
+| Roboter je Brain (Kapazität, beste Strategie) | 3 | 5 |
+| Erfolg des schlechtesten Roboters dabei | 35,9 % | 35,7 % |
+| Kosten je Roboter und Monat (inkl. Raspberry Pi) | 25,66 € | 18,80 € |
+
+- **Absolut bringt RTC etwa einen Roboter:** Den Erfolg, den das Brain mit RTC bei 5 Robotern hält, hält es
+  ohne RTC bei 4. Der Sprung von 3 auf 5 kommt vor allem daher, dass das 3-pp-Kriterium relativ misst und RTC
+  den Einzelroboter senkt.
+- **Engpass:** Bis zur Kapazität begrenzt die Kurve, nicht die Hardware. Nach dem Budget allein trägt die Karte
+  22–23 Roboter. Das WLAN bremst mit dem neuen verlustfreien Standard-Codec (zstd, 292 statt 778 kB je Anfrage,
+  bitgleich) erst unter 100 Mbit/s Nutzrate.
+- **Wirtschaftlichkeit:** Bei gleichem Erfolg ist das Brain 2-mal günstiger je Roboter als ein Jetson Orin Nano
+  Super (16–17 Roboter) und 2–3,5-mal günstiger als ein AGX Orin (1–2 Roboter). Den Erfolg eines Thor (45 %)
+  erreicht es nicht. Präregistrierte Regel: **„trägt“** (mit RTC 5 Roboter, 18,80 € gegen 118,83 € für den
+  AGX Orin).
+- **Validierung:** Beide präregistrierten Fälle (Strategie d mit 5 und 10 Robotern) erfüllen das Kriterium:
+  32 % gemessen gegen 43 % vorhergesagt und 38 % gegen 45 % (10 Roboter mit 50 statt 60 Episoden,
+  Speichergrenze). Gepoolt liegt die Messung ≈ 10 pp unter der Vorhersage, etwa zur Hälfte Glättung der Kurve.
+  Im ungünstigsten Fall schrumpft der Kostenvorteil gegen den Orin Nano Super auf Faktor 1–1,5, und das
+  AGX-Orin-Niveau erreicht das Brain nicht mehr.
+- **Renderfehler gefunden und behoben:** Mehrere LIBERO-Simulatoren in einem Prozess löschten sich gegenseitig
+  Render-Ressourcen. Das verfälschte die Flotten-Validierung aus Phase 3 und den ersten Lauf dieser Phase;
+  Einzelroboter-Läufe waren nicht betroffen (Commit `4c83bac`, Report Abschnitt 5.4).
+- **Nächster Schritt:** die Servicezeit messen und senken (kompilierte Laufzeit auf der RTX 3060 Ti), RTC mit
+  kurzer Führung erneut messen.
 
 ---
 
@@ -66,7 +117,8 @@ signifikanter Verlust, und das Kriterium hat keine Toleranz.
   d: 5 bis 50 Roboter im Scan).
 - **Validierung:** Echte Flotten mit 2 und 4 Robotern bestätigen das Warteschlangenmodell auf wenige
   Millisekunden und erfüllen das präregistrierte Kriterium in allen vier Fällen. Der Erfolg liegt aber durchgängig
-  5–7 pp unter der Vorhersage (je Fall nicht signifikant).
+  5–7 pp unter der Vorhersage (je Fall nicht signifikant). **Nachtrag aus Phase 4:** Diese Flotten-Rollouts waren
+  durch einen Renderfehler verfälscht (behoben in `4c83bac`); die 5–7 pp sind kein Befund über die Vorhersage.
 - **Nächster Schritt:** Real-Time Chunking für SmolVLA (macht die Kurve flacher und damit jede Kapazität größer),
   parallel das Benchmark-Skript auf der RTX 3060 Ti.
 
@@ -413,6 +465,44 @@ done
 unset UV_PROJECT_ENVIRONMENT
 uv run python -m kortyn.fleet_rollout --config kortyn/experiments/phase3/fleet.yaml --evaluate
 uv run python -m kortyn.report_phase3       # reports/phase3_data.md + reports/phase3_*.png
+
+# 8. Phase 4: Real-Time Chunking (RTC), Kapazität mit 3-pp-Toleranz, WLAN, Wirtschaftlichkeit. Vorab
+#    festgelegt in reports/phase4_preregistration.md; Laufzeiten und Verlauf in reports/phase4.md, Abschnitt 1.
+uv run python -m kortyn.power_phase4                 # Power-Analyse (vor jedem Lauf) -> results/phase4/power.json
+export UV_PROJECT_ENVIRONMENT=.venv-libero
+uv sync --no-group metaworld --group libero          # neu in Phase 4: zstandard, Pillow, scipy
+L="uv run --no-group metaworld --group libero python -m"
+$L kortyn.run_virtual --config kortyn/experiments/phase4/libero_repro.yaml --workers 4 --share-model  # R0
+$L kortyn.run_virtual --config kortyn/experiments/phase4/libero_dose.yaml --workers 4 --share-model  # A: ohne RTC
+$L kortyn.bench_rtc --config kortyn/experiments/phase4/libero_rtc.yaml      # RTC-Mehraufwand r (ruhige CPU)
+$L kortyn.bench_codec --config kortyn/experiments/phase4/libero_dose.yaml   # verlustfreier Codec (ruhige CPU)
+$L kortyn.run_virtual --config kortyn/experiments/phase4/libero_rtc.yaml --workers 4 --share-model   # B: mit RTC
+for s in $(seq 1000 1049); do                        # Ergänzung: Aufgabe 8 bei 500 ms, frischer Prozess je Episode
+  $L kortyn.run_virtual --config kortyn/experiments/phase4/libero_fresh.yaml --seed-start $s --episodes 1 \
+      --workers 1 --results-dir results/phase4/fresh/stream$((s % 4))
+done
+unset UV_PROJECT_ENVIRONMENT
+F="uv run python -m kortyn.fleet --config kortyn/experiments/phase4/fleet.yaml --scan --scan-replications 5 --scan-stop-on-rejection"
+$F --gpus rtx3060ti_schaetzung --networks buero_wlan --out results/phase4/fleet/scan.jsonl          # ohne RTC
+$F --gpus rtx3060ti_schaetzung_rtc --networks buero_wlan --out results/phase4/fleet/scan_rtc.jsonl  # mit RTC
+$F --strategies d --batching realistisch \
+    --networks wlan_25,wlan_50,wlan_100,wlan_200,wlan_400,wlan_25_roh,wlan_50_roh,wlan_100_roh,wlan_200_roh,wlan_400_roh \
+    --out results/phase4/fleet/scan_wlan.jsonl                                                       # geteiltes WLAN
+for step in curves retest sensitivity fresh; do uv run python -m kortyn.phase4_steps $step; done  # L*, H1/H2, R-RTC, ...
+C="--curve rtx3060ti_schaetzung=ohne_rtc --curve rtx3060ti_schaetzung_rtc=mit_rtc"
+uv run python -m kortyn.fleet_capacity --stage1 results/phase4/fleet/scan.jsonl results/phase4/fleet/scan_rtc.jsonl \
+    $C --out results/phase4/fleet/capacity.json
+uv run python -m kortyn.fleet_capacity --stage1 results/phase4/fleet/scan_wlan.jsonl $C \
+    --out results/phase4/fleet/capacity_wlan.json
+export UV_PROJECT_ENVIRONMENT=.venv-libero           # Validierung: beste Strategie mit RTC (d), 5 und 10 Roboter
+for n in 5 10; do
+  $L kortyn.fleet_rollout --config kortyn/experiments/phase4/fleet.yaml --strategy d --robots $n --workers 4
+done
+unset UV_PROJECT_ENVIRONMENT
+uv run python -m kortyn.phase4_steps validate
+uv run python -m kortyn.economics_phase4 --capacity results/phase4/fleet/capacity.json \
+    --rtc-overhead results/phase4/rtc_overhead.json
+uv run python -m kortyn.report_phase4                # reports/phase4_data.md + reports/phase4_*.png
 ```
 
 Laufzeiten auf der Messmaschine (4-vCPU-Xeon, keine GPU): Kalibrierung ≈ 10 min, alle Läufe ≈ 4 h 40 min (650
@@ -420,7 +510,9 @@ Episoden: `kalibriert` 400, `ddim10` 250), LeRobot-Referenz DDPM-100 ≈ 1 h; Ph
 Stufe 2 ≈ 4 h 25 min, Sync-Ablation ≈ 35 min; Phase 3a: Validierung ≈ 6 h, SmolVLA ≈ 4,7 h mit 4 Workern
 (Aufschlüsselung in [`reports/phase3a.md`](reports/phase3a.md), Abschnitt 9); Phase 3 ≈ 13 h mit 1–3 Workern
 (Pilot und `lerobot-eval` ≈ 3,7 h, Dosis-Wirkung ≈ 5,3 h, Validierung ≈ 2,6 h; Verlauf in
-[`reports/phase3.md`](reports/phase3.md), Abschnitt „Tatsächlicher Verlauf“). Mit einer NVIDIA-GPU ist die
+[`reports/phase3.md`](reports/phase3.md), Abschnitt „Tatsächlicher Verlauf“); Phase 4 ≈ 12,4 h mit 4 Workern
+(Block A ≈ 4,3 h, Block B ≈ 3,0 h, Validierung ≈ 1,7 h einschließlich des ungültigen ersten Laufs; Verlauf in
+[`reports/phase4.md`](reports/phase4.md), Abschnitt 1). Mit einer NVIDIA-GPU ist die
 Inferenz schneller; die Echtzeit-Episoden dauern trotzdem ihre 10–30 s Simulationszeit.
 
 > **Hinweise für Windows (WSL2):** Den aktuellen NVIDIA-Treiber unter Windows installieren, in Ubuntu keinen;
@@ -464,6 +556,23 @@ Kortyn Brain :50051  ◄─ TCP/HTTP2 ─  netem_proxy :50052  ◄─  Kortyn Ag
 | `kortyn/bench_inference.py` | Phase 3a: echte CPU-Inferenzzeit der Policy | `python -m kortyn.bench_inference --config …` |
 | `kortyn/env_determinism.py` | Phase 3a: Ist die PushT-Physik bitgenau reproduzierbar? | `python -m kortyn.env_determinism` |
 | `kortyn/report_phase3a.py` | `reports/phase3a_data.md` + Abbildungen: Validierung, Rauschen/Power, SmolVLA | `python -m kortyn.report_phase3a` |
+| `kortyn/libero_env.py` | Phase 3: LIBERO wie LeRobots Evaluation, Kameras nur bei Bedarf gerendert; mehrere Simulatoren je Prozess (Flotte) | – |
+| `kortyn/fleet.py` | Phase 3/4: Warteschlangen-Simulation der Flotte (Stufe 1), Scan über alle Flottengrößen; Phase 4: geteiltes WLAN | `python -m kortyn.fleet --config …` |
+| `kortyn/fleet_brain.py` | Phase 3: Brain einer Flotte in Simulationszeit: Batching, Scheduler a–e, Zugangskontrolle | – |
+| `kortyn/fleet_predict.py` | Phase 3: Erfolg je Roboter aus seiner Latenzverteilung, Kapazität (Stufe 2) | `python -m kortyn.fleet_predict --config …` |
+| `kortyn/fleet_rollout.py` | Phase 3/4: Validierung mit echten LIBERO-Flotten an einem Brain (Stufe 3) | `python -m kortyn.fleet_rollout --config … --strategy d --robots 5` |
+| `kortyn/economics.py` | Phase 3: Kosten je Roboter, Brain gegen Rechner im Roboter | – |
+| `kortyn/phase3_steps.py` | Phase 3: präregistrierte Entscheidungsregeln (Aufgabenwahl, JPEG, Kaltstart) | `python -m kortyn.phase3_steps …` |
+| `kortyn/report_phase3.py` | `reports/phase3_data.md` + Abbildungen | `python -m kortyn.report_phase3` |
+| `kortyn/bench_codec.py` | Phase 4: verlustfreie Codecs auf echten LIBERO-Bildern: Bitgleichheit, Größe, Zeit | `python -m kortyn.bench_codec --config …` |
+| `kortyn/bench_rtc.py` | Phase 4: Rechen-Mehraufwand von RTC je Anfrage | `python -m kortyn.bench_rtc --config …` |
+| `kortyn/dose_curve.py` | Phase 4: glatte, monotone Dosis-Wirkungs-Kurven (log-logistisch, Ausweichkurve PCHIP), gepaarter Bootstrap, L* | – |
+| `kortyn/power_phase4.py` | Phase 4: Power-Analyse vor dem ersten Lauf | `python -m kortyn.power_phase4` |
+| `kortyn/phase4_steps.py` | Phase 4: Kurven, L*, H1/H2, R-RTC, Re-Test, Validierung, Ergänzungen | `python -m kortyn.phase4_steps curves` |
+| `kortyn/fleet_capacity.py` | Phase 4: Kapazität mit 3-pp- und 1-%-Kriterium aus Stufe 1 und glatter Kurve | `python -m kortyn.fleet_capacity --stage1 … --curve … --out …` |
+| `kortyn/wlan.py` | Phase 4: geteiltes Funkmedium der Flotten-Simulation | – |
+| `kortyn/economics_phase4.py` | Phase 4: Kosten je Roboter bei gleichem Erfolg, Entscheidungsregel | `python -m kortyn.economics_phase4 --capacity … --rtc-overhead …` |
+| `kortyn/report_phase4.py` | `reports/phase4_data.md` + Abbildungen | `python -m kortyn.report_phase4` |
 
 ### Warum ein eigener Brain-Server statt LeRobots Async Inference?
 
@@ -599,12 +708,36 @@ experiment:
         - {scenario: schlecht, timing: schnell, strategy: halten}   # Ergebnis: <results_dir>/smolvla/schnell__halten__schlecht/
 ```
 
+**Phase 4: Real-Time Chunking und verlustfreie Bilder.** Ein Brain-Profil schaltet LeRobots RTC mit `rtc:` ein
+(LeRobot bleibt unverändert, Kortyn setzt nur dessen Konfiguration), die Strategie schickt den Rest des
+laufenden Plans als Führung mit (`smoothing: {mode: rtc}`), und `image_transport` wählt je Lauf die
+Bildübertragung (`raw`, `jpeg`, `png`, `webp`, `zstd`). Ohne diese Angaben laufen alle bisherigen Modi
+unverändert (Rohbilder, keine Führung).
+
+```yaml
+profiles:
+  smolvla_libero_rtc:
+    num_inference_steps: 10
+    image_size: [360, 360]
+    rtc: {prefix_attention_schedule: exp, max_guidance_weight: 10.0}
+strategies:
+  rtc:
+    guard: {mode: hold}
+    smoothing: {mode: rtc, schedule: exp, max_overlap_steps: 24}
+experiment:
+  suites:
+    - profile: smolvla_libero_rtc
+      runs:
+        - {scenario: gut, timing: fest_300ms, strategy: rtc, image_transport: {codec: zstd, level: 9}, label: rtc_300ms}
+```
+
 ## Entwicklung
 
 ```bash
-uv run pytest                 # ~270 Tests: Proxy, Metriken, Codec, Migration, Brain, Golden-Tests, Echtzeit-Agent,
+uv run pytest                 # ~500 Tests: Proxy, Metriken, Codec, Migration, Brain, Golden-Tests, Echtzeit-Agent,
                               #   Latenzschätzer, Anfrage-Strategien, Inpainting, virtuelle Uhr, Latenzmodelle,
-                              #   Replay, Determinismus, Meta-World, SmolVLA (mit lokalem Checkpoint), Reports
+                              #   Replay, Determinismus, Meta-World, SmolVLA (mit lokalem Checkpoint), Reports,
+                              #   Flotte, verlustfreie Codecs, RTC, Dosis-Kurven, Kapazität, WLAN, Kosten
 uv run ruff check . && uv run ruff format --check .
 uv run mypy kortyn            # strict
 # Protokoll geändert? Python-Module neu erzeugen:

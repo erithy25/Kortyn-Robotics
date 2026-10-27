@@ -1,0 +1,240 @@
+{
+  "profile": "smolvla_libero_rtc",
+  "profile_settings": {
+    "noise_scheduler_type": "DDIM",
+    "num_inference_steps": 10,
+    "n_action_steps": null
+  },
+  "clock": "virtual",
+  "brain": {
+    "policy_type": "smolvla",
+    "checkpoint": "checkpoints/smolvla_libero",
+    "device": "cpu",
+    "sampler": "flow-10",
+    "n_obs_steps": 1,
+    "max_actions": 50,
+    "lerobot_version": "0.6.1",
+    "torch_version": "2.11.0+cpu",
+    "torch_threads": 1,
+    "warmup_inference_ms": 0.0
+  },
+  "runs": {
+    "replay_d_n5_first": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "flotte_replay",
+      "timing_settings": {
+        "description": "Latenzen der Validierungsflotte d mit 5 Robotern, je Anfrage nachgespielt",
+        "latency": "replay",
+        "hardware": null,
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results/phase4/diag/replay_src"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "replay_run": "d_n5_first",
+      "image_transport": {
+        "codec": "zstd",
+        "quality": 90,
+        "level": 9,
+        "height": null,
+        "width": null
+      },
+      "strategy": "rtc",
+      "strategy_settings": {
+        "description": "wie halten, dazu Real-Time Chunking: der Rest des alten Plans f\u00fchrt den neuen (LeRobot-RTC)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "rtc",
+          "schedule": "exp",
+          "max_overlap_steps": 24
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    }
+  },
+  "agent": {
+    "actions_per_chunk": 50,
+    "refill_threshold": 24,
+    "start_mode": "cold",
+    "request_timeout_s": 10.0,
+    "sync_actions_per_chunk": 25
+  },
+  "env": {
+    "gym_id": "gym_pusht/PushT-v0",
+    "fps": 20.0,
+    "max_episode_steps": 520
+  },
+  "seeds": [
+    1000,
+    1004
+  ],
+  "workers": 1,
+  "torch_threads": 1,
+  "share_model": false,
+  "host": {
+    "platform": "Linux-6.18.44-fc-v165-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "cpu_count": 4,
+    "python": "3.12.3"
+  },
+  "git_commit": "3fa4d62a817463c66de4b567d1921b2db4a6727c-dirty",
+  "started_utc": "2026-10-27T03:06:12+00:00",
+  "sessions": [
+    {
+      "started_utc": "2026-10-27T03:06:12+00:00",
+      "git_commit": "3fa4d62a817463c66de4b567d1921b2db4a6727c-dirty",
+      "runs": [
+        "replay_d_n5_first"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v165-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-27T03:07:49+00:00",
+      "git_commit": "3fa4d62a817463c66de4b567d1921b2db4a6727c-dirty",
+      "runs": [
+        "replay_d_n5_first"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v165-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-27T03:09:28+00:00",
+      "git_commit": "3fa4d62a817463c66de4b567d1921b2db4a6727c-dirty",
+      "runs": [
+        "replay_d_n5_first"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v165-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-27T03:11:03+00:00",
+      "git_commit": "3fa4d62a817463c66de4b567d1921b2db4a6727c-dirty",
+      "runs": [
+        "replay_d_n5_first"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v165-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-27T03:12:30+00:00",
+      "git_commit": "3fa4d62a817463c66de4b567d1921b2db4a6727c-dirty",
+      "runs": [
+        "replay_d_n5_first"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v165-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    }
+  ]
+}

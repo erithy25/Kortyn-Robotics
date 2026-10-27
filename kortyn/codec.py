@@ -4,17 +4,21 @@ Arrays travel as raw little-endian bytes plus dtype and shape. Only a small set 
 that a malformed or malicious request can never make the receiver allocate arbitrary objects (no pickle).
 
 Camera images (uint8 ``(T, H, W, C)``) can optionally travel scaled down and/or compressed (phase 3a,
-:func:`encode_images`): the frames are stacked vertically into one image, encoded as JPEG, PNG or raw bytes,
-and the receiver decodes them and scales them back to the original resolution, so the policy always gets
-the input size it was trained on.
+:func:`encode_images`): the frames are stacked vertically into one image, encoded as JPEG, PNG, WebP
+(lossless), zstd-compressed raw bytes or raw bytes, and the receiver decodes them and scales them back to the
+original resolution, so the policy always gets the input size it was trained on. PNG, WebP and zstd are
+lossless (phase 4): without scaling the decoded frames equal the camera frames bit for bit.
 """
 
 from __future__ import annotations
 
+import io
 from collections.abc import Collection, Mapping
 
 import cv2
 import numpy as np
+import zstandard
+from PIL import Image
 
 from kortyn.config import ImageTransportConfig
 from kortyn.proto import kortyn_brain_pb2 as pb
@@ -85,7 +89,10 @@ def encode_observation(
 
 
 # --------------------------------------------------------------------------------------------- images
-_IMAGE_EXTENSIONS = {"jpeg": ".jpg", "png": ".png"}
+_IMAGE_EXTENSIONS = {"jpeg": ".jpg", "png": ".png"}  # codecs that OpenCV encodes and decodes
+_KNOWN_ENCODINGS = "raw, jpeg, png, webp, zstd"
+_WEBP_DEFAULT_METHOD = 4  # Pillow's default
+_ZSTD_DEFAULT_LEVEL = 3  # zstandard's default
 
 
 def _check_frames(frames: Array) -> tuple[int, int, int, int]:
@@ -116,9 +123,24 @@ def encode_images(frames: Array, transport: ImageTransportConfig) -> pb.Tensor:
     stacked = scaled.reshape(t * height, width, c)
     if transport.codec == "raw":
         data = stacked.tobytes(order="C")
+    elif transport.codec == "zstd":
+        level = _ZSTD_DEFAULT_LEVEL if transport.level is None else transport.level
+        data = zstandard.ZstdCompressor(level=level).compress(
+            np.ascontiguousarray(stacked).tobytes(order="C")
+        )
+    elif transport.codec == "webp":
+        method = _WEBP_DEFAULT_METHOD if transport.level is None else transport.level
+        picture = Image.fromarray(np.ascontiguousarray(stacked if c == 3 else stacked[..., 0]))
+        stream = io.BytesIO()
+        picture.save(stream, format="WEBP", lossless=True, exact=True, method=method)
+        data = stream.getvalue()
     else:
         image = stacked[..., ::-1] if c == 3 else stacked[..., 0]  # OpenCV expects BGR
-        params = [cv2.IMWRITE_JPEG_QUALITY, transport.quality] if transport.codec == "jpeg" else []
+        params: list[int] = []
+        if transport.codec == "jpeg":
+            params = [cv2.IMWRITE_JPEG_QUALITY, transport.quality]
+        elif transport.level is not None:
+            params = [cv2.IMWRITE_PNG_COMPRESSION, transport.level]
         ok, buffer = cv2.imencode(_IMAGE_EXTENSIONS[transport.codec], np.ascontiguousarray(image), params)
         if not ok:
             raise CodecError(f"{transport.codec} encoding of {frames.shape} failed")
@@ -130,6 +152,35 @@ def encode_images(frames: Array, transport: ImageTransportConfig) -> pb.Tensor:
         encoding=transport.codec,
         encoded_shape=[t, height, width, c],
     )
+
+
+def _decode_zstd(data: bytes, encoded: tuple[int, ...]) -> Array:
+    """zstd-compressed raw frames; the output is capped at the declared size (no decompression bombs)."""
+    expected = int(np.prod(encoded, dtype=np.int64))
+    try:
+        raw = zstandard.ZstdDecompressor().decompress(data, max_output_size=expected)
+    except zstandard.ZstdError as exc:
+        raise CodecError(f"zstd payload could not be decoded: {exc}") from exc
+    if len(raw) != expected:
+        raise CodecError(
+            f"zstd payload decodes to {len(raw)} bytes, encoded_shape {encoded} needs {expected}"
+        )
+    return np.frombuffer(raw, dtype=np.uint8).reshape(encoded)
+
+
+def _decode_webp(data: bytes, encoded: tuple[int, ...]) -> Array:
+    """Lossless WebP frames (stacked vertically, RGB or one channel)."""
+    t, height, width, c = encoded
+    try:
+        with Image.open(io.BytesIO(data), formats=["WEBP"]) as picture:
+            if picture.size != (width, t * height):
+                raise CodecError(f"webp image is {picture.size}, expected {(width, t * height)}")
+            image = np.asarray(picture.convert("RGB" if c == 3 else "L"), dtype=np.uint8)
+    except (OSError, ValueError, Image.DecompressionBombError) as exc:
+        if isinstance(exc, CodecError):
+            raise
+        raise CodecError(f"webp payload could not be decoded: {exc}") from exc
+    return np.ascontiguousarray(image).reshape(encoded)
 
 
 def _decode_images(tensor: pb.Tensor) -> Array:
@@ -152,6 +203,10 @@ def _decode_images(tensor: pb.Tensor) -> Array:
                 f"raw image payload has {len(tensor.data)} bytes, encoded_shape {encoded} needs more"
             )
         frames = np.frombuffer(tensor.data, dtype=np.uint8).reshape(encoded)
+    elif tensor.encoding == "zstd":
+        frames = _decode_zstd(tensor.data, encoded)
+    elif tensor.encoding == "webp":
+        frames = _decode_webp(tensor.data, encoded)
     elif tensor.encoding in _IMAGE_EXTENSIONS:
         image = cv2.imdecode(np.frombuffer(tensor.data, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
         if image is None:
@@ -163,7 +218,7 @@ def _decode_images(tensor: pb.Tensor) -> Array:
             image = image[..., ::-1]  # BGR -> RGB
         frames = np.ascontiguousarray(image, dtype=np.uint8).reshape(encoded)
     else:
-        raise CodecError(f"unknown image encoding {tensor.encoding!r}; known: raw, jpeg, png")
+        raise CodecError(f"unknown image encoding {tensor.encoding!r}; known: {_KNOWN_ENCODINGS}")
     return _resize(frames, shape[1], shape[2], cv2.INTER_LINEAR)
 
 

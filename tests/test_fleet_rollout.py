@@ -11,16 +11,13 @@ import pytest
 from kortyn.config import DEFAULT_BASE_CONFIG, ConfigError
 from kortyn.fleet import (
     BatchingConfig,
-    EpisodeLengthConfig,
-    FleetAgentConfig,
     FleetSimConfig,
     GpuConfig,
-    LevelRun,
     NetworkChoice,
-    PredictionConfig,
     StrategyConfig,
     ValidationConfig,
     grid,
+    load_fleet_config,
     run_grid,
 )
 from kortyn.fleet_predict import load_dose_response
@@ -28,7 +25,10 @@ from kortyn.fleet_rollout import ValidationCase, assign_seeds, evaluate_case, ru
 from kortyn.metrics import read_jsonl
 from kortyn.run_virtual import main as run_virtual_main
 from kortyn.virtual_agent import deterministic_view
-from tests.test_run_virtual import pusht_tiny_checkpoint  # noqa: F401  (module-scoped fixture)
+from tests.test_run_virtual import (
+    pusht_tiny_checkpoint,  # noqa: F401  (module-scoped fixture)
+    run_cli,
+)
 
 pytestmark = pytest.mark.skipif(sys.platform != "linux", reason="forked inference workers: Linux only")
 
@@ -88,51 +88,56 @@ experiment:
     return path
 
 
-def fleet_config(tmp_path: Path, experiment: Path, workers: int, results: str) -> FleetSimConfig:
-    return FleetSimConfig(
-        agent=FleetAgentConfig(fps=10.0, actions_per_chunk=15, refill_threshold=6, request_timeout_s=5.0),
-        episode_lengths=EpisodeLengthConfig(
-            paths=[str(tmp_path / "dose" / "kalibriert" / "fest_0ms" / "episodes.jsonl")]
-        ),
-        gpus={"gpu": GpuConfig(s1_ms=300.0)},
-        batching={"keiner": BatchingConfig(beta=1.0)},
-        strategies={"a": StrategyConfig(scheduler="fifo")},
-        networks={"gut": NetworkChoice(scenario="gut", margin_ms=0.0)},
-        fleet_sizes=[1, 2],
-        replications=1,
-        horizon_s=60.0,
-        window_start_s=5.0,
-        results_path=str(tmp_path / "stage1.jsonl"),
-        prediction=PredictionConfig(
-            experiment=str(experiment),
-            profile="kalibriert",
-            levels=[LevelRun(0.0, "fest_0ms"), LevelRun(800.0, "fest_800ms")],
-            bootstrap=200,
-        ),
-        validation=ValidationConfig(
-            experiment=str(experiment),
-            template_run="fest_0ms",
-            gpu="gpu",
-            batching="keiner",
-            network="gut",
-            profile="kalibriert",
-            results_dir=results,
-            episodes=4,
-            workers=workers,
-            bootstrap=200,
-        ),
+def fleet_yaml(tmp_path: Path, experiment: Path, workers: int, results: str, name: str) -> Path:
+    path = tmp_path / name
+    path.write_text(
+        f"""
+agent: {{fps: 10.0, actions_per_chunk: 15, refill_threshold: 6, request_timeout_s: 5.0}}
+episode_lengths: {{paths: [{tmp_path / "dose" / "kalibriert" / "fest_0ms" / "episodes.jsonl"}]}}
+gpus: {{gpu: {{s1_ms: 300.0}}}}
+batching: {{keiner: {{beta: 1.0}}}}
+strategies: {{a: {{scheduler: fifo}}}}
+networks: {{gut: {{scenario: gut, margin_ms: 0.0}}}}
+fleet_sizes: [1, 2]
+replications: 1
+horizon_s: 60.0
+window_start_s: 5.0
+results_path: {tmp_path / "stage1.jsonl"}
+prediction:
+  experiment: {experiment}
+  profile: kalibriert
+  levels: [{{latency_ms: 0.0, run: fest_0ms}}, {{latency_ms: 800.0, run: fest_800ms}}]
+  bootstrap: 200
+validation:
+  experiment: {experiment}
+  template_run: fest_0ms
+  gpu: gpu
+  batching: keiner
+  network: gut
+  profile: kalibriert
+  results_dir: {results}
+  episodes: 4
+  workers: {workers}
+  bootstrap: 200
+""",
+        encoding="utf-8",
     )
+    return path
 
 
 @pytest.mark.timeout(900)
 def test_validation_rollouts_end_to_end(tmp_path: Path, pusht_tiny_checkpoint: Path) -> None:  # noqa: F811
     experiment = write_experiment(tmp_path, pusht_tiny_checkpoint)
     assert run_virtual_main(["--config", str(experiment), "--log-level", "WARNING"]) == 0
-    two = fleet_config(tmp_path, experiment, workers=2, results=str(tmp_path / "val2"))
+    two_path = fleet_yaml(tmp_path, experiment, workers=2, results=str(tmp_path / "val2"), name="fleet2.yaml")
+    one_path = fleet_yaml(tmp_path, experiment, workers=2, results=str(tmp_path / "val1"), name="fleet1.yaml")
+    two = load_fleet_config(two_path)
     run_grid(two, grid(two), Path(two.results_path), workers=1)
     case = ValidationCase("a", 2)
 
-    meta = run_case(two, case, tmp_path / "val2" / case.label)
+    # the rollouts fork their inference workers: from a fresh interpreter, as from the command line
+    run_cli("kortyn.fleet_rollout", "--config", str(two_path), "--strategy", "a", "--robots", "2")
+    meta = json.loads((tmp_path / "val2" / case.label / "meta.json").read_text(encoding="utf-8"))
     assert meta["admitted"] == 2
     assert meta["episodes_counted"] == 4
     assert meta["inferences"] > 0
@@ -146,7 +151,19 @@ def test_validation_rollouts_end_to_end(tmp_path: Path, pusht_tiny_checkpoint: P
 
     # the plans do not depend on the number of inference processes: identical rollouts with one worker
     # (PushT physics, pymunk, is not bit-reproducible in the last float digits: compare 9 digits)
-    assert run_case(two, case, tmp_path / "val1" / case.label, workers=1)["inference_workers"] == 1
+    run_cli(
+        "kortyn.fleet_rollout",
+        "--config",
+        str(one_path),
+        "--strategy",
+        "a",
+        "--robots",
+        "2",
+        "--workers",
+        "1",
+    )
+    meta_one = json.loads((tmp_path / "val1" / case.label / "meta.json").read_text(encoding="utf-8"))
+    assert meta_one["inference_workers"] == 1
     for name in ("episodes.jsonl", "requests.jsonl"):
         left = sorted(
             json.dumps(rounded(deterministic_view(r)), sort_keys=True)

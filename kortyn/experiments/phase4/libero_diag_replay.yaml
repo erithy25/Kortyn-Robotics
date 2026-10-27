@@ -1,0 +1,21 @@
+# Phase 4 diagnostic (not pre-registered; reports/phase4.md, section 5.4): the first episode of every robot of
+# the first validation run d_n5 (results/phase4/validation_renderfehler, before the render fix 4c83bac) replayed
+# as a single robot in a fresh process, with exactly the end-to-end latency the fleet logged for each request.
+# Same agent, strategy (rtc), images (zstd_9) and policy as the validation. results/phase4/diag/replay_src
+# holds those five episodes and their requests (robot_episode 0 of every robot). One process per seed:
+#   for s in 1000 1001 1002 1003 1004; do python -m kortyn.run_virtual \
+#       --config kortyn/experiments/phase4/libero_diag_replay.yaml --seed-start $s --episodes 1 --workers 1; done
+# Result: identical requests until another robot's reset destroyed a simulator while this robot's GL context
+# was current; from the next render on the fleet's images differ (robosuite freed them in the wrong context).
+extends: libero_rtc.yaml
+experiment:
+  results_dir: results/phase4/diag/replay
+  suites:
+    - profile: smolvla_libero_rtc
+      runs:
+        - {scenario: gut, timing: flotte_replay, strategy: rtc, image_transport: {codec: zstd, level: 9}, replay_run: d_n5_first, label: replay_d_n5_first}
+timings:
+  flotte_replay:
+    description: "Latenzen der Validierungsflotte d mit 5 Robotern, je Anfrage nachgespielt"
+    latency: replay
+    replay: {results_dir: results/phase4/diag/replay_src}

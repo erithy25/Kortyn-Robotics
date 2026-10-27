@@ -1,0 +1,26 @@
+{
+ "case": "d_n10",
+ "strategy": "d",
+ "robots": 10,
+ "admitted": 10,
+ "gpu": "rtx3060ti_schaetzung_rtc",
+ "batching": "realistisch",
+ "network": "buero_wlan",
+ "template_run": "rtc_0ms",
+ "episodes_counted": 50,
+ "simulated_s": 132.64889351328145,
+ "starts": [
+  1.4334021226429317,
+  1.5774809160627645,
+  2.8988935132814464,
+  2.994656273975227,
+  3.108528487801503,
+  3.9971538809990728,
+  6.161036032441732,
+  6.390171268905712,
+  8.617481031429278,
+  9.308495638504493
+ ],
+ "inference_workers": 4,
+ "aborted": "killed by the memory cgroup (13.36 GiB) at 04:50 UTC after 50 of 60 counted episodes, when every robot switched to task 0, whose scene needs about twice the memory of task 8; this file was written afterwards from the configuration (fleet.yaml validation section) and the episode records"
+}

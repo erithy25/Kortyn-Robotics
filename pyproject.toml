@@ -30,6 +30,10 @@ dependencies = [
     "matplotlib==3.11.2",
     # Phase 3a: SmolVLA (transformers backbone) via the LeRobot extra above.
     "transformers==5.5.4",
+    # Phase 4: lossless image codecs (PNG/WebP via Pillow and OpenCV, zstd) and the monotone dose-response fit.
+    "zstandard==0.25.0",
+    "pillow==12.3.0",
+    "scipy==1.18.1",
 ]
 
 [project.scripts]
@@ -135,6 +139,7 @@ module = [
     "libero.*",
     "robosuite.*",
     "mujoco.*",
+    "scipy.*",
 ]
 ignore_missing_imports = true
 follow_untyped_imports = false
