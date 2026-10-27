@@ -1,0 +1,28 @@
+# Phase 5, step 2, gate block G: real-time chunking with SHORT guidance at 0 ms against the synchronous
+# reference, pre-registered in reports/phase5_preregistration.md (section 3). Same agent, policy, images
+# (lossless zstd_9) and LeRobot RTC settings as phase 4 (libero_rtc.yaml); the only change is the guidance
+# length: at most 4 soft actions after the d frozen ones (H = d + 4 instead of up to 25).
+#
+# 200 episodes per condition: tasks 8 and 0 x init states 0-49, played twice (seeds 1000-1099 and 1100-1199:
+# same task, init state and simulator seed, different policy noise). All three conditions run in the RTC
+# profile so that a worker plays them one after another for the same seed (run_virtual processes a profile
+# seed by seed); without a guide its sampling is bit-identical to the profile without RTC (phase-4 unit test).
+#   UV_PROJECT_ENVIRONMENT=.venv-libero uv run --no-sync \
+#       python -m kortyn.run_virtual --config kortyn/experiments/phase5/libero_rtc_kurz.yaml --share-model
+# The dose block D (libero_rtc_kurz_dose.yaml) runs only if the gate passes.
+extends: ../phase4/libero_rtc.yaml
+experiment:
+  results_dir: results/phase5/libero
+  episodes: 200
+  suites:
+    - profile: smolvla_libero_rtc
+      runs:
+        - {scenario: referenz_sync, timing: fest_0ms, sync_actions_per_chunk: 25, image_transport: {codec: zstd, level: 9}, label: sync25}
+        - {scenario: gut, timing: fest_0ms, strategy: halten, image_transport: {codec: zstd, level: 9}, label: async_0ms}
+        - {scenario: gut, timing: fest_0ms, strategy: rtc_kurz, image_transport: {codec: zstd, level: 9}, label: rtc_kurz_0ms}
+
+strategies:
+  rtc_kurz:
+    description: "RTC mit kurzer Führung: d sichere Aktionen, danach höchstens 4 weich geführte (H = d + 4)"
+    guard: {mode: hold}
+    smoothing: {mode: rtc, schedule: exp, max_overlap_steps: 4}

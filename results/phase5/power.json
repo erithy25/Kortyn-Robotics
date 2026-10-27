@@ -1,0 +1,230 @@
+{
+ "gate": {
+  "margin": 0.15,
+  "alpha": 0.05,
+  "confidence": 0.95
+ },
+ "simulations": 2000,
+ "draws": 2000,
+ "seed": 20261027,
+ "p_reference": 0.53,
+ "async_gap": 0.06,
+ "scenarios": [
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.53,
+   "rho_total": 0.3,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.684
+  },
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.47000000000000003,
+   "rho_total": 0.3,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.3085
+  },
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.43000000000000005,
+   "rho_total": 0.3,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.157
+  },
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.38,
+   "rho_total": 0.3,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.025
+  },
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.53,
+   "rho_total": 0.5,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.757
+  },
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.47000000000000003,
+   "rho_total": 0.5,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.377
+  },
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.43000000000000005,
+   "rho_total": 0.5,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.184
+  },
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.38,
+   "rho_total": 0.5,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.0335
+  },
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.53,
+   "rho_total": 0.7,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.8775
+  },
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.47000000000000003,
+   "rho_total": 0.7,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.4795
+  },
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.43000000000000005,
+   "rho_total": 0.7,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.2205
+  },
+  {
+   "replicates": 1,
+   "p_reference": 0.53,
+   "p_test": 0.38,
+   "rho_total": 0.7,
+   "cluster_share": 0.5,
+   "pairs": 100,
+   "pass_rate": 0.03
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.53,
+   "rho_total": 0.3,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.928
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.47000000000000003,
+   "rho_total": 0.3,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.5395
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.43000000000000005,
+   "rho_total": 0.3,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.2235
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.38,
+   "rho_total": 0.3,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.03
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.53,
+   "rho_total": 0.5,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.9655
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.47000000000000003,
+   "rho_total": 0.5,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.629
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.43000000000000005,
+   "rho_total": 0.5,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.2535
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.38,
+   "rho_total": 0.5,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.034
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.53,
+   "rho_total": 0.7,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.98
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.47000000000000003,
+   "rho_total": 0.7,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.64
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.43000000000000005,
+   "rho_total": 0.7,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.2345
+  },
+  {
+   "replicates": 2,
+   "p_reference": 0.53,
+   "p_test": 0.38,
+   "rho_total": 0.7,
+   "cluster_share": 0.5,
+   "pairs": 200,
+   "pass_rate": 0.017
+  }
+ ]
+}
