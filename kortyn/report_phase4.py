@@ -1084,12 +1084,14 @@ def figure_capacity(
     values = [int(e["capacity"]) for e in capacity["configurations"]]
     top_value = float(max([1, *values]))
     fig, axes, layout = make_figure(1, max(1, len(shown)), 3.5, 2.6, header_in=1.45, sharey=True)
+    strategies = [s for s in STRATEGY_ORDER if s in fleet.strategies]
     for index, name in enumerate(shown):
         ax = axes[0][index]
-        for strategy in [s for s in STRATEGY_ORDER if s in fleet.strategies]:
+        for position, strategy in enumerate(strategies):
             y = [found.get((BASE_NETWORK, gpus[name], p, strategy)) for p in profiles]
+            dodge = 1.0 + 0.035 * (position - (len(strategies) - 1) / 2)  # equal capacities stay visible
             ax.plot(
-                betas,
+                [beta * dodge for beta in betas],
                 [math.nan if e is None else float(e["capacity"]) for e in y],
                 color=STRATEGY_COLORS[strategy],
                 linewidth=2.0,
@@ -1251,14 +1253,14 @@ def figure_costs(
     names: Sequence[str],
     path: Path,
 ) -> None:
-    """Brain cost per robot against the fleet size (best strategy, realistic) and the onboard computers."""
+    """Brain cost per robot against the fleet size, the capacity of each condition, the onboard computers."""
     apply_style()
     found = entries_by_key(capacity, fleet)
     gpus = condition_gpus(capacity)
-    fig, axes, layout = make_figure(1, 1, 6.2, 3.3, header_in=1.45, right_in=2.3)
+    fig, axes, layout = make_figure(1, 1, 6.2, 3.3, header_in=1.45, right_in=2.9)
     ax = axes[0][0]
     handles: list[Any] = []
-    largest = 1
+    curves: dict[str, tuple[list[int], list[float], int, str]] = {}
     for name in names:
         decided = economics["decisions"]["realistisch"].get(name, {})
         if "brain" not in decided or name not in gpus:
@@ -1268,40 +1270,53 @@ def figure_costs(
         if entry is None:
             continue
         sizes, costs = cost_curve(config, entry)
-        if not sizes:
+        if sizes:
+            curves[name] = (sizes, costs, int(brain["robots"]), str(brain["strategy"]))
+    if not curves:
+        raise ReportError("no Brain configuration with a cost curve")
+    # the cost per robot depends on the fleet size (the busy share moves it by cents): one line, the longest
+    sizes, costs, _, _ = max(curves.values(), key=lambda item: len(item[0]))
+    ax.plot(sizes, costs, color=INK_2, linewidth=2.0, zorder=3)
+    handles.append(Line2D([0], [0], color=INK_2, linewidth=2.0, label="Brain je Roboter (ohne Netz-Engpass)"))
+    for name, (own_sizes, own_costs, k, strategy) in curves.items():
+        if k not in own_sizes:
             continue
-        largest = max(largest, sizes[-1])
         color = CONDITION_COLORS.get(name, CATEGORICAL[2])
-        ax.plot(sizes, costs, color=color, linewidth=2.0, zorder=3)
-        k = int(brain["robots"])
-        if k in sizes:
-            ax.plot([k], [costs[sizes.index(k)]], marker="o", markersize=7, color=color, zorder=4)
-            ax.annotate(
-                f"K = {k}",
-                (k, costs[sizes.index(k)]),
-                xytext=(4, 6),
-                textcoords="offset points",
-                color=INK_2,
-                fontsize=8,
-            )
+        value = own_costs[own_sizes.index(k)]
+        ax.plot([k], [value], marker="o", markersize=8, color=color, markeredgecolor="white", zorder=4)
+        ax.annotate(
+            f"K = {k}: {eur(value)}",
+            (k, value),
+            xytext=(6, 6),
+            textcoords="offset points",
+            color=INK_2,
+            fontsize=8,
+        )
         handles.append(
             Line2D(
                 [0],
                 [0],
-                color=color,
-                linewidth=2.0,
+                linestyle="none",
                 marker="o",
-                markersize=6,
-                label=f"Brain {condition_name(name)} (Strategie {brain['strategy']}; Punkt = Kapazität)",
+                markersize=7,
+                color=color,
+                label=f"Kapazität {condition_name(name)} (Strategie {strategy})",
             )
         )
-    with_rtc = economics["rtc_condition"]
-    devices = [d for d in economics["devices"] if d["condition"] == with_rtc]
-    for device in devices:
+    success: dict[str, dict[str, float]] = {}
+    for device in economics["devices"]:
+        success.setdefault(str(device["label"]), {})[str(device["condition"])] = float(device["success"])
+    seen: set[str] = set()
+    for device in economics["devices"]:
+        label = str(device["label"])
+        if label in seen:
+            continue
+        seen.add(label)
         value = float(device["monthly_eur"])
+        rates = " / ".join(pct(success[label][name]) for name in names if name in success[label])
         ax.axhline(value, color=MUTED, linewidth=1.0, linestyle=(0, (4, 3)), zorder=1)
         ax.annotate(
-            f"{short_device(str(device['label']))}: {eur(value)} · {pct(float(device['success']))}",
+            f"{short_device(label)}: {eur(value)} · {rates}",
             (1.0, value),
             xycoords=("axes fraction", "data"),
             xytext=(6, 0),
@@ -1317,7 +1332,7 @@ def figure_costs(
     ax.yaxis.set_major_locator(FixedLocator(ticks))
     ax.yaxis.set_minor_locator(NullLocator())
     ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:,.0f} €".replace(",", "\u202f")))
-    ax.set_xlim(0.5, largest + 0.5)
+    ax.set_xlim(0.5, sizes[-1] + 0.5)
     ax.set_xlabel("Roboter am Brain (Größen mit ≤ 1 % verpassten Anfragen)")
     ax.set_ylabel("€ je Roboter und Monat")
     top = header(
@@ -1325,7 +1340,8 @@ def figure_costs(
         layout,
         "Kosten je Roboter: ein Brain gegen einen Rechner in jedem Roboter",
         "RTX 3060 Ti + Host-PC + Raspberry Pi 5 je Roboter, Batching realistisch; gestrichelt: Jetson im "
-        "Roboter (Kosten · Erfolg mit RTC). Alle Preise sind Annahmen (Quellen im Datenteil).",
+        "Roboter (Kosten · vorhergesagter Erfolg ohne / mit RTC). Alle Preise sind Annahmen (Quellen im "
+        "Datenteil).",
     )
     header_legend(fig, layout, handles, ncol=1, top_in=top)
     fig.savefig(path, dpi=DPI)
