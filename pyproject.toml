@@ -41,6 +41,7 @@ kortyn-brain = "kortyn.brain:main"
 kortyn-proxy = "kortyn.netem_proxy:main"
 kortyn-run = "kortyn.run_experiment:main"
 kortyn-report = "kortyn.report:main"
+kortyn-capacity = "kortyn.capacity:main"
 
 [dependency-groups]
 dev = [

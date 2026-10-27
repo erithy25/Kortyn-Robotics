@@ -1,0 +1,140 @@
+{
+ "format": "kortyn-dose-response-v1",
+ "description": "SmolVLA (lerobot/smolvla_libero) on LIBERO-Long tasks 8 and 0, 50 init states each, without real-time chunking: phase-4 block A (0-1250 ms) and phase 3 (1500, 2000 ms)",
+ "source": {
+  "analysis": "kortyn/experiments/phase4/analysis.yaml",
+  "condition": "ohne_rtc",
+  "runs": [
+   "results/phase4/libero/smolvla_libero/fest_0ms",
+   "results/phase4/libero/smolvla_libero/fest_100ms",
+   "results/phase4/libero/smolvla_libero/fest_200ms",
+   "results/phase4/libero/smolvla_libero/fest_300ms",
+   "results/phase4/libero/smolvla_libero/fest_500ms",
+   "results/phase4/libero/smolvla_libero/fest_750ms",
+   "results/phase4/libero/smolvla_libero/fest_1000ms",
+   "results/phase4/libero/smolvla_libero/fest_1250ms",
+   "results/phase3/libero/smolvla_libero/fest_1500ms",
+   "results/phase3/libero/smolvla_libero/fest_2000ms"
+  ],
+  "seeds": [
+   1000,
+   1099
+  ]
+ },
+ "tick_ms": 50.0,
+ "fit_max_ms": 1250.0,
+ "zero_from_ms": 1500.0,
+ "gof_alpha": 0.01,
+ "tasks": [
+  {
+   "name": "libero_10 task 0: put both the alphabet soup and the tomato sauce in the basket",
+   "levels": [
+    {
+     "latency_ms": 0.0,
+     "successes": 21,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 100.0,
+     "successes": 24,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 200.0,
+     "successes": 23,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 300.0,
+     "successes": 13,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 500.0,
+     "successes": 7,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 750.0,
+     "successes": 1,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 1000.0,
+     "successes": 0,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 1250.0,
+     "successes": 0,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 1500.0,
+     "successes": 0,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 2000.0,
+     "successes": 0,
+     "episodes": 50
+    }
+   ]
+  },
+  {
+   "name": "libero_10 task 8: put both moka pots on the stove",
+   "levels": [
+    {
+     "latency_ms": 0.0,
+     "successes": 26,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 100.0,
+     "successes": 24,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 200.0,
+     "successes": 24,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 300.0,
+     "successes": 17,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 500.0,
+     "successes": 22,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 750.0,
+     "successes": 16,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 1000.0,
+     "successes": 5,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 1250.0,
+     "successes": 1,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 1500.0,
+     "successes": 0,
+     "episodes": 50
+    },
+    {
+     "latency_ms": 2000.0,
+     "successes": 0,
+     "episodes": 50
+    }
+   ]
+  }
+ ]
+}
