@@ -443,7 +443,7 @@ def phase4(facts: Facts) -> dict[str, Any]:
     )
     facts.add(
         "p4.codec.identical",
-        f"{standard['identical_model_inputs']}/{standard['requests']}",
+        f"{standard['identical_model_inputs']}/{standard['requests']} requests",
         codec_path,
         "identical model inputs",
     )
@@ -813,10 +813,42 @@ def table_gate(p5: Mapping[str, Any]) -> str:
 
 
 # --------------------------------------------------------------------------------------------- constants
+def _setting(path: Path, *keys: str | int) -> Any:
+    """A value of a YAML config file; the key must be in the file itself (no ``extends`` resolution)."""
+    value: Any = _yaml(path)
+    for key in keys:
+        try:
+            value = value[key]
+        except (KeyError, IndexError, TypeError) as error:
+            dotted = ".".join(str(k) for k in keys)
+            raise PaperError(f"{path.relative_to(ROOT)}: no setting {dotted}") from error
+    return value
+
+
+def _plain(value: float) -> str:
+    """A setting as printed: 20.0 -> "20", 1.25 -> "1.25"."""
+    return f"{value:g}"
+
+
 def constants(facts: Facts) -> None:
-    """Settings the report quotes, with the config file that fixes them."""
-    pusht = ROOT / "reports" / "phase1.md"
-    facts.add("c.pushT.fps", "10 Hz", pusht, "Setup: 10-Hz control loop")
+    """Settings the report quotes, read from the config file or module that fixes them."""
+    from kortyn import notebook_bench
+    from kortyn.fleet import MISS_SHARE_LIMIT
+    from kortyn.rtc_gate import GATE_MARGIN
+
+    experiments = ROOT / "kortyn" / "experiments"
+    pusht = experiments / "base.yaml"
+    pusht_fps = _setting(pusht, "env", "fps")
+    facts.add("c.pushT.fps", f"{_plain(pusht_fps)} Hz", pusht, "env.fps")
+    pusht_budget = (_setting(pusht, "agent", "refill_threshold") + 1) / pusht_fps
+    facts.add("c.pushT.budget", ms(1000 * pusht_budget), pusht, "(agent.refill_threshold + 1) / env.fps")
+    first = _setting(pusht, "experiment", "seed_start")
+    facts.add(
+        "c.seeds.pusht",
+        f"seeds {first}–{first + _setting(pusht, 'experiment', 'episodes') - 1}",
+        pusht,
+        "experiment.seed_start … seed_start + episodes − 1",
+    )
     _, n = _rate(ROOT / "results" / "kalibriert" / "gut")
     facts.add(
         "c.p1.episodes",
@@ -824,88 +856,129 @@ def constants(facts: Facts) -> None:
         ROOT / "results" / "kalibriert" / "gut" / "episodes.jsonl",
         "episodes per condition",
     )
-    libero = ROOT / "kortyn" / "experiments" / "phase3" / "libero_base.yaml"
-    facts.add("c.fps", "20 Hz", libero, "env.fps")
-    facts.add("c.chunk", "50 actions", libero, "agent.actions_per_chunk")
-    facts.add("c.budget", "1,250 ms", libero, "(agent.refill_threshold + 1) / env.fps")
-    facts.add("c.period", "1.25 s", libero, "a request every 25 ticks at 20 Hz")
+
+    libero = experiments / "phase3" / "libero_base.yaml"
+    fps = _setting(libero, "env", "fps")
+    ticks = _setting(libero, "agent", "refill_threshold") + 1
+    facts.add("c.fps", f"{_plain(fps)} Hz", libero, "env.fps")
     facts.add(
-        "c.episodes",
-        "100 episodes",
-        ROOT / "kortyn" / "experiments" / "phase3" / "libero_main.yaml",
-        "experiment.episodes",
+        "c.chunk",
+        f"{_setting(libero, 'agent', 'actions_per_chunk')} actions",
+        libero,
+        "agent.actions_per_chunk",
     )
-    fleet = ROOT / "kortyn" / "experiments" / "phase4" / "fleet.yaml"
-    facts.add("c.s1", "220 ms", fleet, "gpus.rtx3060ti_schaetzung.s1_ms (assumption)")
-    facts.add("c.beta", "15%", fleet, "batching.realistisch.beta")
+    facts.add("c.ticks", f"{ticks} ticks", libero, "agent.refill_threshold + 1 (a request every … ticks)")
+    facts.add("c.budget", ms(1000 * ticks / fps), libero, "(agent.refill_threshold + 1) / env.fps")
+    facts.add("c.period", f"{_plain(ticks / fps)} s", libero, "(agent.refill_threshold + 1) / env.fps")
+    facts.add(
+        "c.steps",
+        f"{_setting(libero, 'profiles', 'smolvla_libero', 'num_inference_steps')} flow-matching steps",
+        libero,
+        "profiles.smolvla_libero.num_inference_steps",
+    )
+    main = experiments / "phase3" / "libero_main.yaml"
+    episodes = _setting(main, "experiment", "episodes")
+    first = _setting(libero, "experiment", "seed_start")
+    facts.add("c.episodes", f"{episodes} episodes", main, "experiment.episodes")
+    facts.add(
+        "c.seeds.libero",
+        f"seeds {first}–{first + episodes - 1}",
+        main,
+        "seed_start (libero_base.yaml) … seed_start + experiment.episodes − 1",
+    )
+    facts.add(
+        "c.init",
+        f"init states 0–{_setting(main, 'env', 'libero', 'episodes_per_task') - 1}",
+        main,
+        "env.libero.episodes_per_task",
+    )
+    sync = _setting(main, "experiment", "suites", 0, "runs", 0)
+    if sync.get("label") != "sync25":
+        raise PaperError(f"{main.relative_to(ROOT)}: the first run is not sync25")
+    facts.add(
+        "c.sync25", f"{sync['sync_actions_per_chunk']} actions", main, "runs[sync25].sync_actions_per_chunk"
+    )
+
+    fleet = experiments / "phase4" / "fleet.yaml"
+    facts.add(
+        "c.s1",
+        ms(_setting(fleet, "gpus", "rtx3060ti_schaetzung", "s1_ms")),
+        fleet,
+        "gpus.rtx3060ti_schaetzung.s1_ms (assumption)",
+    )
+    facts.add(
+        "c.beta", pct(_setting(fleet, "batching", "realistisch", "beta")), fleet, "batching.realistisch.beta"
+    )
+    facts.add(
+        "c.wait", ms(_setting(fleet, "strategies", "b", "max_wait_ms")), fleet, "strategies.b.max_wait_ms"
+    )
+    facts.add(
+        "c.validation.confidence",
+        pct(_setting(fleet, "validation", "confidence"), 1),
+        fleet,
+        "validation.confidence",
+    )
+    wifi = experiments / "buero_wlan.yaml"
     facts.add(
         "c.wifi",
-        "20 ± 10 ms",
-        ROOT / "kortyn" / "experiments" / "buero_wlan.yaml",
+        f"{_setting(wifi, 'network', 'rtt_ms')} ± {_setting(wifi, 'network', 'rtt_jitter_ms')} ms",
+        wifi,
         "network.rtt_ms ± rtt_jitter_ms",
     )
-    facts.add("c.margin.gate", "−15 pp", ROOT / "kortyn" / "rtc_gate.py", "GATE_MARGIN")
-    facts.add(
-        "c.tolerance", "3 pp", ROOT / "kortyn" / "experiments" / "phase4" / "analysis.yaml", "tolerance"
-    )
-    facts.add(
-        "c.tick",
-        "50 ms",
-        ROOT / "kortyn" / "experiments" / "phase4" / "analysis.yaml",
-        "tick_ms (one control tick at 20 Hz)",
-    )
-    facts.add("c.miss", "1%", ROOT / "kortyn" / "fleet.py", "MISS_SHARE_LIMIT")
-    facts.add(
-        "c.slo",
-        "150 ms",
-        ROOT / "kortyn" / "experiments" / "phase5" / "analysis.yaml",
-        "gpu_decision.latency_slo.max_ms",
-    )
-    facts.add(
-        "c.slo.robots",
-        "10 robots",
-        ROOT / "kortyn" / "experiments" / "phase5" / "analysis.yaml",
-        "gpu_decision.latency_slo.robots",
-    )
-    facts.add("c.numerics", "25%", ROOT / "kortyn" / "notebook_bench.py", "NUMERIC_THRESHOLD")
-    facts.add(
-        "c.pushT.budget", "700 ms", ROOT / "reports" / "phase1.md", "Setup: chunk 15, refill at <= 6, 10 Hz"
-    )
-    facts.add(
-        "c.sync25",
-        "25 actions",
-        ROOT / "kortyn" / "experiments" / "phase3" / "libero_main.yaml",
-        "runs[sync25].sync_actions_per_chunk",
-    )
     for name in ("schlecht", "sehr_schlecht"):
-        scenario = ROOT / "kortyn" / "experiments" / f"{name}.yaml"
-        text = scenario.read_text(encoding="utf-8")
-        rtt = re.search(r"rtt_ms: (\d+)", text)
-        jitter = re.search(r"rtt_jitter_ms: (\d+)", text)
-        if rtt is None or jitter is None:
-            raise PaperError(f"{scenario.relative_to(ROOT)}: no rtt_ms / rtt_jitter_ms")
+        scenario = experiments / f"{name}.yaml"
+        rtt, jitter = _setting(scenario, "network", "rtt_ms"), _setting(scenario, "network", "rtt_jitter_ms")
         facts.add(
             f"c.net.{name}",
-            f"{rtt.group(1)} ± {jitter.group(1)} ms",
+            f"{rtt} ± {jitter} ms",
             scenario,
             "network.rtt_ms ± rtt_jitter_ms",
         )
-    fleet_text = fleet.read_text(encoding="utf-8")
-    wait = re.search(r"max_wait_ms: ([\d.]+)", fleet_text)
-    confidence = re.search(r"confidence: ([\d.]+)", fleet_text)
-    if wait is None or confidence is None:
-        raise PaperError("kortyn/experiments/phase4/fleet.yaml: no max_wait_ms / confidence")
-    facts.add("c.wait", ms(float(wait.group(1))), fleet, "strategies.b.max_wait_ms")
-    facts.add("c.validation.confidence", pct(float(confidence.group(1)), 1), fleet, "validation.confidence")
+    facts.add("c.margin.gate", pp(-GATE_MARGIN, 0), ROOT / "kortyn" / "rtc_gate.py", "GATE_MARGIN")
+    analysis4 = experiments / "phase4" / "analysis.yaml"
+    facts.add("c.tolerance", f"{_plain(100 * _setting(analysis4, 'tolerance'))} pp", analysis4, "tolerance")
+    facts.add("c.tick", ms(_setting(analysis4, "tick_ms")), analysis4, "tick_ms (one control tick at 20 Hz)")
+    facts.add("c.miss", pct(MISS_SHARE_LIMIT), ROOT / "kortyn" / "fleet.py", "MISS_SHARE_LIMIT")
+    analysis5 = experiments / "phase5" / "analysis.yaml"
+    slo = _setting(analysis5, "gpu_decision", "latency_slo")
+    facts.add("c.slo", ms(slo["max_ms"]), analysis5, "gpu_decision.latency_slo.max_ms")
+    facts.add("c.slo.robots", f"{slo['robots']} robots", analysis5, "gpu_decision.latency_slo.robots")
+    bench = ROOT / "kortyn" / "notebook_bench.py"
+    facts.add("c.numerics", pct(notebook_bench.NUMERIC_THRESHOLD), bench, "NUMERIC_THRESHOLD")
+    facts.add(
+        "c.nb.sizes",
+        f"{min(notebook_bench.SIZES)} to {max(notebook_bench.SIZES)} requests",
+        bench,
+        "SIZES (batch sizes)",
+    )
+    facts.add("c.nb.repeats", f"{notebook_bench.REPEATS} runs", bench, "REPEATS (timed runs per batch size)")
+    rtc = experiments / "phase4" / "libero_rtc.yaml"
+    weight = _setting(rtc, "profiles", "smolvla_libero_rtc", "rtc", "max_guidance_weight")
+    facts.add(
+        "c.rtc.weight",
+        f"maximum guidance weight of {_plain(weight)}",
+        rtc,
+        "profiles.smolvla_libero_rtc.rtc.max_guidance_weight",
+    )
+    gate = experiments / "phase5" / "libero_rtc_kurz.yaml"
+    transport = _setting(gate, "experiment", "suites", 0, "runs", 0, "image_transport")
+    facts.add("c.zstd", f"{transport['codec']}, level {transport['level']}", gate, "runs[*].image_transport")
     facts.add(
         "c.confidence",
         "95%",
         ROOT / "kortyn" / "metrics.py",
         "wilson_interval z = 1.96; bootstrap percentiles 2.5/97.5",
     )
-    dose = ROOT / "kortyn" / "experiments" / "phase4" / "libero_dose.yaml"
+    dose = experiments / "phase4" / "libero_dose.yaml"
+    dose_text = dose.read_text(encoding="utf-8")
     for latency in (0, 100, 200, 300, 500, 750, 1000, 1500, 2000):
+        if f"fest_{latency}ms" not in dose_text and latency not in (0, 1500, 2000):
+            raise PaperError(f"{dose.relative_to(ROOT)}: no level fest_{latency}ms")
         facts.add(f"c.level.{latency}", ms(latency), dose, "dose-response latency level (fest_<L>ms)")
+    prereg4 = ROOT / "reports" / "phase4_preregistration.md"
+    if "1,5 oder 2" not in prereg4.read_text(encoding="utf-8"):
+        raise PaperError(f"{prereg4.relative_to(ROOT)}: no stretch factor 1,5")
+    facts.add("c.stretch", "1.5-fold", prereg4, "H1 power: stretch k of the latency axis (1, 1,5 or 2)")
 
 
 # --------------------------------------------------------------------------------------------- figures
@@ -1312,7 +1385,8 @@ def table_names(report: str) -> list[str]:
 
 
 UNIT_NUMBER = re.compile(
-    r"(?<![\w.])[−+±]?\d[\d,]*(?:\.\d+)?(?:\s?(?:%|pp|ms|s|Hz|kB|MB|GB|Mbit/s|robots|episodes|pairs|actions))(?![\w])"
+    r"(?<![\w.-])[−+±]?\d[\d,]*(?:\.\d+)?"
+    r"(?:\s?(?:%|pp|ms|s|Hz|kB|MB|GB|Mbit/s|robots|episodes|pairs|actions|ticks|steps|runs|requests))(?![\w])"
 )
 
 

@@ -390,7 +390,7 @@ without any harm of its own passes in only 54%–64% of cases.
 **GPU measurement (pending).** All GPU service times so far were assumptions. Phase 5 provides a notebook that
 measures SmolVLA on a free Google Colab or Kaggle GPU in the browser: service time per batch of 1 to 32 requests
 with eight real LIBERO observations, as loaded by LeRobot (bf16 and fp32 parts), in fp16 and fp32, and compiled
-with `torch.compile`; 100 timed runs per size after warm-up, p50/p95/p99 and GPU memory. A configuration counts
+with `torch.compile`; after warm-up, 100 runs per size are timed (p50/p95/p99) and GPU memory is recorded. A configuration counts
 only if its actions deviate from the fp32 reference by at most 25% of the policy's own sampling spread; on the
 CPU the as-loaded configuration deviates by 6.9% and fp16 by 0.8%. On this machine's CPU a single request takes
 2.3 s. The pre-registered decision rule: if the measured GPU serves at least 10 robots with a pooled p99
@@ -457,7 +457,8 @@ the guide `docs/gpu_benchmark_browser.md`.
   which loads the policy several times, next to the running block. 49 of 200 seeds were complete in all three
   conditions, with no partial records; the runner writes a seed only when all its conditions are done. The run
   resumed at 21:49 UTC in the same worktree at the same commit; the seeds that were in progress ran again from
-  their start. Afterwards no memory-intensive work ran next to the rollouts.
+  their start. Afterwards no memory-intensive work ran next to the rollouts. The kernel's message and the run
+  logs are in `results/phase5/libero/run_logs/`.
 
 ## References
 
