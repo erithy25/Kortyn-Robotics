@@ -365,7 +365,12 @@ def test_wlan_rows_mark_the_network_bottleneck(inputs: rp.Inputs) -> None:
     assert slow.capacity_unlimited == 8
     assert slow.network_limits
     assert slow.medium_busy == pytest.approx(0.21)
+    assert slow.budget == 3  # every scanned size keeps criterion 1
+    assert slow.budget_unlimited == 8
+    assert slow.network_limits_budget
+    assert slow.medium_busy_budget == pytest.approx(0.21)
     assert not by_key[("ohne_rtc", 400.0)].network_limits
+    assert not by_key[("ohne_rtc", 400.0)].network_limits_budget
     broken = json.loads(json.dumps(inputs.wlan))
     broken["configurations"][0]["network"] = "buero_wlan"  # no medium in the config
     with pytest.raises(rp.ReportError):
@@ -416,3 +421,17 @@ def test_load_json_and_cli_errors(tmp_path: Path) -> None:
     with pytest.raises(rp.ReportError):
         rp.load_json(bad)
     assert rp.main(["--analysis", str(tmp_path / "missing.yaml"), "--out-dir", str(tmp_path)]) == 2
+
+
+def test_budget_capacity_stops_at_criterion_1_or_a_rejection() -> None:
+    sizes = [
+        {"robots": 1, "criterion_1": True, "admitted_mean": 1.0},
+        {"robots": 2, "criterion_1": True, "admitted_mean": 2.0},
+        {"robots": 3, "criterion_1": True, "admitted_mean": 2.6},  # a robot rejected in some replications
+        {"robots": 4, "criterion_1": True, "admitted_mean": 4.0},
+    ]
+    assert rp.budget_capacity({"sizes": sizes}) == 2
+    sizes[2]["admitted_mean"] = 3.0
+    sizes[3]["criterion_1"] = False
+    assert rp.budget_capacity({"sizes": sizes}) == 3
+    assert rp.budget_capacity({"sizes": [{"robots": 1, "criterion_1": False}]}) == 0

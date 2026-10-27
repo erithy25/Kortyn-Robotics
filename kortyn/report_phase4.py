@@ -38,7 +38,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.lines import Line2D
-from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
+from matplotlib.ticker import FixedLocator, FuncFormatter, MaxNLocator, NullLocator
 
 from kortyn import economics_phase4 as ep
 from kortyn.config import ConfigError
@@ -49,7 +49,6 @@ from kortyn.phase4_steps import AnalysisConfig, load_analysis_config
 from kortyn.report import (
     CATEGORICAL,
     DPI,
-    GRID,
     INK_2,
     MUTED,
     REFERENCE_GRAY,
@@ -641,10 +640,34 @@ class WlanRow:
     capacity_unlimited: int
     gpu_busy: float | None
     medium_busy: float | None
+    # supplement: the budget alone (criterion 1, every robot admitted), where the medium saturates first
+    budget: int = 0
+    budget_unlimited: int = 0
+    gpu_busy_budget: float | None = None
+    medium_busy_budget: float | None = None
 
     @property
     def network_limits(self) -> bool:
         return self.capacity < self.capacity_unlimited
+
+    @property
+    def network_limits_budget(self) -> bool:
+        return self.budget < self.budget_unlimited
+
+
+def budget_capacity(entry: Mapping[str, Any]) -> int:
+    """Supplement: the largest size up to which every size keeps criterion 1 and admits every robot."""
+    capacity = 0
+    for size in sorted(entry["sizes"], key=lambda s: int(s["robots"])):
+        robots = int(size["robots"])
+        if not bool(size["criterion_1"]) or float(size.get("admitted_mean", robots)) < robots - 1e-9:
+            break
+        capacity = robots
+    return capacity
+
+
+def _share(size: Mapping[str, Any] | None, key: str) -> float | None:
+    return None if size is None or size.get(key) is None else float(size[key])
 
 
 def wlan_rows(wlan: Mapping[str, Any], capacity: Mapping[str, Any], fleet: FleetSimConfig) -> list[WlanRow]:
@@ -662,7 +685,8 @@ def wlan_rows(wlan: Mapping[str, Any], capacity: Mapping[str, Any], fleet: Fleet
             raise ReportError(f"no unlimited-network capacity for GPU {entry['gpu']!r}")
         capacity_c = int(entry["capacity"])
         at = size_at(entry, capacity_c) if capacity_c else None
-        medium = None if at is None or at.get("medium_busy_share") is None else float(at["medium_busy_share"])
+        budget = budget_capacity(entry)
+        at_budget = size_at(entry, budget) if budget else None
         rows.append(
             WlanRow(
                 rate_mbit_s=float(network.wlan_mbit_s),
@@ -670,8 +694,12 @@ def wlan_rows(wlan: Mapping[str, Any], capacity: Mapping[str, Any], fleet: Fleet
                 condition=str(entry["condition"]),
                 capacity=capacity_c,
                 capacity_unlimited=int(base["capacity"]),
-                gpu_busy=None if at is None else float(at["busy_share"]),
-                medium_busy=medium,
+                gpu_busy=_share(at, "busy_share"),
+                medium_busy=_share(at, "medium_busy_share"),
+                budget=budget,
+                budget_unlimited=budget_capacity(base),
+                gpu_busy_budget=_share(at_budget, "busy_share"),
+                medium_busy_budget=_share(at_budget, "medium_busy_share"),
             )
         )
     return sorted(rows, key=lambda r: (r.request_bytes, r.condition, r.rate_mbit_s))
@@ -680,33 +708,38 @@ def wlan_rows(wlan: Mapping[str, Any], capacity: Mapping[str, Any], fleet: Fleet
 def wlan_section(rows: Sequence[WlanRow]) -> list[str]:
     body = []
     for row in rows:
-        limit = f"Netz ab n = {row.capacity + 1}" if row.network_limits else "GPU (Netz begrenzt nicht)"
+        limit = f"Netz ab n = {row.capacity + 1}" if row.network_limits else "nicht das Netz"
+        limit_budget = f"Netz ab n = {row.budget + 1}" if row.network_limits_budget else "GPU"
         body.append(
             [
                 f"{row.rate_mbit_s:g} Mbit/s",
                 kbytes(row.request_bytes),
                 condition_name(row.condition),
-                f"**{row.capacity}**",
-                str(row.capacity_unlimited),
+                f"**{row.capacity}** ({row.capacity_unlimited})",
                 limit,
-                pct(row.gpu_busy),
-                pct(row.medium_busy),
+                f"{pct(row.gpu_busy)} / {pct(row.medium_busy)}",
+                f"{row.budget} ({row.budget_unlimited})",
+                limit_budget,
+                f"{pct(row.gpu_busy_budget)} / {pct(row.medium_busy_budget)}",
             ]
         )
     return [
         "Strategie d, Batching realistisch; ein gemeinsames Funkmedium (FIFO, beide Richtungen) zusätzlich "
-        "zum Latenzmodell des Büro-WLANs. Auslastungen an der Kapazitätsgrenze mit WLAN.",
+        "zum Latenzmodell des Büro-WLANs. In Klammern jeweils dieselbe Konfiguration mit unbegrenztem Netz. "
+        "Ergänzung (nicht präregistriert): die Kapazität nach dem Budget allein (≤ 1 % verpasste Anfragen, "
+        "jeder Roboter zugelassen), also ohne die 3-pp-Grenze; sie zeigt, wo das Funkmedium sättigt.",
         "",
         *table(
             [
                 "Nutzrate C",
                 "Nutzlast je Anfrage",
                 "Bedingung",
-                "Kapazität mit WLAN",
-                "Kapazität unbegrenzt",
+                "Kapazität (3 pp, 1 %)",
                 "Engpass",
-                "GPU belegt",
-                "Funk belegt",
+                "GPU / Funk belegt",
+                "nur Budget",
+                "Engpass (Budget)",
+                "GPU / Funk belegt (Budget)",
             ],
             body,
         ),
@@ -1109,65 +1142,75 @@ def _condition_rank(condition: str) -> int:
 
 
 def figure_wlan(rows: Sequence[WlanRow], path: Path) -> None:
-    """Capacity against the WLAN rate; dashed: the same configuration with unlimited bandwidth."""
+    """Capacity against the WLAN rate: by the definition (left) and by the budget alone (right)."""
     apply_style()
-    fig, axes, layout = make_figure(1, 1, 5.6, 3.0, header_in=1.45)
-    ax = axes[0][0]
+    fig, axes, layout = make_figure(1, 2, 3.6, 2.9, header_in=1.6, wspace_in=0.7)
     payloads = sorted({row.request_bytes for row in rows})
     styles: list[Literal["-"] | tuple[float, tuple[float, ...]]] = ["-", (0, (1, 1.5))]
-    handles: list[Any] = []
     rates = sorted({row.rate_mbit_s for row in rows})
     conditions = sorted({row.condition for row in rows}, key=_condition_rank)
-    for position, condition in enumerate(conditions):
-        color = CONDITION_COLORS.get(condition, CATEGORICAL[2])
-        dodge = 1.0 + 0.04 * (position - (len(conditions) - 1) / 2)  # equal capacities stay visible
-        unlimited = [row.capacity_unlimited for row in rows if row.condition == condition]
-        if unlimited:
-            ax.axhline(unlimited[0], color=color, linewidth=1.0, linestyle=(0, (4, 3)), zorder=1)
-        for index, payload in enumerate(payloads):
-            selected = sorted(
-                (row for row in rows if row.condition == condition and row.request_bytes == payload),
-                key=lambda row: row.rate_mbit_s,
-            )
-            if not selected:
-                continue
-            ax.plot(
-                [row.rate_mbit_s * dodge for row in selected],
-                [row.capacity for row in selected],
-                color=color,
-                linewidth=2.0,
-                linestyle=styles[index % len(styles)],
-                marker="o",
-                markersize=5,
-                markeredgecolor="white",
-                markeredgewidth=1.0,
-                zorder=3,
-            )
-            handles.append(
-                Line2D(
-                    [0],
-                    [0],
+    panels = (
+        ("Kapazität nach Definition (3 pp, 1 %)", "capacity", "capacity_unlimited"),
+        ("Nur Budget (≤ 1 % verpasst), Ergänzung", "budget", "budget_unlimited"),
+    )
+    handles: list[Any] = []
+    for column, (title, value_key, unlimited_key) in enumerate(panels):
+        ax = axes[0][column]
+        top_value = 1
+        for position, condition in enumerate(conditions):
+            color = CONDITION_COLORS.get(condition, CATEGORICAL[2])
+            dodge = 1.0 + 0.04 * (position - (len(conditions) - 1) / 2)  # equal capacities stay visible
+            own = [row for row in rows if row.condition == condition]
+            if own:
+                unlimited = int(getattr(own[0], unlimited_key))
+                top_value = max(top_value, unlimited)
+                ax.axhline(unlimited, color=color, linewidth=1.0, linestyle=(0, (4, 3)), zorder=1)
+            for index, payload in enumerate(payloads):
+                selected = sorted(
+                    (row for row in own if row.request_bytes == payload), key=lambda r: r.rate_mbit_s
+                )
+                if not selected:
+                    continue
+                values = [int(getattr(row, value_key)) for row in selected]
+                top_value = max(top_value, *values)
+                ax.plot(
+                    [row.rate_mbit_s * dodge for row in selected],
+                    values,
                     color=color,
                     linewidth=2.0,
                     linestyle=styles[index % len(styles)],
                     marker="o",
                     markersize=5,
-                    label=f"{condition_name(condition)}, {kbytes(payload)} je Anfrage",
+                    markeredgecolor="white",
+                    markeredgewidth=1.0,
+                    zorder=3,
                 )
-            )
+                if column == 0:
+                    handles.append(
+                        Line2D(
+                            [0],
+                            [0],
+                            color=color,
+                            linewidth=2.0,
+                            linestyle=styles[index % len(styles)],
+                            marker="o",
+                            markersize=5,
+                            label=f"{condition_name(condition)}, {kbytes(payload)} je Anfrage",
+                        )
+                    )
+        ax.set_xscale("log", base=2)
+        ax.xaxis.set_major_locator(FixedLocator(rates))
+        ax.xaxis.set_minor_locator(NullLocator())
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+        ax.set_xlabel("Nutzrate C (Mbit/s, Annahme)")
+        ax.set_ylim(0, top_value * 1.15)
+        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.set_title(title, loc="left", fontsize=10)
+        if column == 0:
+            ax.set_ylabel("Roboter")
     handles.append(
         Line2D([0], [0], color=MUTED, linewidth=1.0, linestyle=(0, (4, 3)), label="Netz unbegrenzt")
     )
-    ax.set_xscale("log", base=2)
-    ax.xaxis.set_major_locator(FixedLocator(rates))
-    ax.xaxis.set_minor_locator(NullLocator())
-    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
-    ax.set_xlabel("Nutzrate des geteilten WLANs C (Mbit/s, Annahme)")
-    ax.set_ylabel("Kapazität (Roboter)")
-    ax.set_ylim(
-        0, max([1, *(row.capacity_unlimited for row in rows), *(row.capacity for row in rows)]) * 1.15
-    )
-    ax.grid(axis="x", color=GRID)
     top = header(
         fig,
         layout,
@@ -1175,7 +1218,7 @@ def figure_wlan(rows: Sequence[WlanRow], path: Path) -> None:
         "Strategie d, Batching realistisch, RTX 3060 Ti; ein gemeinsames Funkmedium für alle Roboter. Liegt "
         "eine Linie unter ihrer gestrichelten Linie, begrenzt das Netz.",
     )
-    header_legend(fig, layout, handles, ncol=2, top_in=top)
+    header_legend(fig, layout, handles, ncol=3, top_in=top)
     fig.savefig(path, dpi=DPI)
     plt.close(fig)
 
