@@ -71,7 +71,8 @@ frei. Einmalig unter deinem Profilbild → **Settings → Phone verification**.
 4. Unten bei „Commit changes“ eine kurze Beschreibung eintragen, z. B. `GPU-Messung T4 (Colab)`. Die Option
    **„Commit directly to the `phase-5-publish` branch“** auswählen und **„Commit changes“** klicken.
 
-Fertig. Kortyn rechnet die Entscheidungsregel danach mit einem einzigen Befehl:
+Fertig. Gib danach Bescheid (zum Beispiel hier im Chat), dass die Datei hochgeladen ist. Die Auswertung
+läuft auf einem Rechner mit Kortyn, du musst dafür nichts installieren. Dort ist es ein einziger Befehl:
 
 ```bash
 uv run python -m kortyn.phase5_steps gpu-decision
@@ -93,6 +94,7 @@ einzeln ausgewertet.
 | „PyTorch sieht die GPU nicht“ | Menü „Laufzeit → Laufzeit neu starten“ (Kaggle: „Restart Session“), dann erneut „Alle ausführen“. |
 | Die Sitzung bricht während der Messung ab (Tab geschlossen, Zeitlimit) | Das Notebook neu starten. Bei Colab und Kaggle ist die virtuelle Maschine danach leer; die Messung beginnt von vorn. |
 | Eine Konfiguration meldet „Fehler, Konfiguration übersprungen“ | Kein Problem: Das Notebook misst die anderen weiter, und der Fehler steht in der Datei. |
+| „Die Messung ist mit Fehler … abgebrochen“ in Schritt 3 | Schritt 4 einzeln starten: auf den Play-Knopf links neben „Schritt 4“ klicken. Er lädt die bis dahin gemessene Datei herunter. Diese Datei trotzdem hochladen und den roten Text dazuschreiben. |
 
 ---
 

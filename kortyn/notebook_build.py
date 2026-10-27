@@ -176,9 +176,28 @@ def step(command: list[str], what: str) -> None:
     print(f"  {{what}}: ok ({{time.time() - started:.0f}} s)")
 
 
+def venv_ready() -> bool:
+    # A second "Run all" in the same session finds the environment of the first run.
+    if not PY.exists():
+        return False
+    probe = subprocess.run(
+        [str(PY), "-c", "import sys; print(sys.version_info[:2] == (3, 12))"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return probe.stdout.strip() == "True"
+
+
 print("Installiere eine eigene Python-3.12-Umgebung mit festen Versionen ...")
 step([sys.executable, "-m", "pip", "install", "--quiet", f"uv=={{UV_VERSION}}"], "uv")
-step([*UV, "venv", "--quiet", "--managed-python", "--python", "3.12", str(VENV)], "Python 3.12")
+if venv_ready():
+    print("  Python 3.12: schon vorhanden / already present")
+else:
+    step(
+        [*UV, "venv", "--quiet", "--clear", "--managed-python", "--python", "3.12", str(VENV)],
+        "Python 3.12",
+    )
 step(
     [*UV, "pip", "install", "--quiet", "--python", str(PY), "--index-url", TORCH_INDEX, *TORCH_PACKAGES],
     "PyTorch",
@@ -254,6 +273,12 @@ if RESULT is None:
     raise RuntimeError("Die Messung hat keine Datei geschrieben (Ausgabe oben). / No result file written.")"""
 
 DOWNLOAD = r"""#@title Schritt 4 – Ergebnis herunterladen / download the result
+RESULT = globals().get("RESULT")
+if RESULT is None:
+    raise RuntimeError(
+        "Es gibt keine Ergebnisdatei: Schritt 3 hat keine geschrieben oder lief in dieser Sitzung nicht. "
+        "/ No result file: step 3 wrote none or did not run in this session."
+    )
 print("Ergebnisdatei / result file:", RESULT)
 if ON_COLAB:
     from google.colab import files
@@ -288,6 +313,11 @@ def _raw_literal(text: str, what: str) -> str:
     return text
 
 
+def _list_literal(items: Sequence[str]) -> str:
+    """A list of strings as Python source, one item per line (readable in the notebook)."""
+    return "[\n" + "".join(f"    {json.dumps(item)},\n" for item in items) + "]"
+
+
 def _source(text: str) -> list[str]:
     lines = text.splitlines(keepends=True)
     if lines and lines[-1].endswith("\n"):
@@ -318,7 +348,10 @@ def build_notebook(script: str, observations: str) -> dict[str, Any]:
         observations=_raw_literal(observations, "the observations"),
     )
     install = INSTALL.format(
-        uv=UV_VERSION, index=TORCH_INDEX, torch=list(TORCH_PACKAGES), packages=list(PACKAGES)
+        uv=UV_VERSION,
+        index=TORCH_INDEX,
+        torch=_list_literal(TORCH_PACKAGES),
+        packages=_list_literal(PACKAGES),
     )
     cells = [
         _markdown(INTRO),

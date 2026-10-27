@@ -175,3 +175,90 @@ def test_gpu_check_test_switch_allows_the_cpu(
     assert namespace["GPUS"] == []
     assert namespace["ALLOW_CPU"] is True
     assert "Testmodus" in capsys.readouterr().out
+
+
+# --------------------------------------------------------------------------------------------- installation
+def _run_install(
+    notebook: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    venv: Path,
+    python_is_312: bool,
+) -> list[list[str]]:
+    """Run the install cell with every subprocess faked; return the commands it ran."""
+    commands: list[list[str]] = []
+
+    def fake_run(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        if command[1:3] == ["-c", "import sys; print(sys.version_info[:2] == (3, 12))"]:
+            return subprocess.CompletedProcess(command, 0, stdout=f"{python_is_312}\n", stderr="")
+        if command[1:2] == ["-c"]:
+            return subprocess.CompletedProcess(command, 0, stdout="2.11.0 12.6 True\n", stderr="")
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setenv("KORTYN_BENCHMARK_VENV", str(venv))
+    namespace: dict[str, Any] = {"__name__": "__notebook__", "ALLOW_CPU": False}
+    exec(compile(_code_cells(notebook)[1], "install", "exec"), namespace)
+    return commands
+
+
+def _creates_venv(commands: list[list[str]]) -> bool:
+    return any("venv" in command[3:5] for command in commands)
+
+
+def test_install_creates_the_environment(
+    notebook: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    commands = _run_install(notebook, monkeypatch, tmp_path / "venv", python_is_312=True)
+    venv_commands = [command for command in commands if "venv" in command[3:5]]
+    assert len(venv_commands) == 1
+    assert "--clear" in venv_commands[0]
+    assert sum("pip" in command[3:5] and "install" in command for command in commands) == 2
+    capsys.readouterr()
+
+
+def test_install_reuses_the_environment_of_an_earlier_run(
+    notebook: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A second "Run all" in the same session must not fail because the environment exists."""
+    venv = tmp_path / "venv"
+    (venv / "bin").mkdir(parents=True)
+    (venv / "bin" / "python").write_text("", encoding="utf-8")
+    commands = _run_install(notebook, monkeypatch, venv, python_is_312=True)
+    assert not _creates_venv(commands)
+    assert "schon vorhanden" in capsys.readouterr().out
+    commands = _run_install(notebook, monkeypatch, venv, python_is_312=False)
+    assert _creates_venv(commands), "an environment with another Python version is replaced"
+    capsys.readouterr()
+
+
+# --------------------------------------------------------------------------------------------- download
+def test_download_without_a_result_file_explains_why(notebook: dict[str, Any]) -> None:
+    namespace: dict[str, Any] = {"__name__": "__notebook__", "RESULT": None}
+    with pytest.raises(RuntimeError, match="keine Ergebnisdatei"):
+        exec(compile(_code_cells(notebook)[4], "download", "exec"), namespace)
+    with pytest.raises(RuntimeError, match="keine Ergebnisdatei"):
+        exec(compile(_code_cells(notebook)[4], "download", "exec"), {"__name__": "__notebook__"})
+
+
+def test_download_outside_colab_and_kaggle_names_the_file(
+    notebook: dict[str, Any], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    result = tmp_path / "smolvla_gpu_teslat4_other_20261028-0930.json"
+    result.write_text("{}", encoding="utf-8")
+    namespace: dict[str, Any] = {
+        "__name__": "__notebook__",
+        "RESULT": result,
+        "ON_COLAB": False,
+        "ON_KAGGLE": False,
+    }
+    exec(compile(_code_cells(notebook)[4], "download", "exec"), namespace)
+    out = capsys.readouterr().out
+    assert str(result) in out
+    assert "Arbeitsverzeichnis" in out
