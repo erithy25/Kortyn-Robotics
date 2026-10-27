@@ -1,6 +1,6 @@
 # Phase 4: Daten (automatisch erzeugt)
 
-_Erzeugt am 27.10.2026 02:46 UTC mit `python -m kortyn.report_phase4`._
+_Erzeugt am 27.10.2026 05:04 UTC mit `python -m kortyn.report_phase4`._
 
 ## Schritt 1: verlustfreier Bildtransport
 
@@ -104,6 +104,15 @@ Bias gemessen − vorhergesagt über die aussagekräftigen Fälle a_n2, e_n2, e_
 
 **Urteil (eigene Latenzen):** nicht erklärt · **Urteil (Stufe-1-Latenzen):** nicht erklärt
 
+### Reihenfolge der Läufe: frische Prozesse
+
+Ergänzung (nicht präregistriert): Seeds 1000–1049 bei 500 ms, jede Episode in einem frischen Prozess (50 Episoden, Erfolg 46 %).
+
+| Vergleich | Paare | Referenz | frischer Prozess | Differenz [95-%-KI] | nur Referenz / nur frisch | McNemar p |
+|---|---|---|---|---|---|---|
+| Block A (alle Stufen eines Seeds nacheinander) | 50 | 44 % | 46 % | +2 pp [-14, +18] pp | 8 / 9 | 1,000 |
+| Phase 3 | 50 | 26 % | 46 % | +20 pp [+4, +36] pp | 4 / 14 | 0,031 |
+
 ### Sensitivität: Phase-3-Stufen gepoolt
 
 Ergänzung (nicht präregistriert): Die Phase-3-Episoden der wieder gemessenen Stufen (0 ms, 500 ms, 1 000 ms, 1 250 ms) gepoolt in die Kurve ohne RTC; Punktschätzung mit derselben Anpassungsregel.
@@ -166,6 +175,15 @@ Strategie d, Batching realistisch; ein gemeinsames Funkmedium (FIFO, beide Richt
 | 400 Mbit/s | 778 kB | ohne RTC | **2** (2) | nicht das Netz | 36 % / 3 % | 23 (23) | GPU | 100 % / 29 % |
 
 ![WLAN](phase4_wlan.png)
+
+### Validierung mit echten Rollouts
+
+| Fall | Episoden | gemessen | vorhergesagt (Stufe 1) | Differenz [97,5-%-KI] | Kriterium V | Diagnose: Vorhersage aus eigenen Latenzen |
+|---|---|---|---|---|---|---|
+| d_n10 | 50 | 38 % | 45 % | -7,4 pp [-21,4, +8,6] pp | erfüllt | 45 %: -7,4 pp [-21,6, +8,5] pp |
+| d_n5 | 60 | 32 % | 43 % | -11,7 pp [-24,6, +1,8] pp | erfüllt | 43 %: -11,7 pp [-24,7, +1,9] pp |
+
+**Validierung insgesamt:** erfüllt (Bedingung mit RTC).
 
 ## Schritt 5: Wirtschaftlichkeit
 

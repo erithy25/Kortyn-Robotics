@@ -1,11 +1,13 @@
 """Real-time chunking in the Kortyn Brain path (phase 4): LeRobot's RTC switched on for SmolVLA.
 
-Uses the SmolVLA checkpoint of phase 3a (lerobot/smolvla_metaworld, ~0.9 GB); without it the policy tests are
-skipped. The guide checks of the agents need no checkpoint.
+Uses the SmolVLA checkpoint of phase 3a (lerobot/smolvla_metaworld, ~0.9 GB) and a Meta-World observation;
+without either (the LIBERO environment has no Meta-World) the policy tests are skipped. The guide checks of
+the agents need neither.
 """
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import sys
 from pathlib import Path
@@ -27,6 +29,9 @@ os.environ.setdefault("MUJOCO_GL", "cgl" if sys.platform == "darwin" else "egl")
 CHECKPOINT = Path(__file__).resolve().parents[1] / "checkpoints" / "smolvla_metaworld"
 needs_checkpoint = pytest.mark.skipif(
     not (CHECKPOINT / "model.safetensors").is_file(), reason="SmolVLA checkpoint not downloaded"
+)
+needs_metaworld = pytest.mark.skipif(
+    importlib.util.find_spec("metaworld") is None, reason="Meta-World is not installed (LIBERO environment)"
 )
 
 
@@ -94,6 +99,7 @@ def observation():
 
 
 @needs_checkpoint
+@needs_metaworld
 @pytest.mark.timeout(900)
 def test_rtc_without_guide_is_bit_identical_and_with_guide_follows_the_old_plan(runner, observation):
     from kortyn.policy_runner import GuideSpec, ObservationError, _enable_rtc
