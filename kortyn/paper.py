@@ -1106,27 +1106,41 @@ def figure_simtime(data: Mapping[str, Any], out: Path) -> None:
 def figure_dose(p4: Mapping[str, Any], p5: Mapping[str, Any] | None, out: Path) -> None:
     plt = _pyplot()
     fig, ax = plt.subplots(figsize=(6.5, 3.2))
+    short = p5 is not None and p5.get("curves") is not None
+    # (label, condition, colour, band); with the phase-5 curve, phase-4 RTC is context: dashed, no band
     conditions = [
-        ("no RTC (phase 4)", p4["curves"]["conditions"]["ohne_rtc"], STYLE["series"][0]),
-        ("RTC, guidance H ≤ 25 (phase 4)", p4["curves"]["conditions"]["mit_rtc"], STYLE["series"][1]),
+        ("no RTC (phase 4)", p4["curves"]["conditions"]["ohne_rtc"], STYLE["series"][0], True),
+        (
+            "RTC, guidance H ≤ 25 (phase 4)",
+            p4["curves"]["conditions"]["mit_rtc"],
+            STYLE["series"][1],
+            not short,
+        ),
     ]
-    if p5 is not None and p5.get("curves") is not None:
+    if p5 is not None and short:
         conditions.append(
-            ("RTC, guidance H = D + 4 (phase 5)", p5["curves"]["conditions"]["rtc_kurz"], STYLE["series"][2])
+            (
+                "RTC, guidance H = D + 4 (phase 5)",
+                p5["curves"]["conditions"]["rtc_kurz"],
+                STYLE["series"][2],
+                True,
+            )
         )
-    for label, condition, color in conditions:
+    for label, condition, color, band in conditions:
         curve = condition["curve"]
         grid = np.asarray(curve["latency_ms"], dtype=float)
         keep = grid <= 1500.0
-        ax.fill_between(
-            grid[keep],
-            100 * np.asarray(curve["low"])[keep],
-            100 * np.asarray(curve["high"])[keep],
-            color=color,
-            alpha=0.12,
-            linewidth=0,
-        )
-        ax.plot(grid[keep], 100 * np.asarray(curve["point"])[keep], color=color, label=label)
+        if band:
+            ax.fill_between(
+                grid[keep],
+                100 * np.asarray(curve["low"])[keep],
+                100 * np.asarray(curve["high"])[keep],
+                color=color,
+                alpha=0.12,
+                linewidth=0,
+            )
+        style = "-" if band else "--"
+        ax.plot(grid[keep], 100 * np.asarray(curve["point"])[keep], style, color=color, label=label)
         xs = [level["latency_ms"] for level in condition["levels"] if level["latency_ms"] <= 1500]
         ys = [100 * level["pooled"] for level in condition["levels"] if level["latency_ms"] <= 1500]
         ax.plot(xs, ys, "o", ms=4.5, color=color, markeredgecolor=STYLE["surface"], markeredgewidth=0.8)

@@ -74,8 +74,9 @@ target throughput-heavy tasks; we target closed-loop control with a learned poli
 changes the actions taken.
 
 **Serving with batching and deadlines.** Prediction-serving systems batch requests adaptively under latency
-objectives [12]. Earliest-deadline-first scheduling [13] is optimal for meeting deadlines on one processor
-without batching. Our Brain combines both: deadlines come from each robot's action queue.
+objectives [12]. Earliest-deadline-first scheduling [13] is optimal for preemptive scheduling of periodic
+tasks on one processor. Our Brain combines both, without preemption: deadlines come from each robot's action
+queue, and a batch runs to completion.
 
 **Benchmarks.** We use PushT from Diffusion Policy [6], Meta-World [14] and LIBERO [15], simulated with MuJoCo
 [16] and robosuite [17], through LeRobot's environment wrappers [9].
