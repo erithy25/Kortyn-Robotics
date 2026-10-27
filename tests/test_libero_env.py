@@ -291,3 +291,53 @@ def test_several_envs_in_one_process_render_their_own_scene() -> None:
         assert not np.array_equal(image_a, image_b)  # init states 0 and 1 differ
     finally:
         first.close()
+
+
+CAMERAS = ("observation.images.camera1", "observation.images.camera2")
+
+
+def _camera_frames(observation: Any) -> list[np.ndarray]:
+    return [np.array(observation[key]) for key in CAMERAS]
+
+
+@needs_libero
+@pytest.mark.timeout(900)
+def test_reset_and_close_of_another_simulator_keep_this_robots_images() -> None:
+    """Fleet validation: robosuite frees a destroyed simulator's GL resources in the current GL context.
+
+    A hard reset (or close) of robot B's simulator right after robot A rendered must not delete A's textures
+    and framebuffers: A's images stay those of A alone, step by step.
+    """
+    from kortyn.libero_env import LiberoEnv
+
+    config = libero_env_config()
+    actions = np.zeros((12, 7), dtype=np.float32)
+    actions[:, 0] = 0.4  # move the end effector, so every frame differs from the last
+    actions[:, -1] = -1.0
+
+    def play(env: LiberoEnv, other: LiberoEnv | None) -> list[list[np.ndarray]]:
+        frames = [_camera_frames(env.reset(seed=1000))]
+        for t, action in enumerate(actions):
+            if other is not None and t == 4:
+                other.reset(seed=1002)  # destroys B's simulator while A's GL context is current
+            if other is not None and t == 8:
+                other.close()  # closes B's simulator while A's GL context is current
+            frames.append(_camera_frames(env.step(action).observation))
+        return frames
+
+    alone = LiberoEnv(config)
+    try:
+        expected = play(alone, None)
+    finally:
+        alone.close()
+    robot_a, robot_b = LiberoEnv(config), LiberoEnv(config)
+    try:
+        # B owns a simulator and rendered last, as after the agent's compatibility check
+        _camera_frames(robot_b.reset(seed=1001))
+        frames = play(robot_a, robot_b)
+    finally:
+        robot_a.close()
+        robot_b.close()
+    for t, (got, want) in enumerate(zip(frames, expected, strict=True)):
+        for camera, (image, reference) in enumerate(zip(got, want, strict=True)):
+            assert np.array_equal(image, reference), f"step {t}, camera {camera + 1}: differs from A alone"

@@ -18,6 +18,11 @@ copies the simulator state (``mjData``) exactly when robosuite samples, and rend
 does not change the simulation, so trajectories and images equal those of LeRobot's env bit for bit
 (checked by ``tests/test_libero_env.py``). As for Meta-World, lazy images require ``n_obs_steps = 1``.
 
+Several simulators in one process (fleet validation) need two guards, both about robosuite's GL contexts:
+a render makes its simulator's context current first, and so does every hard reset or close, because
+robosuite frees a destroyed simulator's render resources in whatever context is current
+(:func:`_activate_render_context`).
+
 LIBERO asks interactively for a data directory on its first import and downloads object meshes from the Hub
 without a pinned revision. :func:`prepare_libero` answers the question non-interactively with LIBERO's
 defaults (what answering "N" writes) and fetches the meshes at a pinned revision beforehand.
@@ -233,6 +238,22 @@ class StateSnapshot:
 SNAPSHOT_OBSERVABLE = "kortyn_render_state"
 
 
+def _activate_render_context(task_env: Any) -> None:
+    """Make the GL context of ``task_env``'s live simulator current, before robosuite destroys it.
+
+    A hard reset or close frees the simulator's MuJoCo render resources (``mjr_freeContext``: textures,
+    vertex buffers, offscreen framebuffer) in whatever GL context is current, not in the simulator's own.
+    With several simulators in one process that is usually the context of the robot that rendered last:
+    its resources would be deleted under the same ids, and its images stay wrong until its own next
+    reset. Without a live simulator (not built yet) there is nothing to free.
+    """
+    inner = getattr(task_env, "_env", None)
+    sim = getattr(getattr(inner, "env", None), "sim", None)
+    context = getattr(sim, "_render_context_offscreen", None)
+    if context is not None:
+        context.gl_ctx.make_current()
+
+
 def _lerobot_env_class() -> type[Any]:
     """LeRobot's ``LiberoEnv`` with a simulator that skips camera observables (rendered on demand)."""
     from lerobot.envs.libero import LiberoEnv as LeRobotLiberoEnv
@@ -376,8 +397,9 @@ class LiberoEnv:
         if env is None:
             # A simulator per task costs memory (scene, meshes, render context): keep only a few.
             while len(self._envs) >= MAX_CACHED_TASKS:
-                oldest = next(iter(self._envs))
-                self._envs.pop(oldest).close()
+                evicted = self._envs.pop(next(iter(self._envs)))
+                _activate_render_context(evicted)
+                evicted.close()
             settings = self.settings
             env = self._env_class(
                 task_suite=self._suite,
@@ -445,6 +467,7 @@ class LiberoEnv:
         if n_states is not None and init_state_id >= n_states:
             raise EnvError(f"task {task_id} has {n_states} init states, episode needs state {init_state_id}")
         env.init_state_id = init_state_id  # LeRobot: episode j of a task starts from init state j
+        _activate_render_context(env)  # the hard reset frees the old simulator's render resources
         raw, _info = env.reset(seed=env_seed)
         # A hard reset rebuilds the simulator: camera sensors bound to the old one are invalid.
         self._sensors = {}
@@ -482,6 +505,7 @@ class LiberoEnv:
 
     def close(self) -> None:
         for env in self._envs.values():
+            _activate_render_context(env)
             env.close()
         self._envs.clear()
         self._sensors.clear()
