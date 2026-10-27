@@ -1,0 +1,24 @@
+{
+ "condition": "mit_rtc",
+ "confidence": 0.975,
+ "cases": {
+  "d_n5": {
+   "episodes": 60,
+   "measured": 0.1,
+   "predicted": 0.4336240833908376,
+   "difference": -0.33362408339083766,
+   "interval": [
+    -0.4130138189884739,
+    -0.23942290027683516
+   ],
+   "passes": false,
+   "predicted_own": 0.4305566981799801,
+   "difference_own": -0.3305566981799801,
+   "interval_own": [
+    -0.41020496840030624,
+    -0.23613337457431563
+   ]
+  }
+ },
+ "passes": false
+}

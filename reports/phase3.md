@@ -15,7 +15,7 @@ Annahmen (Abschnitt „Festlegung der Brain-Profile“), Erfolgsquoten echte LIB
 | **Welche Strategie?** | Nach dem präregistrierten Kriterium ist es egal. Nach Kriterium 1 allein (Budget-Verletzungen) entscheidet **Batching**: RTX 3060 Ti 23–25 Roboter mit Batching (b, d, e) gegen 5 ohne (a, c). EDF ohne Batching bringt nichts. d und b liegen gleichauf, e degradiert bei Überlast als einzige kontrolliert. |
 | **Wie stark hängt das vom Batching ab?** | Stark: Die Warteschlangen-Kapazität der RTX 3060 Ti mit d liegt je nach Annahme bei 5, 9, 23 oder 50 Robotern (kein Gewinn bis optimistisch). Gemessen ist das für keine GPU; das Benchmark-Skript misst es auf deiner Karte. |
 | **Was kostet ein Roboter?** | Präregistriert (1 Roboter je Brain): RTX 3060 Ti 53,85 € je Monat gegen 18,16 € für einen Jetson Orin Nano Super. **Ergänzung bei gleichem vorhergesagtem Erfolg** (nicht präregistriert): Eine RTX 3060 Ti mit Batching hält 16 Roboter auf dem Niveau des Orin Nano Super (18 %) für **9,22 € je Roboter und Monat** inkl. Raspberry Pi im Roboter (Faktor 2). Eine RTX 4090 kompiliert ersetzt 32 AGX Orin (9,44 € statt 118,83 €). Einen Thor (43 %) erreicht kein Brain. |
-| **Stimmt die Vorhersage?** | Die Validierung mit echten Flotten (2 und 4 Roboter) besteht in allen vier Fällen. Das Warteschlangenmodell trifft die Latenzen auf wenige Millisekunden. Der Erfolg liegt aber durchgängig 5–7 pp unter der Vorhersage (je Fall nicht signifikant). Die Vorhersagen sind eher optimistisch. |
+| **Stimmt die Vorhersage?** | Die Validierung mit echten Flotten (2 und 4 Roboter) besteht in allen vier Fällen. Das Warteschlangenmodell trifft die Latenzen auf wenige Millisekunden. Der Erfolg liegt aber durchgängig 5–7 pp unter der Vorhersage (je Fall nicht signifikant). Die Vorhersagen sind eher optimistisch. **Nachtrag aus Phase 4:** Die Flotten-Rollouts dieser Validierung sind durch einen Renderfehler verfälscht: Der Reset eines Simulators gab die GL-Ressourcen des Roboters frei, der zuletzt gerendert hatte (behoben in Commit `4c83bac`). Die gemessenen Erfolge sind deshalb zu niedrig, und die 5–7 pp sind kein Beleg gegen die Vorhersage ([`phase4.md`](phase4.md), Abschnitt 5.4). |
 | **Reproduktion** | Kortyn reproduziert LeRobots eigene Evaluation (54 % gegen 52 %, p = 0,82). |
 | **Nächster Schritt** | **Real-Time Chunking für SmolVLA**, dann die Dosis-Wirkung neu messen. Die Steilheit der Kurve bestimmt Kapazität, Erfolg und den Jetson-Vergleich. Parallel: Benchmark auf der RTX 3060 Ti. |
 
@@ -543,6 +543,15 @@ solange die Dosis-Wirkung so steil ist.
 
 ## 6. Validierung mit echten Flotten (Stufe 3)
 
+> **Nachtrag aus Phase 4 (27.10.2026):** Diese Flotten-Rollouts sind durch einen Renderfehler verfälscht.
+> robosuite gibt beim Hard Reset oder Schließen eines Simulators dessen Render-Ressourcen (Texturen,
+> Framebuffer) in dem GL-Kontext frei, der gerade aktiv ist. Mit mehreren Simulatoren in einem Prozess ist
+> das der Kontext des Roboters, der zuletzt gerendert hat; dessen Kamerabilder sind danach falsch. Behoben
+> in Commit `4c83bac` (Test in `tests/test_libero_env.py`). Einzelroboter-Läufe, also die Dosis-Wirkung
+> dieser Phase, sind nicht betroffen. Die gemessenen Flottenerfolge unten sind deshalb zu niedrig; die
+> „5–7 pp zu optimistische Vorhersage“ ist kein Befund über die Vorhersagemethode. Details:
+> [`phase4.md`](phase4.md), Abschnitt 5.4.
+
 Echte LIBERO-Rollouts ganzer Flotten an einem gemeinsamen Brain: gleiche Scheduler, gleiches Netzmodell, gleiche
 Startzeiten wie Wiederholung 0 der Warteschlangen-Simulation. Testprofil „Validierung“ (s₁ = 420 ms, Batching
 realistisch, Büro-WLAN), damit 4 Roboter ohne Batching überlasten. Fälle nach der präregistrierten Regel:
@@ -685,7 +694,7 @@ Für Kortyn heißt das:
   30 pp); die Kapazität hängt über Kriterium 2 direkt daran.
 - **Validierung bis 4 Roboter.** Mehr Simulatoren passen nicht in den Arbeitsspeicher (≈ 1,7–2,3 GB je
   LIBERO-Umgebung). Größere Flotten sind vorhergesagt, nicht validiert.
-- **Vorhersage eher optimistisch.** In der Validierung liegt der gemessene Erfolg in allen drei Fällen mit Erfolg
+- **Vorhersage eher optimistisch** (Nachtrag aus Phase 4: nicht belegt, die Flotten-Rollouts waren durch einen Renderfehler verfälscht, Abschnitt 6). In der Validierung liegt der gemessene Erfolg in allen drei Fällen mit Erfolg
   über 0 um 5–7 pp unter der Vorhersage (je Fall nicht signifikant, Abschnitt 6). Die Kurve hat nur sechs Stufen;
   zwischen ihnen wird linear interpoliert.
 - **Netz ohne Bandbreite.** Das Netzmodell kennt Verzögerung, Jitter und Stalls, aber keine Bandbreitengrenze und
