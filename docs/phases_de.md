@@ -1,3 +1,5 @@
+> **Archiv (Deutsch):** Dies war das README der Phasen 1–4. Es enthält die Ergebnisübersichten und die Reproduktionsbefehle jeder Phase. Das aktuelle README ist englisch: [`../README.md`](../README.md); der Gesamtbericht steht in [`../paper/report.md`](../paper/report.md).
+
 # Kortyn – ausgelagerte Roboter-Policy unter schlechtem Netz
 
 Kortyn lagert die KI eines Roboters (die *Policy*) auf einen Server im selben Netz aus („**Kortyn Brain**“)
@@ -8,11 +10,11 @@ führt ein deterministischer **Simulationszeit-Modus** dieselbe Regelschleife au
 
 | Phase | Frage | Kurzantwort | Report |
 |---|---|---|---|
-| **1 – Baseline** | Wie stark leidet die ausgelagerte Policy unter Latenz, Jitter und Stalls? | Echtzeit kostet nichts, solange das Latenzbudget hält; danach sinkt die Qualität mit dem Planalter. | [`reports/phase1.md`](reports/phase1.md) |
-| **2 – Freshness Engine** | Holt ein jüngeres Planalter die Qualität zurück, ohne unnötige Brain-Last? | **Nein.** Häufigere Anfragen senken das Planalter, bringen aber keine Qualität und kosten bis zu 2× Brain-Last. Keine Strategie schlägt die Baseline signifikant. | [`reports/phase2.md`](reports/phase2.md) |
-| **3a – Simulationszeit + SmolVLA** | Lässt sich die Echtzeit-Messung durch eine deterministische Simulation ersetzen? Schadet Latenz einer VLA-Policy (SmolVLA) mehr, besonders bei dynamischen Aufgaben? | **Ja**, validiert gegen Phase 1, deterministisch reproduzierbar, ≈ 6× weniger Seeds für dieselbe Präzision. SmolVLA ist in Millisekunden empfindlicher (Budget 312 statt 700 ms), relativ zum Budget nicht. Nicht die Dynamik der Aufgabe entscheidet, sondern ihre Präzisionsanforderung (über Budget: push −30 pp, coffee-push −7 pp). | [`reports/phase3a.md`](reports/phase3a.md) |
-| **3 – Flotten-Brain** | Wie viele Roboter bedient ein Brain im Budget, welche Strategie maximiert das? | **Präregistriert: einer**, egal mit welcher Strategie, weil SmolVLA auf LIBERO-Long schon unter dem Budget steil Erfolg verliert (46 % → 20 % bei 500 ms). Ergänzend: Batching vervierfacht bis verfünffacht die Flotte im Budget; bei gleichem Erfolg wie ein Jetson Orin Nano Super kostet ein Roboter am Brain ≈ halb so viel. | [`reports/phase3.md`](reports/phase3.md) |
-| **4 – Real-Time Chunking** | Macht RTC SmolVLA so verzögerungstolerant, dass ein Brain viele Roboter ohne nennenswerten Qualitätsverlust bedient? | **Nein.** LeRobots RTC streckt die Kurve nicht, es kappt sie: mittlerer Gewinn im Budget −1,6 pp (nicht nachweisbar). Eine RTX 3060 Ti bedient 2–3 Roboter ohne und 5 mit RTC; absolut bringt RTC etwa einen Roboter. Bei gleichem Erfolg ist das Brain trotzdem 2–3,5-mal günstiger je Roboter als langsame Jetsons, den Erfolg eines Thor erreicht es nicht. Die korrigierte Validierung mit 5 und 10 Robotern besteht, liegt aber gepoolt ≈ 10 pp unter der Vorhersage; mit diesem Abschlag bleibt gegen den Orin Nano Super nur Faktor 1–1,5. | [`reports/phase4.md`](reports/phase4.md) |
+| **1 – Baseline** | Wie stark leidet die ausgelagerte Policy unter Latenz, Jitter und Stalls? | Echtzeit kostet nichts, solange das Latenzbudget hält; danach sinkt die Qualität mit dem Planalter. | [`reports/phase1.md`](../reports/phase1.md) |
+| **2 – Freshness Engine** | Holt ein jüngeres Planalter die Qualität zurück, ohne unnötige Brain-Last? | **Nein.** Häufigere Anfragen senken das Planalter, bringen aber keine Qualität und kosten bis zu 2× Brain-Last. Keine Strategie schlägt die Baseline signifikant. | [`reports/phase2.md`](../reports/phase2.md) |
+| **3a – Simulationszeit + SmolVLA** | Lässt sich die Echtzeit-Messung durch eine deterministische Simulation ersetzen? Schadet Latenz einer VLA-Policy (SmolVLA) mehr, besonders bei dynamischen Aufgaben? | **Ja**, validiert gegen Phase 1, deterministisch reproduzierbar, ≈ 6× weniger Seeds für dieselbe Präzision. SmolVLA ist in Millisekunden empfindlicher (Budget 312 statt 700 ms), relativ zum Budget nicht. Nicht die Dynamik der Aufgabe entscheidet, sondern ihre Präzisionsanforderung (über Budget: push −30 pp, coffee-push −7 pp). | [`reports/phase3a.md`](../reports/phase3a.md) |
+| **3 – Flotten-Brain** | Wie viele Roboter bedient ein Brain im Budget, welche Strategie maximiert das? | **Präregistriert: einer**, egal mit welcher Strategie, weil SmolVLA auf LIBERO-Long schon unter dem Budget steil Erfolg verliert (46 % → 20 % bei 500 ms). Ergänzend: Batching vervierfacht bis verfünffacht die Flotte im Budget; bei gleichem Erfolg wie ein Jetson Orin Nano Super kostet ein Roboter am Brain ≈ halb so viel. | [`reports/phase3.md`](../reports/phase3.md) |
+| **4 – Real-Time Chunking** | Macht RTC SmolVLA so verzögerungstolerant, dass ein Brain viele Roboter ohne nennenswerten Qualitätsverlust bedient? | **Nein.** LeRobots RTC streckt die Kurve nicht, es kappt sie: mittlerer Gewinn im Budget −1,6 pp (nicht nachweisbar). Eine RTX 3060 Ti bedient 2–3 Roboter ohne und 5 mit RTC; absolut bringt RTC etwa einen Roboter. Bei gleichem Erfolg ist das Brain trotzdem 2–3,5-mal günstiger je Roboter als langsame Jetsons, den Erfolg eines Thor erreicht es nicht. Die korrigierte Validierung mit 5 und 10 Robotern besteht, liegt aber gepoolt ≈ 10 pp unter der Vorhersage; mit diesem Abschlag bleibt gegen den Orin Nano Super nur Faktor 1–1,5. | [`reports/phase4.md`](../reports/phase4.md) |
 
 - Aufgabe Phase 1–2: **PushT** (LeRobot/gym-pusht, 10 Hz, max. 300 Schritte)
 - Policy Phase 1–2: **`lerobot/diffusion_pusht`** (Diffusion Policy, Apache-2.0), lokal ins aktuelle
@@ -31,9 +33,9 @@ führt ein deterministischer **Simulationszeit-Modus** dieselbe Regelschleife au
 ## Phase 4: Real-Time Chunking – Ergebnisse auf einen Blick
 
 Messung vom 26./27.10.2026 in der Cloud (4-vCPU-Xeon, keine GPU, Simulationszeit), vor dem ersten Lauf
-präregistriert ([`reports/phase4_preregistration.md`](reports/phase4_preregistration.md)). GPU-Servicezeiten sind
-benannte Annahmen. Vollständiger Report: **[`reports/phase4.md`](reports/phase4.md)**, Rohtabellen in
-[`reports/phase4_data.md`](reports/phase4_data.md).
+präregistriert ([`reports/phase4_preregistration.md`](../reports/phase4_preregistration.md)). GPU-Servicezeiten sind
+benannte Annahmen. Vollständiger Report: **[`reports/phase4.md`](../reports/phase4.md)**, Rohtabellen in
+[`reports/phase4_data.md`](../reports/phase4_data.md).
 
 **Frage:** Kann Real-Time Chunking (RTC) SmolVLA so verzögerungstolerant machen, dass ein Brain viele Roboter
 ohne nennenswerten Qualitätsverlust bedient (schlechtester Roboter höchstens 3 pp unter einem einzelnen)?
@@ -80,8 +82,8 @@ ohne nennenswerten Qualitätsverlust bedient (schlechtester Roboter höchstens 3
 
 Messung vom 25.10.2026 in der Cloud (4-vCPU-Xeon, keine GPU, Simulationszeit). GPU-Servicezeiten sind
 benannte Annahmen aus der Literatur, bis das Benchmark-Skript auf einer echten Karte läuft. Vollständiger Report:
-**[`reports/phase3.md`](reports/phase3.md)**, Rohtabellen in [`reports/phase3_data.md`](reports/phase3_data.md),
-Anleitung für die Messung auf deiner RTX 3060 Ti: [`docs/benchmark_rtx3060ti.md`](docs/benchmark_rtx3060ti.md).
+**[`reports/phase3.md`](../reports/phase3.md)**, Rohtabellen in [`reports/phase3_data.md`](../reports/phase3_data.md),
+Anleitung für die Messung auf deiner RTX 3060 Ti: [`docs/benchmark_rtx3060ti.md`](benchmark_rtx3060ti.md).
 
 **Frage:** Wie viele Roboter bedient ein Brain, ohne dass einer sein Latenzbudget reißt, und welche
 Scheduling-Strategie maximiert diese Zahl? Aufgabe: LIBERO-Long (zwei Aufgaben × 50 Init-States) mit
@@ -127,8 +129,8 @@ signifikanter Verlust, und das Kriterium hat keine Toleranz.
 ## Phase 3a: Simulationszeit-Modus und SmolVLA-Baseline – Ergebnisse auf einen Blick
 
 Messung vom 24./25.10.2026 auf derselben Maschine (4-vCPU-Xeon, keine GPU). Vollständiger Report mit allen
-Tabellen, Tests und Abbildungen: **[`reports/phase3a.md`](reports/phase3a.md)**, Rohtabellen in
-[`reports/phase3a_data.md`](reports/phase3a_data.md).
+Tabellen, Tests und Abbildungen: **[`reports/phase3a.md`](../reports/phase3a.md)**, Rohtabellen in
+[`reports/phase3a_data.md`](../reports/phase3a_data.md).
 
 **Was neu ist:**
 - **Simulationszeit-Modus** (`python -m kortyn.run_virtual`): Discrete-Event-Simulation mit virtueller Uhr.
@@ -212,7 +214,7 @@ Fett = 95-%-KI schließt die Null aus.
 
 Messung vom 24.10.2026 auf derselben Maschine wie Phase 1, mit identischem Checkpoint, Brain-Profil `kalibriert`
 (DDIM-4) und denselben Seeds. Vollständiger Report mit allen Tabellen, gepaarten Tests und Abbildungen:
-**[`reports/phase2.md`](reports/phase2.md)**.
+**[`reports/phase2.md`](../reports/phase2.md)**.
 
 **Stufe 1 – Screening:** alle 9 Strategien, 20 Seeds; Δ Reward = gepaarte Differenz zur frisch gemessenen
 Baseline.
@@ -312,7 +314,7 @@ Holm-p ≥ 0,92.
 
 Messung vom 23./24.10.2026 auf der Entwicklungsmaschine: Linux, 4-vCPU-Xeon, **CPU statt GPU**, Brain auf
 3 Kernen. Je Zeile 50 Episoden mit identischen Seeds. Vollständiger Report mit Konfidenzintervallen, Tests und
-Abbildungen: **[`reports/phase1.md`](reports/phase1.md)**.
+Abbildungen: **[`reports/phase1.md`](../reports/phase1.md)**.
 
 | Szenario | Netz (RTT) | `kalibriert` (DDIM-4, Inferenz 0,34 s): Erfolg · verhungert | `ddim10` (DDIM-10, Inferenz 0,78 s): Erfolg · verhungert |
 |---|---|---:|---:|
@@ -372,7 +374,7 @@ Abbildungen: **[`reports/phase1.md`](reports/phase1.md)**.
 ## Schnellstart (≈ 5 Minuten + Downloads)
 
 Voraussetzungen: Linux x86_64 oder Windows 10/11 mit WSL2 (Ubuntu; Einrichtung Schritt für Schritt in
-[`docs/benchmark_rtx3060ti.md`](docs/benchmark_rtx3060ti.md), Schritte 1–5), [`uv`](https://docs.astral.sh/uv/)
+[`docs/benchmark_rtx3060ti.md`](benchmark_rtx3060ti.md), Schritte 1–5), [`uv`](https://docs.astral.sh/uv/)
 (`curl -LsSf https://astral.sh/uv/install.sh | sh`), Git, ~4 GB freier Platz (LIBERO für Phase 3: ~15 GB).
 
 ```bash
@@ -508,11 +510,11 @@ uv run python -m kortyn.report_phase4                # reports/phase4_data.md + 
 Laufzeiten auf der Messmaschine (4-vCPU-Xeon, keine GPU): Kalibrierung ≈ 10 min, alle Läufe ≈ 4 h 40 min (650
 Episoden: `kalibriert` 400, `ddim10` 250), LeRobot-Referenz DDPM-100 ≈ 1 h; Phase 2: Stufe 1 ≈ 2 h 50 min,
 Stufe 2 ≈ 4 h 25 min, Sync-Ablation ≈ 35 min; Phase 3a: Validierung ≈ 6 h, SmolVLA ≈ 4,7 h mit 4 Workern
-(Aufschlüsselung in [`reports/phase3a.md`](reports/phase3a.md), Abschnitt 9); Phase 3 ≈ 13 h mit 1–3 Workern
+(Aufschlüsselung in [`reports/phase3a.md`](../reports/phase3a.md), Abschnitt 9); Phase 3 ≈ 13 h mit 1–3 Workern
 (Pilot und `lerobot-eval` ≈ 3,7 h, Dosis-Wirkung ≈ 5,3 h, Validierung ≈ 2,6 h; Verlauf in
-[`reports/phase3.md`](reports/phase3.md), Abschnitt „Tatsächlicher Verlauf“); Phase 4 ≈ 12,4 h mit 4 Workern
+[`reports/phase3.md`](../reports/phase3.md), Abschnitt „Tatsächlicher Verlauf“); Phase 4 ≈ 12,4 h mit 4 Workern
 (Block A ≈ 4,3 h, Block B ≈ 3,0 h, Validierung ≈ 1,7 h einschließlich des ungültigen ersten Laufs; Verlauf in
-[`reports/phase4.md`](reports/phase4.md), Abschnitt 1). Mit einer NVIDIA-GPU ist die
+[`reports/phase4.md`](../reports/phase4.md), Abschnitt 1). Mit einer NVIDIA-GPU ist die
 Inferenz schneller; die Echtzeit-Episoden dauern trotzdem ihre 10–30 s Simulationszeit.
 
 > **Hinweise für Windows (WSL2):** Den aktuellen NVIDIA-Treiber unter Windows installieren, in Ubuntu keinen;
