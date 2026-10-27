@@ -739,6 +739,46 @@ def phase5(facts: Facts) -> dict[str, Any]:
                 f"controls.{name}.interval",
             )
             facts.add(f"p5.{short}.p", p_value(control["p_value"]), gate_path, f"controls.{name}.p_value")
+        for task in ("0", "8"):
+            for name in ("gate", "K1", "K2"):
+                facts.add(
+                    f"p5.task{task}.{name}",
+                    pp(gate["per_task"][task][name]["difference"]),
+                    gate_path,
+                    f"per_task.{task}.{name}.difference",
+                )
+        # K3: reproduction of the earlier measurements on seeds 1000-1099 (a = earlier phase, b = phase 5)
+        for key, short in (
+            ("sync25_vs_phase3", "sync"),
+            ("async_0ms_vs_phase4_block_a", "async"),
+            ("rtc_kurz_vs_phase4_rtc_long_at_0ms", "rtc"),
+        ):
+            entry = gate["reproduction"][key]
+            field = f"reproduction.{key}"
+            facts.add(f"p5.K3.{short}.before", pct(entry["rate_a"]), gate_path, f"{field}.rate_a")
+            facts.add(f"p5.K3.{short}.now", pct(entry["rate_b"]), gate_path, f"{field}.rate_b")
+            facts.add(f"p5.K3.{short}.p", p_value(entry["p_value"]), gate_path, f"{field}.p_value")
+        sync = gate["reproduction"]["sync25_vs_phase3"]
+        facts.add(
+            "p5.K3.sync.diff", pp(sync["difference"]), gate_path, "reproduction.sync25_vs_phase3.difference"
+        )
+        facts.add(
+            "p5.K3.sync.interval",
+            pp_interval(*sync["interval"]),
+            gate_path,
+            "reproduction.sync25_vs_phase3.interval",
+        )
+        # descriptive: the reference on the two noise replicates of the same init states
+        reference = ROOT / "results" / "phase5" / "libero" / "smolvla_libero_rtc" / "sync25"
+        episodes = load_episodes(reference)
+        for half, first in (("1", 1000), ("2", 1100)):
+            seeds = range(first, first + 100)
+            facts.add(
+                f"p5.sync.replicate{half}",
+                pct(sum(episodes[seed].success for seed in seeds) / len(seeds)),
+                reference / "episodes.jsonl",
+                f"success rate of seeds {first}–{first + 99}",
+            )
     curves_path = folder / "curves.json"
     if curves_path.exists():
         curves = _json(curves_path)

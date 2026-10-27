@@ -386,7 +386,37 @@ pairing; with 200 pairs it passes in 93%–98%, and an RTC at the −15 pp margi
 was known in advance: if asynchronous execution itself loses 6 pp against the synchronous reference, even an RTC
 without any harm of its own passes in only 54%–64% of cases.
 
-<!-- phase5-gate -->
+**Gate (passed).** RTC with short guidance reached 45.5% at 0 ms against 49.0% for the synchronous reference of
+the same block, a difference of −3.5 pp [−11.5, +4.0] pp (McNemar p = 0.43; Table 5, Figure 7). Both conditions
+of the criterion held, so the dose block ran. The controls agree: asynchronous execution without RTC also reached
+49.0% (K1: ±0.0 pp [−8.5, +8.5] pp, p = 1.00), and RTC changed success against it by −3.5 pp [−11.0, +4.5] pp
+(K2, p = 0.44). The loss of 6 pp from asynchronous execution that the power analysis treated as a risk did not
+appear. The tasks differ: in task 0 both asynchronous conditions lost against the reference (−8.0 pp without and
+−9.0 pp with RTC; RTC against asynchronous −1.0 pp), in task 8 neither did (+8.0 pp and +2.0 pp; RTC against
+asynchronous −6.0 pp). With 100 pairs per task these differences are descriptive.
+
+<!-- table:gate -->
+<!-- /table:gate -->
+
+*Table 5. Zero-latency gate and its controls at 0 ms, 200 pairs in 100 clusters (task × init state), exact
+McNemar tests and 95% cluster-bootstrap intervals. Only the first row decides; the other rows apply the same
+criterion descriptively. Source: `results/phase5/gate.json`.*
+
+![Zero-latency gate](figures/fig7_gate.png)
+
+*Figure 7. Paired differences in success at 0 ms with 95% cluster-bootstrap intervals; the colour marks the
+tested condition. The gate passes while the lower bound stays above the margin of −15 pp and McNemar's test finds
+no significant loss. Source: `results/phase5/gate.json`.*
+
+**The phase-3 reference did not reproduce.** On the 100 seeds of the phase-4 check, the synchronous reference
+reached 42% in phase 5 against 53% in phase 3 (−11.0 pp [−20.0, −2.0] pp, p = 0.03), and 56% on the second
+noise replicate of the same init states. Asynchronous execution without RTC reproduced phase 4 (48% against 47%,
+p = 1.00). On these seeds RTC with short guidance (46%) did not differ significantly from RTC with long guidance
+in phase 4 (42%, p = 0.61). The failed zero-latency check of phase 4 had therefore compared RTC with a reference
+that was high, by chance or through its run context; we cannot tell which. A reference from 100 episodes was too
+noisy for a margin of −15 pp, which the design with 200 pairs addressed.
+
+<!-- phase5-dose -->
 
 **GPU measurement (pending).** All GPU service times so far were assumptions. Phase 5 provides a notebook that
 measures SmolVLA on a free Google Colab or Kaggle GPU in the browser: service time per batch of 1 to 32 requests
