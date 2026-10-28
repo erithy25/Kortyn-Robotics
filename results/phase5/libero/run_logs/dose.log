@@ -1,0 +1,211 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+2026-10-27 23:50:44,191 INFO kortyn.run_virtual: [smolvla_libero_rtc] 300 episodes pending (100 seeds x up to 3 runs), 4 workers x 1 torch threads
+2026-10-27 23:50:50,647 WARNING root: No accelerated backend detected. Using default cpu, this will be slow.
+2026-10-27 23:50:50,647 WARNING lerobot.configs.policies: Device 'cuda' is not available. Switching to 'cpu'.
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+2026-10-27 23:50:51,111 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-10-27 23:50:51,111 WARNING huggingface_hub.utils._http: Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-10-27 23:50:51,161 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fconfig.json=&etag=%222463e842695989a207176fdb249327a494b05cfb%22 "HTTP/1.1 200 OK"
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  12%|█▏        | 59/489 [00:00<00:00, 544.37it/s]Loading weights:  25%|██▍       | 122/489 [00:00<00:00, 586.07it/s]Loading weights:  37%|███▋      | 181/489 [00:00<00:00, 563.22it/s]Loading weights:  49%|████▊     | 238/489 [00:00<00:00, 561.46it/s]Loading weights:  62%|██████▏   | 301/489 [00:00<00:00, 575.75it/s]Loading weights:  89%|████████▉ | 436/489 [00:00<00:00, 830.09it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 737.07it/s]
+2026-10-27 23:50:52,345 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/generation_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:52,439 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/generation_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fgeneration_config.json=&etag=%22eace9aa6d392fd94dbe0c90825074c53fd7ecd4a%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:52,523 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:52,796 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:52,885 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-10-27 23:50:52,963 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:53,010 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:53,086 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/chat_template.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:53,135 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/chat_template.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fchat_template.json=&etag=%221d342e4f070c962a14ba4ece4e06212bc70d8e36%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:53,216 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/chat_template.jinja "HTTP/1.1 404 Not Found"
+2026-10-27 23:50:53,295 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/audio_tokenizer_config.json "HTTP/1.1 404 Not Found"
+2026-10-27 23:50:53,404 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-10-27 23:50:53,481 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:53,528 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:53,606 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/chat_template.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:53,654 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/chat_template.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fchat_template.json=&etag=%221d342e4f070c962a14ba4ece4e06212bc70d8e36%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:53,732 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/chat_template.jinja "HTTP/1.1 404 Not Found"
+2026-10-27 23:50:53,811 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/audio_tokenizer_config.json "HTTP/1.1 404 Not Found"
+2026-10-27 23:50:53,902 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:53,949 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:54,024 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:54,075 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/preprocessor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fpreprocessor_config.json=&etag=%22bf7669a38692ad141d333db3be18bd55cb6e2c59%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:54,157 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:54,208 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:54,291 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:54,340 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/preprocessor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fpreprocessor_config.json=&etag=%22bf7669a38692ad141d333db3be18bd55cb6e2c59%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:54,427 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:54,476 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fconfig.json=&etag=%222463e842695989a207176fdb249327a494b05cfb%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:54,560 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:54,611 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/tokenizer_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Ftokenizer_config.json=&etag=%22e4042a1126290fdb96ece2a4ad8dd7108c5de484%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:54,700 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-10-27 23:50:54,781 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-10-27 23:50:54,987 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:55,039 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:55,130 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-10-27 23:50:55,211 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:55,260 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/preprocessor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fpreprocessor_config.json=&etag=%22bf7669a38692ad141d333db3be18bd55cb6e2c59%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:55,346 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:55,395 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 23:50:55,480 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-10-27 23:50:55,558 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:50:55,605 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/preprocessor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fpreprocessor_config.json=&etag=%22bf7669a38692ad141d333db3be18bd55cb6e2c59%22 "HTTP/1.1 200 OK"
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+2026-10-27 23:51:01,057 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:51:01,104 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fconfig.json=&etag=%222463e842695989a207176fdb249327a494b05cfb%22 "HTTP/1.1 200 OK"
+2026-10-27 23:51:01,206 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 23:51:01,258 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/tokenizer_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Ftokenizer_config.json=&etag=%22e4042a1126290fdb96ece2a4ad8dd7108c5de484%22 "HTTP/1.1 200 OK"
+2026-10-27 23:51:01,343 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-10-27 23:51:01,428 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-10-27 23:51:01,588 INFO kortyn.policy: loaded smolvla from checkpoints/smolvla_libero on cpu (n_obs_steps=1, chunk=50, sampler=flow-10)
+[robosuite WARNING] No private macro file found! (__init__.py:7)
+2026-10-27 23:51:01,715 WARNING robosuite_logs: No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (__init__.py:8)
+2026-10-27 23:51:01,715 WARNING robosuite_logs: It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (__init__.py:9)
+2026-10-27 23:51:01,715 WARNING robosuite_logs: To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+[robosuite WARNING] No private macro file found! (__init__.py:7)
+2026-10-27 23:51:01,729 WARNING robosuite_logs: No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (__init__.py:8)
+2026-10-27 23:51:01,729 WARNING robosuite_logs: It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (__init__.py:9)
+2026-10-27 23:51:01,729 WARNING robosuite_logs: To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+2026-10-27 23:51:01,762 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 23:51:01,763 INFO OpenGL.acceleratesupport: No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-27 23:51:01,771 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+[robosuite WARNING] No private macro file found! (__init__.py:7)
+2026-10-27 23:51:01,773 WARNING robosuite_logs: No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (__init__.py:8)
+2026-10-27 23:51:01,773 WARNING robosuite_logs: It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (__init__.py:9)
+2026-10-27 23:51:01,773 WARNING robosuite_logs: To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+2026-10-27 23:51:01,772 INFO OpenGL.acceleratesupport: No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-27 23:51:01,777 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 23:51:01,785 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 23:51:01,820 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+[robosuite WARNING] No private macro file found! (__init__.py:7)
+2026-10-27 23:51:01,820 WARNING robosuite_logs: No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (__init__.py:8)
+2026-10-27 23:51:01,821 WARNING robosuite_logs: It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (__init__.py:9)
+2026-10-27 23:51:01,821 WARNING robosuite_logs: To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+2026-10-27 23:51:01,822 INFO OpenGL.acceleratesupport: No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-27 23:51:01,834 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 23:51:01,883 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 23:51:01,885 INFO OpenGL.acceleratesupport: No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-27 23:51:01,905 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+[info] using task orders [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+Local assets not found. Downloading from HuggingFace Hub...
+Assets already downloaded at /root/.cache/libero/assets
+[info] using task orders [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+Local assets not found. Downloading from HuggingFace Hub...
+Assets already downloaded at /root/.cache/libero/assets
+[info] using task orders [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+Local assets not found. Downloading from HuggingFace Hub...
+Assets already downloaded at /root/.cache/libero/assets
+[info] using task orders [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+Local assets not found. Downloading from HuggingFace Hub...
+Assets already downloaded at /root/.cache/libero/assets
+2026-10-27 23:54:41,896 INFO kortyn.run_virtual: [smolvla_libero_rtc 3/300, ETA 363 min] seed 1001 (211 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:S20
+2026-10-27 23:54:43,429 INFO kortyn.run_virtual: [smolvla_libero_rtc 6/300, ETA 181 min] seed 1000 (213 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-27 23:54:47,816 INFO kortyn.run_virtual: [smolvla_libero_rtc 9/300, ETA 122 min] seed 1003 (216 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:S20
+2026-10-27 23:54:48,718 INFO kortyn.run_virtual: [smolvla_libero_rtc 12/300, ETA 91 min] seed 1002 (217 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-27 23:58:09,449 INFO kortyn.run_virtual: [smolvla_libero_rtc 15/300, ETA 135 min] seed 1005 (206 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:S20
+2026-10-27 23:58:25,969 INFO kortyn.run_virtual: [smolvla_libero_rtc 18/300, ETA 116 min] seed 1004 (224 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-27 23:58:26,410 INFO kortyn.run_virtual: [smolvla_libero_rtc 21/300, ETA 98 min] seed 1006 (219 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-27 23:58:43,586 INFO kortyn.run_virtual: [smolvla_libero_rtc 24/300, ETA 89 min] seed 1007 (235 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:01:37,607 INFO kortyn.run_virtual: [smolvla_libero_rtc 27/300, ETA 107 min] seed 1008 (208 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:01:50,525 INFO kortyn.run_virtual: [smolvla_libero_rtc 30/300, ETA 97 min] seed 1009 (205 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:01:51,933 INFO kortyn.run_virtual: [smolvla_libero_rtc 33/300, ETA 88 min] seed 1010 (206 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:02:04,216 INFO kortyn.run_virtual: [smolvla_libero_rtc 36/300, ETA 81 min] seed 1011 (201 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:05:04,143 INFO kortyn.run_virtual: [smolvla_libero_rtc 39/300, ETA 94 min] seed 1013 (194 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:05:04,587 INFO kortyn.run_virtual: [smolvla_libero_rtc 42/300, ETA 86 min] seed 1012 (207 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:05:19,069 INFO kortyn.run_virtual: [smolvla_libero_rtc 45/300, ETA 81 min] seed 1014 (207 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:05:33,237 INFO kortyn.run_virtual: [smolvla_libero_rtc 48/300, ETA 76 min] seed 1015 (209 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:07:54,929 INFO kortyn.run_virtual: [smolvla_libero_rtc 51/300, ETA 82 min] seed 1016 (171 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:08:24,038 INFO kortyn.run_virtual: [smolvla_libero_rtc 54/300, ETA 79 min] seed 1017 (199 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:08:27,260 INFO kortyn.run_virtual: [smolvla_libero_rtc 57/300, ETA 74 min] seed 1019 (174 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:08:31,380 INFO kortyn.run_virtual: [smolvla_libero_rtc 60/300, ETA 70 min] seed 1018 (192 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:11:43,144 INFO kortyn.run_virtual: [smolvla_libero_rtc 63/300, ETA 78 min] seed 1020 (228 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:11:53,681 INFO kortyn.run_virtual: [smolvla_libero_rtc 66/300, ETA 74 min] seed 1022 (206 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:11:56,735 INFO kortyn.run_virtual: [smolvla_libero_rtc 69/300, ETA 70 min] seed 1021 (213 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:12:13,762 INFO kortyn.run_virtual: [smolvla_libero_rtc 72/300, ETA 67 min] seed 1023 (222 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:15:05,162 INFO kortyn.run_virtual: [smolvla_libero_rtc 75/300, ETA 72 min] seed 1024 (202 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:S20
+2026-10-28 00:15:18,994 INFO kortyn.run_virtual: [smolvla_libero_rtc 78/300, ETA 69 min] seed 1025 (205 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:15:28,115 INFO kortyn.run_virtual: [smolvla_libero_rtc 81/300, ETA 66 min] seed 1026 (211 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:15:37,550 INFO kortyn.run_virtual: [smolvla_libero_rtc 84/300, ETA 63 min] seed 1027 (204 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:18:10,533 INFO kortyn.run_virtual: [smolvla_libero_rtc 87/300, ETA 66 min] seed 1028 (185 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:18:56,370 INFO kortyn.run_virtual: [smolvla_libero_rtc 90/300, ETA 65 min] seed 1031 (199 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:18:59,996 INFO kortyn.run_virtual: [smolvla_libero_rtc 93/300, ETA 62 min] seed 1029 (221 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:19:09,558 INFO kortyn.run_virtual: [smolvla_libero_rtc 96/300, ETA 60 min] seed 1030 (221 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:21:43,855 INFO kortyn.run_virtual: [smolvla_libero_rtc 99/300, ETA 62 min] seed 1032 (213 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:21:54,452 INFO kortyn.run_virtual: [smolvla_libero_rtc 102/300, ETA 60 min] seed 1034 (174 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:22:00,806 INFO kortyn.run_virtual: [smolvla_libero_rtc 105/300, ETA 58 min] seed 1033 (184 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:S20
+2026-10-28 00:22:23,597 INFO kortyn.run_virtual: [smolvla_libero_rtc 108/300, ETA 56 min] seed 1035 (194 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:24:39,917 INFO kortyn.run_virtual: [smolvla_libero_rtc 111/300, ETA 57 min] seed 1036 (176 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:S20
+2026-10-28 00:25:28,577 INFO kortyn.run_virtual: [smolvla_libero_rtc 114/300, ETA 56 min] seed 1038 (208 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:25:29,521 INFO kortyn.run_virtual: [smolvla_libero_rtc 117/300, ETA 54 min] seed 1037 (215 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:25:34,863 INFO kortyn.run_virtual: [smolvla_libero_rtc 120/300, ETA 52 min] seed 1039 (191 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:28:06,173 INFO kortyn.run_virtual: [smolvla_libero_rtc 123/300, ETA 53 min] seed 1040 (206 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:28:56,815 INFO kortyn.run_virtual: [smolvla_libero_rtc 126/300, ETA 52 min] seed 1041 (208 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:29:06,255 INFO kortyn.run_virtual: [smolvla_libero_rtc 129/300, ETA 50 min] seed 1042 (217 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:29:11,101 INFO kortyn.run_virtual: [smolvla_libero_rtc 132/300, ETA 49 min] seed 1043 (216 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:31:42,732 INFO kortyn.run_virtual: [smolvla_libero_rtc 135/300, ETA 50 min] seed 1044 (217 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:32:26,881 INFO kortyn.run_virtual: [smolvla_libero_rtc 138/300, ETA 49 min] seed 1047 (196 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:32:31,381 INFO kortyn.run_virtual: [smolvla_libero_rtc 141/300, ETA 47 min] seed 1045 (215 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:32:39,874 INFO kortyn.run_virtual: [smolvla_libero_rtc 144/300, ETA 45 min] seed 1046 (214 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:35:19,558 INFO kortyn.run_virtual: [smolvla_libero_rtc 147/300, ETA 46 min] seed 1048 (217 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:35:47,616 INFO kortyn.run_virtual: [smolvla_libero_rtc 150/300, ETA 45 min] seed 1051 (188 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:35:51,769 INFO kortyn.run_virtual: [smolvla_libero_rtc 153/300, ETA 43 min] seed 1049 (205 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:36:15,567 INFO kortyn.run_virtual: [smolvla_libero_rtc 156/300, ETA 42 min] seed 1050 (224 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:38:18,316 INFO kortyn.run_virtual: [smolvla_libero_rtc 159/300, ETA 42 min] seed 1052 (179 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:38:50,984 INFO kortyn.run_virtual: [smolvla_libero_rtc 162/300, ETA 41 min] seed 1053 (183 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:39:21,502 INFO kortyn.run_virtual: [smolvla_libero_rtc 165/300, ETA 40 min] seed 1054 (210 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:39:41,656 INFO kortyn.run_virtual: [smolvla_libero_rtc 168/300, ETA 38 min] seed 1055 (206 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:41:42,918 INFO kortyn.run_virtual: [smolvla_libero_rtc 171/300, ETA 38 min] seed 1056 (205 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:42:17,421 INFO kortyn.run_virtual: [smolvla_libero_rtc 174/300, ETA 37 min] seed 1057 (206 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:42:35,163 INFO kortyn.run_virtual: [smolvla_libero_rtc 177/300, ETA 36 min] seed 1059 (174 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:42:49,021 INFO kortyn.run_virtual: [smolvla_libero_rtc 180/300, ETA 35 min] seed 1058 (208 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:44:43,949 INFO kortyn.run_virtual: [smolvla_libero_rtc 183/300, ETA 34 min] seed 1060 (181 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:45:10,287 INFO kortyn.run_virtual: [smolvla_libero_rtc 186/300, ETA 33 min] seed 1061 (173 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:45:43,697 INFO kortyn.run_virtual: [smolvla_libero_rtc 189/300, ETA 32 min] seed 1062 (189 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:46:33,019 INFO kortyn.run_virtual: [smolvla_libero_rtc 192/300, ETA 31 min] seed 1063 (224 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:48:23,361 INFO kortyn.run_virtual: [smolvla_libero_rtc 195/300, ETA 31 min] seed 1064 (219 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:48:46,403 INFO kortyn.run_virtual: [smolvla_libero_rtc 198/300, ETA 30 min] seed 1065 (216 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:49:17,964 INFO kortyn.run_virtual: [smolvla_libero_rtc 201/300, ETA 29 min] seed 1066 (214 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:49:28,976 INFO kortyn.run_virtual: [smolvla_libero_rtc 204/300, ETA 28 min] seed 1067 (176 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:51:51,877 INFO kortyn.run_virtual: [smolvla_libero_rtc 207/300, ETA 27 min] seed 1068 (209 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:52:16,665 INFO kortyn.run_virtual: [smolvla_libero_rtc 210/300, ETA 26 min] seed 1069 (210 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:52:52,036 INFO kortyn.run_virtual: [smolvla_libero_rtc 213/300, ETA 25 min] seed 1070 (214 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:53:00,777 INFO kortyn.run_virtual: [smolvla_libero_rtc 216/300, ETA 24 min] seed 1071 (212 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:54:52,577 INFO kortyn.run_virtual: [smolvla_libero_rtc 219/300, ETA 24 min] seed 1072 (181 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:55:14,767 INFO kortyn.run_virtual: [smolvla_libero_rtc 222/300, ETA 23 min] seed 1073 (178 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:55:14,873 INFO kortyn.run_virtual: [smolvla_libero_rtc 225/300, ETA 21 min] seed 1074 (143 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:55:50,634 INFO kortyn.run_virtual: [smolvla_libero_rtc 228/300, ETA 20 min] seed 1075 (170 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:57:04,249 INFO kortyn.run_virtual: [smolvla_libero_rtc 231/300, ETA 20 min] seed 1076 (132 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 00:57:59,435 INFO kortyn.run_virtual: [smolvla_libero_rtc 234/300, ETA 19 min] seed 1078 (165 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:58:01,400 INFO kortyn.run_virtual: [smolvla_libero_rtc 237/300, ETA 18 min] seed 1077 (167 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:58:38,435 INFO kortyn.run_virtual: [smolvla_libero_rtc 240/300, ETA 17 min] seed 1079 (168 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 00:59:56,787 INFO kortyn.run_virtual: [smolvla_libero_rtc 243/300, ETA 16 min] seed 1080 (173 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:00:22,822 INFO kortyn.run_virtual: [smolvla_libero_rtc 246/300, ETA 15 min] seed 1081 (143 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 01:01:36,465 INFO kortyn.run_virtual: [smolvla_libero_rtc 249/300, ETA 14 min] seed 1082 (215 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:02:22,695 INFO kortyn.run_virtual: [smolvla_libero_rtc 252/300, ETA 14 min] seed 1083 (224 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:02:28,965 INFO kortyn.run_virtual: [smolvla_libero_rtc 255/300, ETA 13 min] seed 1084 (152 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:S10 rtc_kurz_1000ms:f20
+2026-10-28 01:04:11,777 INFO kortyn.run_virtual: [smolvla_libero_rtc 258/300, ETA 12 min] seed 1085 (229 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:05:22,828 INFO kortyn.run_virtual: [smolvla_libero_rtc 261/300, ETA 11 min] seed 1086 (226 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:06:08,076 INFO kortyn.run_virtual: [smolvla_libero_rtc 264/300, ETA 10 min] seed 1087 (225 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:06:13,357 INFO kortyn.run_virtual: [smolvla_libero_rtc 267/300, ETA 9 min] seed 1088 (224 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:07:57,104 INFO kortyn.run_virtual: [smolvla_libero_rtc 270/300, ETA 9 min] seed 1089 (225 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:09:07,630 INFO kortyn.run_virtual: [smolvla_libero_rtc 273/300, ETA 8 min] seed 1090 (225 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:09:39,993 INFO kortyn.run_virtual: [smolvla_libero_rtc 276/300, ETA 7 min] seed 1091 (212 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:10:00,041 INFO kortyn.run_virtual: [smolvla_libero_rtc 279/300, ETA 6 min] seed 1092 (227 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:11:03,522 INFO kortyn.run_virtual: [smolvla_libero_rtc 282/300, ETA 5 min] seed 1093 (186 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:13:00,214 INFO kortyn.run_virtual: [smolvla_libero_rtc 285/300, ETA 4 min] seed 1095 (200 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:13:03,463 INFO kortyn.run_virtual: [smolvla_libero_rtc 288/300, ETA 3 min] seed 1094 (236 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:13:25,106 INFO kortyn.run_virtual: [smolvla_libero_rtc 291/300, ETA 3 min] seed 1096 (205 s) rtc_kurz_200ms:S4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:15:10,195 INFO kortyn.run_virtual: [smolvla_libero_rtc 294/300, ETA 2 min] seed 1097 (247 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:16:59,342 INFO kortyn.run_virtual: [smolvla_libero_rtc 297/300, ETA 1 min] seed 1098 (239 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:17:01,652 INFO kortyn.run_virtual: [smolvla_libero_rtc 300/300, ETA 0 min] seed 1099 (238 s) rtc_kurz_200ms:f4 rtc_kurz_500ms:f10 rtc_kurz_1000ms:f20
+2026-10-28 01:17:01,955 INFO kortyn.run_virtual: done. Results in results/phase5/libero/

@@ -346,6 +346,360 @@
           "min_spread_ms": 5.0
         }
       }
+    },
+    "rtc_kurz_200ms": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_200ms",
+      "timing_settings": {
+        "description": "feste Latenz 200 ms",
+        "latency": "model",
+        "hardware": "fest_200ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 200.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "image_transport": {
+        "codec": "zstd",
+        "quality": 90,
+        "level": 9,
+        "height": null,
+        "width": null
+      },
+      "strategy": "rtc_kurz",
+      "strategy_settings": {
+        "description": "RTC mit kurzer F\u00fchrung: d sichere Aktionen, danach h\u00f6chstens 4 weich gef\u00fchrte (H = d + 4)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "rtc",
+          "schedule": "exp",
+          "max_overlap_steps": 4
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "rtc_kurz_500ms": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_500ms",
+      "timing_settings": {
+        "description": "feste Latenz 500 ms",
+        "latency": "model",
+        "hardware": "fest_500ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 500.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "image_transport": {
+        "codec": "zstd",
+        "quality": 90,
+        "level": 9,
+        "height": null,
+        "width": null
+      },
+      "strategy": "rtc_kurz",
+      "strategy_settings": {
+        "description": "RTC mit kurzer F\u00fchrung: d sichere Aktionen, danach h\u00f6chstens 4 weich gef\u00fchrte (H = d + 4)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "rtc",
+          "schedule": "exp",
+          "max_overlap_steps": 4
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
+    },
+    "rtc_kurz_1000ms": {
+      "scenario": "gut",
+      "mode": "realtime",
+      "network": {
+        "rtt_ms": 0.0,
+        "rtt_jitter_ms": 0.0,
+        "jitter_distribution": "uniform",
+        "bandwidth_mbps": null,
+        "stall": null,
+        "burst_gap_ms": 2.0
+      },
+      "timing": "fest_1000ms",
+      "timing_settings": {
+        "description": "feste Latenz 1000 ms",
+        "latency": "model",
+        "hardware": "fest_1000ms",
+        "client_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "transport_overhead": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "delivery_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "tick_lateness": {
+          "kind": "constant",
+          "value_ms": 0.0,
+          "low_ms": 0.0,
+          "high_ms": 0.0,
+          "mean_ms": 0.0,
+          "std_ms": 0.0,
+          "empirical": null,
+          "scale": 1.0,
+          "min_ms": 0.0,
+          "max_ms": null
+        },
+        "replay": {
+          "results_dir": "results"
+        },
+        "timing_seed": 0,
+        "brain_servers": 1,
+        "scheduler": "fifo"
+      },
+      "service_time": {
+        "kind": "constant",
+        "value_ms": 1000.0,
+        "low_ms": 0.0,
+        "high_ms": 0.0,
+        "mean_ms": 0.0,
+        "std_ms": 0.0,
+        "empirical": null,
+        "scale": 1.0,
+        "min_ms": 0.0,
+        "max_ms": null
+      },
+      "image_transport": {
+        "codec": "zstd",
+        "quality": 90,
+        "level": 9,
+        "height": null,
+        "width": null
+      },
+      "strategy": "rtc_kurz",
+      "strategy_settings": {
+        "description": "RTC mit kurzer F\u00fchrung: d sichere Aktionen, danach h\u00f6chstens 4 weich gef\u00fchrte (H = d + 4)",
+        "request": {
+          "mode": "threshold",
+          "refill_threshold": null,
+          "target_age_s": 0.7,
+          "latency_quantile_z": 1.645,
+          "safety_margin_ticks": 1
+        },
+        "alignment": "timestep",
+        "smoothing": {
+          "mode": "rtc",
+          "schedule": "exp",
+          "max_overlap_steps": 4
+        },
+        "guard": {
+          "mode": "hold",
+          "max_plan_age_s": null
+        },
+        "latency": {
+          "window": 16,
+          "initial_ms": 400.0,
+          "initial_spread_ms": 50.0,
+          "min_spread_ms": 5.0
+        }
+      }
     }
   },
   "agent": {
@@ -420,6 +774,24 @@
         "async_0ms",
         "rtc_kurz_0ms",
         "sync25"
+      ],
+      "cpu_pinning": null,
+      "host": {
+        "platform": "Linux-6.18.44-fc-v180-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "processor": "x86_64",
+        "cpu_count": 4,
+        "python": "3.12.3"
+      },
+      "brain_warmup_inference_ms": 0.0
+    },
+    {
+      "started_utc": "2026-10-27T23:54:41+00:00",
+      "git_commit": "b206c93c99d2e01da15bda20b0008b38c89b7f62",
+      "runs": [
+        "rtc_kurz_1000ms",
+        "rtc_kurz_200ms",
+        "rtc_kurz_500ms"
       ],
       "cpu_pinning": null,
       "host": {

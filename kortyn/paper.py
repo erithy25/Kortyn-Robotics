@@ -569,21 +569,30 @@ def phase4(facts: Facts) -> dict[str, Any]:
     }
 
 
-def table_capacity(data: Mapping[str, Any]) -> str:
+def table_capacity(data: Mapping[str, Any], p5: Mapping[str, Any] | None = None) -> str:
     table: Mapping[tuple[str, str], tuple[int, int]] = data["capacity_table"]
+    short: Mapping[str, tuple[int, int]] | None = None if p5 is None else p5.get("capacity_short")
     names = {
         "a": "a: FIFO",
         "b": "b: FIFO + batching",
         "d": "d: EDF + batching",
         "e": "e: EDF + batching + admission",
     }
-    lines = ["| Scheduling strategy | Without RTC | With RTC (H ≤ 25) |", "|---|---:|---:|"]
+    header = "| Scheduling strategy | Without RTC | With RTC (H ≤ 25) |"
+    rule = "|---|---:|---:|"
+    if short is not None:
+        header += " With RTC (H = D + 4) |"
+        rule += "---:|"
+    lines = [header, rule]
     for strategy in ("a", "b", "d", "e"):
         cells = []
         for rtc in ("without", "rtc"):
             point, conservative = table[(rtc, strategy)]
             cells.append(f"{point} ({conservative})")
-        lines.append(f"| {names[strategy]} | {cells[0]} | {cells[1]} |")
+        if short is not None:
+            point, conservative = short[strategy]
+            cells.append(f"{point} ({conservative})")
+        lines.append(f"| {names[strategy]} | " + " | ".join(cells) + " |")
     return "\n".join(lines)
 
 
@@ -799,6 +808,60 @@ def phase5(facts: Facts) -> dict[str, Any]:
             ms(curves["conditions"]["rtc_kurz"]["lstar"]["point_ms"]),
             curves_path,
             "conditions.rtc_kurz.lstar.point_ms",
+        )
+        lstar = curves["conditions"]["rtc_kurz"]["lstar"]
+        for bound, field in (("low", "conservative_ms"), ("high", "upper_ms")):
+            facts.add(
+                f"p5.short.lstar.{bound}",
+                ms(lstar[field]),
+                curves_path,
+                f"conditions.rtc_kurz.lstar.{field}",
+            )
+        for row in curves["levels"]:
+            latency = int(row["latency_ms"])
+            field = f"levels[{latency} ms]"
+            facts.add(f"p5.level.{latency}.diff", pp(row["difference"]), curves_path, f"{field}.difference")
+            facts.add(
+                f"p5.level.{latency}.interval",
+                pp_interval(*row["interval"]),
+                curves_path,
+                f"{field}.interval",
+            )
+        smallest = min(row["p_value"] for row in curves["levels"])
+        facts.add("p5.levels.p", f"p ≥ {smallest:.2f}", curves_path, "min of levels[*].p_value (McNemar)")
+        versus = curves["short_vs_long"]["h1"]
+        facts.add("p5.short_vs_long.gain", pp(versus["gain"]), curves_path, "short_vs_long.h1.gain")
+        facts.add(
+            "p5.short_vs_long.interval",
+            pp_interval(*versus["interval"]),
+            curves_path,
+            "short_vs_long.h1.interval",
+        )
+        # capacity with the short-guidance curve (RTX 3060 Ti + RTC overhead, realistic batching, Wi-Fi)
+        capacity: dict[str, tuple[int, int]] = {}
+        for configuration in curves["capacity"]["configurations"]:
+            if configuration["batching"] == "realistisch" and configuration["network"] == "buero_wlan":
+                capacity[configuration["strategy"]] = (
+                    int(configuration["capacity"]),
+                    int(configuration["capacity_conservative"]),
+                )
+        data["capacity_short"] = capacity
+        facts.add(
+            "p5.capacity.best",
+            f"{max(point for point, _ in capacity.values())} robots",
+            curves_path,
+            "max capacity.configurations[realistisch, buero_wlan].capacity",
+        )
+        conservative = {low for _, low in capacity.values()}
+        if len(conservative) != 1:
+            raise PaperError(
+                f"{curves_path.relative_to(ROOT)}: conservative capacities differ: {conservative}"
+            )
+        facts.add(
+            "p5.capacity.conservative",
+            f"{conservative.pop()} robots",
+            curves_path,
+            "capacity_conservative, every strategy (realistisch, buero_wlan)",
         )
     cpu_path = ROOT / "tests" / "data" / "notebook_cpu_test.json"
     cpu = _json(cpu_path)
@@ -1378,7 +1441,7 @@ def build() -> Build:
     tables = {
         "phase1": table_phase1(p1),
         "dose": table_dose(p3, p4, p5),
-        "capacity": table_capacity(p4),
+        "capacity": table_capacity(p4, p5),
         "validation": table_validation(p3, p4),
     }
     figures: dict[str, Callable[[Path], None]] = {
@@ -1426,11 +1489,15 @@ def _constant(text: str) -> Callable[[re.Match[str]], str]:
 
 
 def replace_tables(report: str, tables: Mapping[str, str]) -> str:
+    """Fill every ``<!-- table:NAME -->`` block (also an empty one) with its generated table."""
     for name, body in tables.items():
         start, end = TABLE_START.format(name=name), TABLE_END.format(name=name)
-        pattern = re.compile(re.escape(start) + r"\n.*?\n" + re.escape(end), re.DOTALL)
-        if start in report:
-            report = pattern.sub(_constant(f"{start}\n{body}\n{end}"), report)
+        if start not in report:
+            continue
+        pattern = re.compile(re.escape(start) + r"\n(?:.*?\n)?" + re.escape(end), re.DOTALL)
+        report, count = pattern.subn(_constant(f"{start}\n{body}\n{end}"), report)
+        if count != report.count(start):
+            raise PaperError(f"table {name}: every {start} needs its own {end} on a later line")
     return report
 
 

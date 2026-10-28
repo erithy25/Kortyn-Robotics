@@ -13,13 +13,15 @@ emulator, later replaced by a validated simulation-time mode in which latencies 
 policy and the simulator are run. Over five pre-registered phases we measured Diffusion Policy on PushT and
 SmolVLA on Meta-World and LIBERO-Long. SmolVLA on two long-horizon LIBERO tasks keeps its success up to about
 200 ms of end-to-end latency and then falls steeply (47% at 0 ms, 30% at 300 ms, 5% at 1,000 ms). Real-time
-chunking (RTC) as implemented in LeRobot, with guidance over up to 25 actions, did not stretch this curve: the
-mean gain over the latency budget was −1.6 pp [−6.1, +3.4] pp, and RTC failed the check that it matches the
-synchronous reference at zero latency. Under an assumed service time of 220 ms per plan, one consumer GPU
-serves 3 robots without RTC and 5 robots with RTC within a 3-pp tolerance. A real fleet validation fell short of
-the predictions by −9.7 pp on average, and an earlier validation was invalidated by a rendering fault we found
-and fixed. Phase 5 re-tests RTC with short guidance behind a pre-registered zero-latency gate and prepares a
-browser-based GPU measurement with a pre-registered business decision rule. We report all negative results.
+chunking (RTC) as implemented in LeRobot did not stretch this curve. With guidance over up to 25 actions, the mean
+gain over the latency budget was −1.6 pp [−6.1, +3.4] pp, and RTC failed the check that it matches the synchronous
+reference at zero latency. With guidance limited to the frozen actions plus 4, RTC passed a pre-registered
+zero-latency gate (45.5% against 49.0%), but its mean gain was again not demonstrable (+2.6 pp [−1.7, +5.6] pp);
+the reference behind the phase-4 check did not reproduce. Under an assumed service time of 220 ms per plan, one
+consumer GPU serves 3 robots without RTC and 4 robots with short guidance within a 3-pp tolerance, and 2 robots by
+a conservative estimate. A real fleet validation fell short of the predictions by −9.7 pp on average, and an
+earlier validation was invalidated by a rendering fault we found and fixed. A browser notebook measures the real
+GPU service time for a pre-registered business decision rule. We report all negative results.
 
 ## 1. Introduction
 
@@ -236,18 +238,18 @@ the worst robot significantly. This led to the 3-pp tolerance and to real-time c
 fleet validation is invalid because of the rendering fault described in section 4.6.
 
 <!-- table:dose -->
-| Latency | Phase 3, no RTC | Phase 4, no RTC | Phase 4, RTC H ≤ 25 |
-|---:|---:|---:|---:|
-| 0 ms | 46% | 47% | 42% |
-| 100 ms | – | 48% | 38% |
-| 200 ms | – | 47% | 38% |
-| 300 ms | – | 30% | 33% |
-| 500 ms | 20% | 29% | 30% |
-| 750 ms | – | 17% | – |
-| 1,000 ms | 6% | 5% | 5% |
-| 1,250 ms | 2% | 1% | – |
-| 1,500 ms | 0% | 0% | – |
-| 2,000 ms | 0% | 0% | – |
+| Latency | Phase 3, no RTC | Phase 4, no RTC | Phase 4, RTC H ≤ 25 | Phase 5, RTC H = D + 4 |
+|---:|---:|---:|---:|---:|
+| 0 ms | 46% | 47% | 42% | 46% |
+| 100 ms | – | 48% | 38% | – |
+| 200 ms | – | 47% | 38% | 41% |
+| 300 ms | – | 30% | 33% | – |
+| 500 ms | 20% | 29% | 30% | 31% |
+| 750 ms | – | 17% | – | – |
+| 1,000 ms | 6% | 5% | 5% | 6% |
+| 1,250 ms | 2% | 1% | – | – |
+| 1,500 ms | 0% | 0% | – | – |
+| 2,000 ms | 0% | 0% | – | – |
 <!-- /table:dose -->
 
 *Table 2. Measured success of SmolVLA on LIBERO-Long tasks 8 and 0 at fixed end-to-end latencies (100 episodes
@@ -273,7 +275,9 @@ latency axis would have produced.
 ![Dose-response curves](figures/fig3_dose_response.png)
 
 *Figure 3. Success against fixed end-to-end latency, measured levels (points) and the pre-registered smooth
-curve with its 95% bootstrap band. Sources: `results/phase4/curves.json`, `results/phase5/curves.json`.*
+curve with its 95% bootstrap band; the phase-4 RTC curve is dashed and drawn without its band. The phase-5 curve
+rests on four levels; between them it is interpolation by the curve model. Sources: `results/phase4/curves.json`,
+`results/phase5/curves.json`.*
 
 **Capacity.** Under the RTX 3060 Ti assumption with realistic batching and office Wi-Fi (RTT 20 ± 10 ms), the
 best strategy served 3 robots without RTC and 5 robots with RTC within the 3-pp tolerance (Table 3, Figure 4).
@@ -281,17 +285,18 @@ In absolute terms RTC was worth about one robot: the jump from 3 to 5 is largely
 criterion, because RTC lowers the single-robot reference.
 
 <!-- table:capacity -->
-| Scheduling strategy | Without RTC | With RTC (H ≤ 25) |
-|---|---:|---:|
-| a: FIFO | 2 (2) | 3 (2) |
-| b: FIFO + batching | 3 (2) | 5 (2) |
-| d: EDF + batching | 2 (2) | 5 (2) |
-| e: EDF + batching + admission | 2 (2) | 5 (2) |
+| Scheduling strategy | Without RTC | With RTC (H ≤ 25) | With RTC (H = D + 4) |
+|---|---:|---:|---:|
+| a: FIFO | 2 (2) | 3 (2) | 3 (2) |
+| b: FIFO + batching | 3 (2) | 5 (2) | 4 (2) |
+| d: EDF + batching | 2 (2) | 5 (2) | 4 (2) |
+| e: EDF + batching + admission | 2 (2) | 5 (2) | 4 (2) |
 <!-- /table:capacity -->
 
 *Table 3. Capacity in robots per GPU, point estimate (conservative estimate from the 97.5% bootstrap quantile in
-parentheses); RTX 3060 Ti assumption, realistic batching, office Wi-Fi. Source:
-`results/phase4/fleet/capacity.json`.*
+parentheses); RTX 3060 Ti assumption, realistic batching, office Wi-Fi. The column for short guidance (phase 5,
+section 4.7) uses the same fleet simulation with the phase-5 curve. Sources: `results/phase4/fleet/capacity.json`,
+`results/phase5/curves.json`.*
 
 ![Capacity per strategy](figures/fig4_capacity.png)
 
@@ -396,6 +401,13 @@ appear. The tasks differ: in task 0 both asynchronous conditions lost against th
 asynchronous −6.0 pp). With 100 pairs per task these differences are descriptive.
 
 <!-- table:gate -->
+| Comparison (0 ms) | Pairs | Reference | Test | Difference [95% CI] | McNemar | Gate criterion |
+|---|---:|---:|---:|---|---|---|
+| Gate: RTC short − sync25 | 200 | 49.0% | 45.5% | −3.5 pp [−11.5, +4.0] pp | p = 0.43 | passed |
+| K1: asynchronous − sync25 | 200 | 49.0% | 49.0% | ±0.0 pp [−8.5, +8.5] pp | p = 1.00 | passed |
+| K2: RTC short − asynchronous | 200 | 49.0% | 45.5% | −3.5 pp [−11.0, +4.5] pp | p = 0.44 | passed |
+| Gate, task 8 only | 100 | 45.0% | 47.0% | +2.0 pp [−11.0, +15.0] pp | p = 0.87 | passed |
+| Gate, task 0 only | 100 | 53.0% | 44.0% | −9.0 pp [−17.0, −1.0] pp | p = 0.08 | failed |
 <!-- /table:gate -->
 
 *Table 5. Zero-latency gate and its controls at 0 ms, 200 pairs in 100 clusters (task × init state), exact
@@ -416,18 +428,37 @@ in phase 4 (42%, p = 0.61). The failed zero-latency check of phase 4 had therefo
 that was high, by chance or through its run context; we cannot tell which. A reference from 100 episodes was too
 noisy for a margin of −15 pp, which the design with 200 pairs addressed.
 
-<!-- phase5-dose -->
+**Dose block: no demonstrable stretch.** With short guidance, RTC reached 46% at 0 ms, 41% at 200 ms, 31% at 500 ms
+and 6% at 1,000 ms (Table 2, Figure 3). At no level did it differ significantly from the phase-4 curve without RTC
+on the same seeds (McNemar p ≥ 0.39): −1.0 pp [−11.0, +9.0] pp at 0 ms, −6.0 pp [−17.0, +5.0] pp at 200 ms, +2.0 pp
+[−7.0, +12.0] pp at 500 ms and +1.0 pp [−5.0, +7.0] pp at 1,000 ms. The pre-registered primary hypothesis, a
+positive mean gain over the latency budget, was not supported: +2.6 pp [−1.7, +5.6] pp. The positive point estimate
+comes from latencies at which RTC with short guidance was not measured. With four levels, its curve is
+interpolation between 200 and 500 ms and between 500 and 1,000 ms, whereas the curve without RTC rests on measured
+drops at 300 and 750 ms. The tolerable latency rose from 200 ms to 400 ms (conservative 100 ms, upper bound 450
+ms), a coarse estimate for the same reason. Against RTC with long guidance from phase 4, the mean gain was +4.2 pp
+[−1.7, +8.3] pp, also not demonstrable.
+
+**Capacity.** With the short-guidance curve and the phase-4 assumptions (RTX 3060 Ti with RTC overhead, realistic
+batching, office Wi-Fi), the best strategy served 4 robots, between the 3 robots without RTC and the 5 robots
+with long guidance (Table 3). The conservative estimate was 2 robots for every strategy, as without RTC.
+
+**Answer to the RTC question.** Phase 4 left open whether RTC helps, because RTC failed the zero-latency check.
+With short guidance it passes that check against a fresh reference, so the dose-response measurement now answers
+the question for this setting: LeRobot's RTC does not make SmolVLA demonstrably more tolerant of latency on these
+tasks. The interval [−1.7, +5.6] pp excludes most of the 5–9 pp that a 1.5-fold stretch of the latency axis would
+have produced.
 
 **GPU measurement (pending).** All GPU service times so far were assumptions. Phase 5 provides a notebook that
 measures SmolVLA on a free Google Colab or Kaggle GPU in the browser: service time per batch of 1 to 32 requests
 with eight real LIBERO observations, as loaded by LeRobot (bf16 and fp32 parts), in fp16 and fp32, and compiled
-with `torch.compile`; after warm-up, 100 runs per size are timed (p50/p95/p99) and GPU memory is recorded. A configuration counts
-only if its actions deviate from the fp32 reference by at most 25% of the policy's own sampling spread; on the
-CPU the as-loaded configuration deviates by 6.9% and fp16 by 0.8%. On this machine's CPU a single request takes
-2.3 s. The pre-registered decision rule: if the measured GPU serves at least 10 robots with a pooled p99
-end-to-end latency (office Wi-Fi, queue and service time) of at most 150 ms, the business idea gets a second
-review; otherwise it is rejected for good. The result enters this report unchanged once a measurement file is in
-the repository.
+with `torch.compile`; after warm-up, 100 runs per size are timed (p50/p95/p99) and GPU memory is recorded. A
+configuration counts only if its actions deviate from the fp32 reference by at most 25% of the policy's own
+sampling spread; on the CPU the as-loaded configuration deviates by 6.9% and fp16 by 0.8%. On this machine's CPU a
+single request takes 2.3 s. The pre-registered decision rule: if the measured GPU serves at least 10 robots with a
+pooled p99 end-to-end latency (office Wi-Fi, queue and service time) of at most 150 ms, the business idea gets a
+second review; otherwise it is rejected for good. The result enters this report unchanged once a measurement file
+is in the repository.
 
 ## 5. Limitations
 
@@ -440,6 +471,12 @@ the repository.
   times were assumptions until a measurement is added; capacity scales with them.
 - **Network models.** Office Wi-Fi is modeled as a uniform round-trip delay without loss; contention on a shared
   medium is a simple serialization model.
+- **RTC settings.** We tested LeRobot's RTC with two guidance lengths and one weight schedule, without the
+  vector-Jacobian correction of the RTC paper [3]; other settings or implementations may behave differently. The
+  phase-5 curve rests on four latency levels.
+- **References and run order.** In phase 5 the compared conditions ran one after another for each seed, always in
+  the same order. Earlier phases compared against references from other runs; the phase-3 synchronous reference
+  did not reproduce (−11.0 pp on the same seeds).
 - **Thresholds.** The 3-pp tolerance, the 1% late-plan limit and the 150 ms target are choices, not derived
   quantities. The capacity depends on them.
 - **Hidden coupling.** The rendering fault shows that multi-simulator rollouts can be wrong without failing
@@ -451,12 +488,17 @@ the repository.
 
 For SmolVLA on long-horizon LIBERO tasks, latency tolerance, not scheduling, limits how many robots can share a
 GPU: success is flat up to about 200 ms of end-to-end latency and drops steeply after it, far below the 1,250 ms
-the action queue could bridge. LeRobot's real-time chunking with long guidance traded zero-latency success for
-small gains at 300–500 ms and did not stretch the curve. Under the phase-4 assumptions one consumer GPU serves
-3–5 robots within a 3-pp tolerance, and a shared Brain is cheaper per robot only against slow on-board computers.
-The simulation-time mode makes such measurements cheap and exactly repeatable, but multi-robot rollouts need
-their own checks: a rendering fault in one shared process silently corrupted two validations. Pre-registration
-made these negative results visible instead of tuning them away.
+the action queue could bridge. LeRobot's real-time chunking did not change this. With long guidance it traded
+zero-latency success for small gains at 300–500 ms; with guidance limited to the frozen actions plus 4 it no
+longer cost success at zero latency, but it did not stretch the curve demonstrably either. Under the phase-4
+assumptions one consumer GPU serves 3–5 robots within a 3-pp tolerance and 2 robots by a conservative estimate,
+and a shared Brain is cheaper per robot only against slow on-board computers.
+
+Three methodological lessons carry beyond this case. The simulation-time mode makes such measurements cheap and
+exactly repeatable. Multi-robot rollouts need their own checks: a rendering fault in one shared process silently
+corrupted two validations. And a single reference of 100 episodes can be far off, as the phase-3 reference was
+(−11.0 pp on the same seeds), so a comparison against a margin needs a larger reference measured in the same
+block. Pre-registration made these negative results visible instead of tuning them away.
 
 ## 7. Reproduction
 

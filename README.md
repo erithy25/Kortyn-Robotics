@@ -16,10 +16,13 @@ SmolVLA (`lerobot/smolvla_libero`) on two long-horizon LIBERO tasks keeps its su
 end-to-end latency and then drops steeply: 47% at 0 ms, 30% at 300 ms, 5% at 1,000 ms, far below the 1,250 ms its
 action queue could bridge. LeRobot's real-time chunking (RTC) with guidance over up to 25 actions did not stretch
 this curve (mean gain over the budget −1.6 pp [−6.1, +3.4] pp) and failed the check that it matches the
-synchronous reference at zero latency. <!-- readme-phase5 --> Under an assumed service time of 220 ms per plan,
-one consumer GPU serves 3 robots without RTC and 5 robots with RTC within a 3-pp tolerance; a fleet validation
-ran below its prediction (−9.7 pp pooled) after we fixed a rendering fault that had invalidated two earlier
-validations. All five phases were pre-registered; the negative results are reported in full in
+synchronous reference at zero latency. With guidance limited to the frozen actions plus 4, RTC passed a
+pre-registered zero-latency gate (45.5% against 49.0%) but did not stretch the curve demonstrably either
+(+2.6 pp [−1.7, +5.6] pp). Under an assumed service time of 220 ms per plan, one consumer GPU serves 3 robots
+without RTC and 4 robots with short guidance within a 3-pp tolerance, and 2 robots by a conservative estimate; a
+fleet validation ran below its prediction (−9.7 pp pooled) after we fixed a rendering fault that had invalidated
+two earlier validations. The GPU service time remains an assumption until the browser measurement below has been
+run. All five phases were pre-registered; the negative results are reported in full in
 **[`paper/report.md`](paper/report.md)**.
 
 ## Quickstart

@@ -70,6 +70,13 @@ def test_line_breaks_inside_a_quantity_are_normalized() -> None:
     assert paper.unquoted("a budget of 1,250\nms.", facts) == []
 
 
+def test_replace_tables_fills_an_empty_block_and_rejects_an_open_one() -> None:
+    filled = paper.replace_tables("a\n<!-- table:t -->\n<!-- /table:t -->\nb\n", {"t": "| x |"})
+    assert filled == "a\n<!-- table:t -->\n| x |\n<!-- /table:t -->\nb\n"
+    with pytest.raises(paper.PaperError):
+        paper.replace_tables("a\n<!-- table:t -->\nno end\n", {"t": "| x |"})
+
+
 def test_replace_tables_is_idempotent() -> None:
     text = "intro\n<!-- table:t -->\nold\n<!-- /table:t -->\nend\n"
     once = paper.replace_tables(text, {"t": "| new |"})
