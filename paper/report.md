@@ -508,10 +508,13 @@ uv sync                                    # Python 3.12, pinned dependencies (C
 uv run pytest                              # unit, golden and regression tests
 uv run kortyn-capacity --config examples/capacity/example.yaml          # robots per GPU from curve + network + GPU
 uv run python -m kortyn.paper              # this report's tables, figures and provenance from results/
-# LIBERO rollouts run in their own environment (.venv-libero), e.g. phase 5:
+# LIBERO rollouts run in their own environment (.venv-libero), e.g. phase 5 (gate block, then dose block):
 UV_PROJECT_ENVIRONMENT=.venv-libero uv run --no-sync python -m kortyn.run_virtual \
     --config kortyn/experiments/phase5/libero_rtc_kurz.yaml --share-model
 uv run python -m kortyn.phase5_steps gate          # the zero-latency gate
+UV_PROJECT_ENVIRONMENT=.venv-libero uv run --no-sync python -m kortyn.run_virtual \
+    --config kortyn/experiments/phase5/libero_rtc_kurz_dose.yaml --share-model
+uv run python -m kortyn.phase5_steps curves        # curves, H1 and capacity (only after a passed gate)
 uv run python -m kortyn.phase5_steps gpu-decision  # the GPU decision rule on results/phase5/gpu/*.json
 ```
 
