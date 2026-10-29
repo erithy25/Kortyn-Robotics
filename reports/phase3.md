@@ -83,6 +83,13 @@ und die Warteschlangen-Simulation rechnet die Kapazität zusätzlich für 10 Akt
 **1.3 Kalt- gegen Warmstart:** bei fester Latenz 1 000 ms (0,8 B), 100 gepaarte Episoden. Berichtet werden
 Differenz mit KI und McNemar; das Ergebnis entscheidet nichts.
 
+> **Nachtrag aus Phase 5 (29.10.2026):** In Aufgabe 8 hing die Szene bis Commit `7fc321f` von der Vorgeschichte
+> des Simulators ab: LIBERO verschob den Herd mit jedem Hard Reset (Sampler-Akkumulation, `paper/report.md`,
+> Abschnitt 4.8). Gleicher Seed bedeutet in Aufgabe 8 deshalb nicht gleiche Episode; Vergleiche mit anderen
+> Läufen sind dort keine bitgenauen Paare. Aufgabe 0 ist nicht betroffen. Die `sync25`-Referenz dieser Phase
+> (53 %) ließ sich in Phase 5 auf denselben Seeds nicht reproduzieren (42 %); die Differenz liegt vollständig
+> in Aufgabe 8.
+
 **1.4 JPEG q90:** `sync25` roh gegen `sync25` mit JPEG q90 (beide Kameras), 100 gepaarte Episoden. JPEG q90
 wird Standard für Schritt 2–4 genau dann, wenn
 1. McNemar exakt p ≥ 0,05 **und**

@@ -490,6 +490,39 @@ measured service time of the compiled configuration, the success criterion of ph
 fleet of 10; the 150 ms target is thus far stricter than the latency the policy tolerates (Table 2). With a shared
 Wi-Fi medium of 100 and 200 Mbit/s, the latency capacity was 0 robots.
 
+### 4.8 Reproducibility: LIBERO moved the stove of task 8 with the simulator's history
+
+**Finding.** The phase-3 reference that did not reproduce (section 4.7) differed only in task 8. Compared
+episode by episode, by success flag and step count per seed, phase 3 and phase 5 produced the same 50 of 50
+episodes on task 0 (25 of 50 successes in both, every success at the same tick), but only 19 of 50 episodes on
+task 8 (28 against 17 successes), most of them failures that end at the step limit. Every pair of runs we
+compared, across phases and within one session, splits the same way (Table 7).
+
+<!-- table:fingerprints -->
+| Runs compared (same seeds, same condition) | Task | Successes | Identical episodes | Successes at the same tick |
+|---|---|---:|---:|---:|
+| synchronous reference, phase 3 vs phase 5 | task 8 | 28 / 17 | 19 of 50 | 2 of 12 |
+| synchronous reference, phase 3 vs phase 5 | task 0 | 25 / 25 | 50 of 50 | 25 of 25 |
+| asynchronous at 0 ms, phase 3 vs phase 4 | task 8 | 25 / 26 | 14 of 50 | 0 of 15 |
+| asynchronous at 0 ms, phase 3 vs phase 4 | task 0 | 21 / 21 | 50 of 50 | 21 of 21 |
+| asynchronous at 0 ms, phase 4 vs phase 5 | task 8 | 26 / 27 | 15 of 50 | 0 of 18 |
+| asynchronous at 0 ms, phase 4 vs phase 5 | task 0 | 21 / 21 | 50 of 50 | 21 of 21 |
+| 500 ms, phase-4 block A vs a fresh process per episode (same session) | task 8 | 22 / 23 | 19 of 50 | 0 of 14 |
+<!-- /table:fingerprints -->
+
+*Table 7. Episodes of the same seed and condition in two runs: successes in each run, identical episodes
+(success flag and step count) and, among episodes that succeeded in both runs, those that succeeded at the same
+tick. Seeds 1000–1049 are task 8, seeds 1050–1099 task 0. Source:
+`results/phase5/reproducibility/fingerprints.json`.*
+
+**Cause.** In LIBERO's environments, every hard reset appends an on/off sampler for the stove to a list that is
+never cleared. Each sampler draws one number from numpy's global random generator before the fixtures are
+placed, so after k resets the stove's placement uses the random numbers shifted by k. The stove is a fixture: its
+position is written into the model, which the init state does not restore. The scene of task 8 therefore
+depended on how many episodes the simulator had run. Task 0 has no articulated object in its initial state and
+is unaffected. Kortyn's LIBERO wrapper now empties the list before each seeded reset (`kortyn/libero_env.py`;
+LIBERO and LeRobot are unchanged), so the scene is a function of the episode seed alone.
+
 ## 5. Limitations
 
 - **Simulation only.** All success rates come from simulated rollouts; no physical robot was used. LIBERO's

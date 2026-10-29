@@ -1012,6 +1012,119 @@ def table_gpu(p5: Mapping[str, Any]) -> str:
     return "\n".join(lines)
 
 
+# ------------------------------------------------------------------------------------------ reproducibility
+def reproducibility(facts: Facts) -> dict[str, Any]:
+    """Facts of the reproducibility analysis (results/phase5/reproducibility, kortyn.reproducibility)."""
+    folder = ROOT / "results" / "phase5" / "reproducibility"
+    path = folder / "fingerprints.json"
+    fingerprints = _json(path)
+    data: dict[str, Any] = {"fingerprints": fingerprints}
+    reference = fingerprints["pairs"][0]["tasks"]
+    task0, task8 = reference["task 0"], reference["task 8"]
+    field = "pairs[0] (synchronous reference, phase 3 vs phase 5)"
+    facts.add(
+        "r.fp.task0",
+        f"{task0['identical']} of {task0['episodes']} episodes",
+        path,
+        f"{field}.task 0.identical",
+    )
+    facts.add(
+        "r.fp.task0.successes",
+        f"{task0['successes_a']} of {task0['episodes']} successes",
+        path,
+        f"{field}.task 0.successes_a (= successes_b)",
+    )
+    if task0["successes_a"] != task0["successes_b"]:
+        raise PaperError(f"{path.relative_to(ROOT)}: task 0 successes differ between the runs")
+    facts.add(
+        "r.fp.task8",
+        f"{task8['identical']} of {task8['episodes']} episodes",
+        path,
+        f"{field}.task 8.identical",
+    )
+    facts.add(
+        "r.fp.task8.successes",
+        f"{task8['successes_a']} against {task8['successes_b']} successes",
+        path,
+        f"{field}.task 8.successes_a, successes_b",
+    )
+    comparisons = folder / "comparisons"
+    bug = comparisons / "fresh_without_fix__warm_without_fix.json"
+    if bug.exists():
+        seed = _json(bug)["seeds"][0]
+        data["bug"] = seed
+        facts.add(
+            "r.bug.model",
+            f"{len(seed['model_fields_differing'])} of {seed['model_fields']} model arrays",
+            bug,
+            "seeds[0].model_fields_differing (body_pos)",
+        )
+        facts.add("r.bug.fresh", f"{seed['outcome_a'][1]} steps", bug, "seeds[0].outcome_a (fresh process)")
+        facts.add("r.bug.warm", f"{seed['outcome_b'][1]} steps", bug, "seeds[0].outcome_b (after seed 1001)")
+        phase3 = load_episodes(ROOT / "results" / "phase3" / "libero" / "smolvla_libero" / "sync25")
+        facts.add(
+            "r.bug.phase3",
+            f"{phase3[seed['seed']].steps} steps",
+            ROOT / "results" / "phase3" / "libero" / "smolvla_libero" / "sync25" / "episodes.jsonl",
+            f"seed {seed['seed']}.steps",
+        )
+    stove = folder / "stove_without_fix.json"
+    if stove.exists():
+        moves = [move for row in _json(stove)["resets"] for move in row["moved"]]
+        if not moves:
+            raise PaperError(f"{stove.relative_to(ROOT)}: no body moved between resets")
+        shifts = [1000 * float(np.linalg.norm(np.subtract(m["now"], m["first"]))) for m in moves]
+        facts.add("r.stove.body", moves[0]["body"], stove, "resets[*].moved[*].body")
+        facts.add(
+            "r.stove.shift", f"{min(shifts):.0f}–{max(shifts):.0f} mm", stove, "|now - first| of moved bodies"
+        )
+    fixed = comparisons / "fresh__warm.json"
+    if fixed.exists():
+        seed = _json(fixed)["seeds"][0]
+        if not seed["identical"]:
+            raise PaperError(f"{fixed.relative_to(ROOT)}: fresh and warm differ with the fix")
+        n = seed["requests_compared"]
+        facts.add("r.fix.requests", f"{n} of {n} requests", fixed, "seeds[0].requests_compared, identical")
+    gate_path = folder / "gate_fixed_scenes.json"
+    if gate_path.exists():
+        gate = _json(gate_path)
+        data["gate_fixed"] = gate
+        g = gate["gate"]
+        facts.add("r.gate.sync", pct(g["reference_rate"], 1), gate_path, "gate.reference_rate (sync25)")
+        facts.add("r.gate.rtc", pct(g["test_rate"], 1), gate_path, "gate.test_rate (rtc_kurz_0ms)")
+        facts.add("r.gate.diff", pp(g["difference"]), gate_path, "gate.difference")
+        facts.add("r.gate.interval", pp_interval(*g["interval"]), gate_path, "gate.interval")
+        facts.add("r.gate.p", p_value(g["p_value"]), gate_path, "gate.p_value")
+        for name in ("K1_async_vs_sync25", "K2_rtc_vs_async"):
+            control = gate["controls"][name]
+            short = name.split("_")[0]
+            facts.add(f"r.{short}.diff", pp(control["difference"]), gate_path, f"controls.{name}.difference")
+        pairing = gate["pairing_task8"]
+        for label in ("original", "fixed"):
+            facts.add(
+                f"r.pairing.{label}",
+                pct(pairing[label]["discordant_rtc_vs_sync25"]),
+                gate_path,
+                f"pairing_task8.{label}.discordant_rtc_vs_sync25",
+            )
+    return data
+
+
+def table_fingerprints(data: Mapping[str, Any]) -> str:
+    lines = [
+        "| Runs compared (same seeds, same condition) | Task | Successes | Identical episodes "
+        "| Successes at the same tick |",
+        "|---|---|---:|---:|---:|",
+    ]
+    for pair in data["fingerprints"]["pairs"]:
+        for task, c in pair["tasks"].items():
+            lines.append(
+                f"| {pair['name']} | {task} | {c['successes_a']} / {c['successes_b']} | "
+                f"{c['identical']} of {c['episodes']} | {c['same_success_tick']} of {c['success_in_both']} |"
+            )
+    return "\n".join(lines)
+
+
 def table_gate(p5: Mapping[str, Any]) -> str:
     gate = p5["gate"]
     rows = [
@@ -1559,6 +1672,7 @@ def build() -> Build:
     p3 = phase3(facts)
     p4 = phase4(facts)
     p5 = phase5(facts)
+    repro = reproducibility(facts)
     tables = {
         "phase1": table_phase1(p1),
         "dose": table_dose(p3, p4, p5),
@@ -1573,6 +1687,7 @@ def build() -> Build:
         "fig5_economics.png": lambda out: figure_economics(p4, out),
         "fig6_fleet_validation.png": lambda out: figure_fleet_validation(p3, p4, out),
     }
+    tables["fingerprints"] = table_fingerprints(repro)
     if p5.get("decision") is not None:
         tables["gpu"] = table_gpu(p5)
     if p5.get("gate") is not None:
@@ -1630,7 +1745,8 @@ def table_names(report: str) -> list[str]:
 
 UNIT_NUMBER = re.compile(
     r"(?<![\w.-])[−+±]?\d[\d,]*(?:\.\d+)?"
-    r"(?:\s?(?:%|pp|ms|s|Hz|kB|MB|GB|Mbit/s|robots|episodes|pairs|actions|ticks|steps|runs|requests))(?![\w])"
+    r"(?:\s?(?:%|pp|ms|mm|s|Hz|kB|MB|GB|Mbit/s|robots|episodes|pairs|actions|ticks|steps|runs|requests))"
+    r"(?![\w])"
 )
 
 

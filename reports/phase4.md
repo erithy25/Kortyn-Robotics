@@ -283,6 +283,15 @@ frischen Prozess (`libero_fresh.yaml`).
   die Ursache ist, bleibt offen. Für Kortyn zählt: Die Phase-4-Kurven sind die belastbare Referenz; Phase 3
   hat den Erfolg bei 500 ms für Aufgabe 8 unterschätzt.
 
+> **Nachtrag aus Phase 5 (29.10.2026): Ursache gefunden.** Der Zustand, den LIBERO von Episode zu Episode
+> trägt, ist die Position des Herds in Aufgabe 8. LIBERO hängt bei jedem Hard Reset einen weiteren
+> Ein/Aus-Sampler an eine Liste, die nie geleert wird. Jeder Sampler verbraucht vor dem Platzieren der
+> Einbauten eine Zufallszahl, also verschiebt sich die Herd-Position mit der Zahl der Resets des Simulators.
+> Der Herd steht im Modell (`body_pos`), nicht im Init-State. Aufgabe 0 hat kein solches Objekt und
+> reproduziert sich Episode für Episode. Die Phase-3-Stufe war deshalb weder „falsch“ noch reproduzierbar:
+> Sie stammt aus anderen Herd-Positionen. Behoben in `kortyn/libero_env.py` (Commit `7fc321f`); Details,
+> Kontrollmessung und betroffene Aussagen: `paper/report.md`, Abschnitt 4.8.
+
 ## 5. Schritt 4: Kapazität, WLAN und Validierung
 
 **Stufe 1** (Warteschlangen-Simulation in Simulationszeit, Einstellungen wie Phase 3): RTX 3060 Ti
