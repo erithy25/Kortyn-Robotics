@@ -28,7 +28,7 @@ effective latency (latencies act in whole control ticks), an isotonic fallback i
 decay to 0 beyond the latency budget; tasks weighted equally.
 
     kortyn-capacity --config examples/capacity/example.yaml
-    kortyn-capacity --config examples/capacity/gpu_decision.yaml --gpu results/phase5/gpu/<file>.json
+    kortyn-capacity --config examples/capacity/example.yaml --gpu results/phase5/gpu/<file>.json
 """
 
 from __future__ import annotations
@@ -725,22 +725,26 @@ def report_lines(document: Mapping[str, Any]) -> list[str]:
             )
     best = document["best"]
     lines.append("")
-    lines.append(f"Best: {best['gpu']}, strategy {best['strategy']}: {best['capacity']} robots per GPU")
+    lines.append(f"Best: {best['gpu']}, strategy {best['strategy']}: {_robots(best['capacity'])} per GPU")
     if "latency" in document:
         latency = document["latency"]
         verdict = (
             ""
             if latency["meets_target"] is None
             else (
-                f" -> target of {latency['target_robots']} robots "
+                f" -> target of {_robots(latency['target_robots'])} "
                 + ("met" if latency["meets_target"] else "NOT met")
             )
         )
         lines.append(
-            f"Latency: {latency['latency_capacity']} robots within the target "
+            f"Latency: {_robots(latency['latency_capacity'])} within the target "
             f"({latency['gpu']}, strategy {latency['strategy']}){verdict}"
         )
     return lines
+
+
+def _robots(count: int) -> str:
+    return f"{count} robot" if count == 1 else f"{count} robots"
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -763,7 +767,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             config.gpu = GpuSpec(
                 measurement=args.gpu,
                 configuration=args.configuration or config.gpu.configuration,
-                label=config.gpu.label,
+                label=Path(args.gpu).stem,  # not the config's label: that names the GPU it replaces
             )
         elif args.configuration is not None:
             config.gpu.configuration = args.configuration

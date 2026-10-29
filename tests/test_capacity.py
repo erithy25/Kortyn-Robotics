@@ -397,7 +397,18 @@ def test_main_with_the_notebook_cpu_test_file(tmp_path: Path, capsys: pytest.Cap
     assert code == 0
     document = json.loads(out.read_text(encoding="utf-8"))
     assert all(result["capacity"] == 0 for result in document["results"])
-    assert "NOT met" in capsys.readouterr().out
+    printed = capsys.readouterr().out
+    assert "NOT met" in printed
+    # the measurement is named after its file, not after the config's assumed GPU it replaces
+    assert all(result["gpu"].startswith(CPU_TEST_FILE.stem) for result in document["results"])
+    assert "rtx3060ti" not in printed
+    assert "0 robots within the target" in printed
+
+
+def test_robot_counts_read_naturally() -> None:
+    assert cap._robots(1) == "1 robot"
+    assert cap._robots(0) == "0 robots"
+    assert cap._robots(12) == "12 robots"
 
 
 def test_main_reports_errors(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
