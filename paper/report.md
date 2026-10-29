@@ -20,8 +20,10 @@ zero-latency gate (45.5% against 49.0%), but its mean gain was again not demonst
 the reference behind the phase-4 check did not reproduce. Under an assumed service time of 220 ms per plan, one
 consumer GPU serves 3 robots without RTC and 4 robots with short guidance within a 3-pp tolerance, and 2 robots by
 a conservative estimate. A real fleet validation fell short of the predictions by −9.7 pp on average, and an
-earlier validation was invalidated by a rendering fault we found and fixed. A browser notebook measures the real
-GPU service time for a pre-registered business decision rule. We report all negative results.
+earlier validation was invalidated by a rendering fault we found and fixed. A browser measurement on a free
+Tesla T4 (91 ms per request with fp16 and `torch.compile`) kept the p99 end-to-end latency within 150 ms for 1
+robot only, so a pre-registered business rule, which required 10 robots, rejected the idea of a shared Brain. We
+report all negative results.
 
 ## 1. Introduction
 
@@ -449,16 +451,44 @@ the question for this setting: LeRobot's RTC does not make SmolVLA demonstrably 
 tasks. The interval [−1.7, +5.6] pp excludes most of the 5–9 pp that a 1.5-fold stretch of the latency axis would
 have produced.
 
-**GPU measurement (pending).** All GPU service times so far were assumptions. Phase 5 provides a notebook that
-measures SmolVLA on a free Google Colab or Kaggle GPU in the browser: service time per batch of 1 to 32 requests
-with eight real LIBERO observations, as loaded by LeRobot (bf16 and fp32 parts), in fp16 and fp32, and compiled
-with `torch.compile`; after warm-up, 100 runs per size are timed (p50/p95/p99) and GPU memory is recorded. A
-configuration counts only if its actions deviate from the fp32 reference by at most 25% of the policy's own
-sampling spread; on the CPU the as-loaded configuration deviates by 6.9% and fp16 by 0.8%. On this machine's CPU a
-single request takes 2.3 s. The pre-registered decision rule: if the measured GPU serves at least 10 robots with a
-pooled p99 end-to-end latency (office Wi-Fi, queue and service time) of at most 150 ms, the business idea gets a
-second review; otherwise it is rejected for good. The result enters this report unchanged once a measurement file
-is in the repository.
+**GPU measurement.** All GPU service times before phase 5 were assumptions. A notebook measures SmolVLA on a free
+Google Colab or Kaggle GPU in the browser: service time per batch of 1 to 32 requests with eight real LIBERO
+observations, as loaded by LeRobot (bf16 and fp32 parts), in fp16 and fp32, and compiled with `torch.compile`;
+after warm-up, 100 runs per size are timed (p50/p95/p99) and GPU memory is recorded. A configuration counts only
+if its actions deviate from the fp32 reference by at most 25% of the policy's own sampling spread; on the CPU the
+as-loaded configuration deviates by 6.9% and fp16 by 0.8%. On this machine's CPU a single request takes 2.3 s.
+The measurement ran on a Tesla T4 in Google Colab (Table 6), and all four configurations were numerically valid.
+As loaded, a request took 498 ms at batch size 1, because the T4 (compute capability 7.5) has no native bf16;
+fp16 took 322 ms and fp32 406 ms. Compiled with `torch.compile`, fp16 took 91 ms (p99 112 ms), 41% of the
+220 ms assumed in phases 3–4.
+
+<!-- table:gpu -->
+| Configuration | Precision | Deviation / spread | Batch 1: median, p99 | Batch 8: median | K150 (best strategy) | Capacity, phase-4 criterion |
+|---|---|---:|---|---:|---:|---:|
+| standard | bf16/fp32 as loaded | 6.8% | 498 ms, 586 ms | 2,484 ms | 0 | 1 (1) |
+| fp16 | fp16 | 0.9% | 322 ms, 374 ms | 578 ms | 0 | 2 (1) |
+| fp32 | fp32 | 0.0% | 406 ms, 463 ms | 1,733 ms | 0 | 1 (1) |
+| compiled | fp16 + torch.compile | 0.5% | 91 ms, 112 ms | 433 ms | 1 | 12 (6) |
+<!-- /table:gpu -->
+
+*Table 6. GPU measurement on a Tesla T4 (Google Colab): deviation of the actions from fp32 relative to the policy's
+sampling spread, service time per batch, latency capacity K150 (the largest fleet with a pooled p99 end-to-end
+latency of at most 150 ms, the decision criterion) and, for comparison, the capacity under the phase-4 success
+criterion (conservative estimate in parentheses); office Wi-Fi, best of strategies a, b, d and e. Sources:
+`results/phase5/gpu/smolvla_gpu_teslat4_colab_20261029-1825.json`, `results/phase5/gpu_decision.json`.*
+
+**Decision rule: No.** The pre-registered rule asked whether the measured GPU serves at least 10 robots with a
+pooled p99 end-to-end latency (office Wi-Fi, queue and service time) of at most 150 ms. It does not: the best
+configuration and strategy kept the p99 within the target for 1 robot only (140 ms), and 10 robots saw a p99 of
+330 ms. As pre-registered, the business idea is rejected for good. **Limit of the verdict:** the rule judges the
+measured GPU, a Tesla T4, the free GPU of Colab and Kaggle; it says nothing about faster GPUs. We did not change
+the rule.
+
+Two secondary results, pre-registered without influence on the verdict, put it into perspective. With the
+measured service time of the compiled configuration, the success criterion of phase 4 admits 12 robots
+(conservative 6 robots), with a predicted success of 43.4% for the average and 42.9% for the worst robot in a
+fleet of 10; the 150 ms target is thus far stricter than the latency the policy tolerates (Table 2). With a shared
+Wi-Fi medium of 100 and 200 Mbit/s, the latency capacity was 0 robots.
 
 ## 5. Limitations
 
@@ -467,8 +497,10 @@ is in the repository.
 - **One policy, few tasks.** The LIBERO results rest on one checkpoint and two tasks with 100 paired episodes per
   level. The curve shape, in particular the drop between 200 and 300 ms, may differ for other tasks and
   policies. Pairing across conditions is weak, so intervals of differences are wide (about ±12 pp for 100 pairs).
-- **CPU inference, assumed GPUs.** Success was measured with CPU inference in bf16 as loaded by LeRobot. GPU service
-  times were assumptions until a measurement is added; capacity scales with them.
+- **CPU inference, one GPU.** Success was measured with CPU inference in bf16 as loaded by LeRobot. Phases 3–4
+  assumed GPU service times; the one measurement is a Tesla T4, whose fastest configuration (fp16, compiled)
+  deviates from fp32 by 0.5% of the sampling spread. Capacity scales with the service time, and the decision rule
+  covers only the T4.
 - **Network models.** Office Wi-Fi is modeled as a uniform round-trip delay without loss; contention on a shared
   medium is a simple serialization model.
 - **RTC settings.** We tested LeRobot's RTC with two guidance lengths and one weight schedule, without the
@@ -492,7 +524,10 @@ the action queue could bridge. LeRobot's real-time chunking did not change this.
 zero-latency success for small gains at 300–500 ms; with guidance limited to the frozen actions plus 4 it no
 longer cost success at zero latency, but it did not stretch the curve demonstrably either. Under the phase-4
 assumptions one consumer GPU serves 3–5 robots within a 3-pp tolerance and 2 robots by a conservative estimate,
-and a shared Brain is cheaper per robot only against slow on-board computers.
+and a shared Brain is cheaper per robot only against slow on-board computers. The one GPU measurement, a free Tesla
+T4, served a request in 91 ms when compiled, faster than assumed, but kept the p99 latency within the
+pre-registered 150 ms for 1 robot only; by our own rule the business idea is rejected, although the success
+criterion alone would have admitted 12 robots.
 
 Three methodological lessons carry beyond this case. The simulation-time mode makes such measurements cheap and
 exactly repeatable. Multi-robot rollouts need their own checks: a rendering fault in one shared process silently

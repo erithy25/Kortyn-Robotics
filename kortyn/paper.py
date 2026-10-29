@@ -888,7 +888,128 @@ def phase5(facts: Facts) -> dict[str, Any]:
     decision_path = folder / "gpu_decision.json"
     if decision_path.exists():
         data["decision"] = _json(decision_path)
+        data["gpu_rows"] = _gpu_decision(facts, data["decision"], decision_path)
     return data
+
+
+VERDICT_TEXT = {
+    "Ja": "the business idea gets a second review",
+    "Nein": "the business idea is rejected for good",
+}
+PRECISION_TEXT = {
+    "standard": "bf16/fp32 as loaded",
+    "fp16": "fp16",
+    "fp32": "fp32",
+}
+
+
+def _gpu_decision(facts: Facts, decision: Mapping[str, Any], path: Path) -> list[dict[str, Any]]:
+    """Facts of the GPU decision rule (pre-registration, section 5) and the rows of the GPU table."""
+    verdict = decision.get("verdict")
+    if verdict not in VERDICT_TEXT:
+        raise PaperError(f"{path.relative_to(ROOT)}: no verdict {verdict!r} (no valid measurement?)")
+    if len(decision["files"]) != 1:
+        raise PaperError(f"{path.relative_to(ROOT)}: the report describes exactly one measurement file")
+    entry = decision["files"][0]
+    source = ROOT / entry["file"]
+    facts.add("p5.gpu.verdict", VERDICT_TEXT[verdict], path, "verdict")
+    facts.add("p5.gpu.name", entry["gpu"], source, "device.gpu")
+    best = entry["best"]
+    k150 = int(best["latency_capacity"])
+    facts.add(
+        "p5.gpu.k150",
+        f"{k150} robot" if k150 == 1 else f"{k150} robots",
+        path,
+        "files[0].best.latency_capacity (largest K150 over configurations and strategies)",
+    )
+    secondary = entry["secondary"]
+    one, target = secondary["at_latency_capacity"], secondary["at_target"]
+    facts.add(
+        "p5.gpu.p99.one", ms(one["latency_p99_ms"]), path, "secondary.at_latency_capacity.latency_p99_ms"
+    )
+    facts.add("p5.gpu.p99.target", ms(target["latency_p99_ms"]), path, "secondary.at_target.latency_p99_ms")
+    facts.add("p5.gpu.target.mean", pct(target["mean_robot"], 1), path, "secondary.at_target.mean_robot")
+    facts.add("p5.gpu.target.worst", pct(target["worst_robot"], 1), path, "secondary.at_target.worst_robot")
+    capacity = secondary["best_capacity_phase4_criterion"]
+    results = entry["office_wifi_details"]["results"]
+    chosen = [r for r in results if r["gpu"] == capacity["gpu"] and r["strategy"] == capacity["strategy"]]
+    if len(chosen) != 1:
+        raise PaperError(
+            f"{path.relative_to(ROOT)}: no result row for {capacity['gpu']} {capacity['strategy']}"
+        )
+    facts.add(
+        "p5.gpu.capacity",
+        f"{capacity['capacity']} robots",
+        path,
+        "secondary.best_capacity_phase4_criterion.capacity",
+    )
+    facts.add(
+        "p5.gpu.capacity.conservative",
+        f"{chosen[0]['capacity_conservative']} robots",
+        path,
+        "office_wifi_details.results[best].capacity_conservative",
+    )
+    fastest = str(best["gpu"]).rsplit("/", 1)[-1]
+    facts.add(
+        "p5.gpu.vs_assumption",
+        pct(secondary["batch_1_vs_assumption"][fastest]),
+        path,
+        f"secondary.batch_1_vs_assumption.{fastest} (median at batch 1 / 220 ms)",
+    )
+    shared = max(v for caps in secondary["wlan"].values() for v in caps.values())
+    facts.add("p5.gpu.wlan", f"{shared} robots", path, "max of secondary.wlan (100 and 200 Mbit/s)")
+    rows: list[dict[str, Any]] = []
+    for configuration in _json(source)["configurations"]:
+        name = configuration["name"]
+        by_size = {r["batch_size"]: r for r in configuration["results"] if r.get("status") == "ok"}
+        own = [r for r in results if str(r["gpu"]).rsplit("/", 1)[-1] == name]
+        top = max(own, key=lambda r: (r["capacity"], r["capacity_conservative"]))
+        rows.append(
+            {
+                "name": name,
+                "precision": PRECISION_TEXT.get(configuration["precision"], configuration["precision"])
+                + (" + torch.compile" if configuration.get("compiled") else ""),
+                "ratio": configuration["numerics"]["ratio"],
+                "median_1": by_size[1]["median_ms"],
+                "p99_1": by_size[1]["p99_ms"],
+                "median_8": by_size[8]["median_ms"] if 8 in by_size else None,
+                "k150": max(int(r["latency_capacity"]) for r in own),
+                "capacity": (int(top["capacity"]), int(top["capacity_conservative"])),
+            }
+        )
+        facts.add(
+            f"p5.gpu.{name}.median1", ms(by_size[1]["median_ms"]), source, f"{name}.results[1].median_ms"
+        )
+    compiled = next(row for row in rows if row["name"] == fastest)
+    facts.add("p5.gpu.fastest.p99", ms(compiled["p99_1"]), source, f"{fastest}.results[1].p99_ms")
+    facts.add("p5.gpu.fastest.ratio", pct(compiled["ratio"], 1), source, f"{fastest}.numerics.ratio")
+    capability = _json(source)["device"]["capability"]
+    facts.add("p5.gpu.capability", f"compute capability {capability}", source, "device.capability")
+    rates = sorted(int(float(rate)) for rate in secondary["wlan"])
+    facts.add(
+        "p5.gpu.wlan.rates",
+        " and ".join(str(rate) for rate in rates) + " Mbit/s",
+        path,
+        "secondary.wlan (shared Wi-Fi medium)",
+    )
+    return rows
+
+
+def table_gpu(p5: Mapping[str, Any]) -> str:
+    lines = [
+        "| Configuration | Precision | Deviation / spread | Batch 1: median, p99 | Batch 8: median "
+        "| K150 (best strategy) | Capacity, phase-4 criterion |",
+        "|---|---|---:|---|---:|---:|---:|",
+    ]
+    for row in p5["gpu_rows"]:
+        batch8 = "–" if row["median_8"] is None else ms(row["median_8"])
+        point, conservative = row["capacity"]
+        lines.append(
+            f"| {row['name']} | {row['precision']} | {pct(row['ratio'], 1)} | "
+            f"{ms(row['median_1'])}, {ms(row['p99_1'])} | {batch8} | {row['k150']} | "
+            f"{point} ({conservative}) |"
+        )
+    return "\n".join(lines)
 
 
 def table_gate(p5: Mapping[str, Any]) -> str:
@@ -1452,6 +1573,8 @@ def build() -> Build:
         "fig5_economics.png": lambda out: figure_economics(p4, out),
         "fig6_fleet_validation.png": lambda out: figure_fleet_validation(p3, p4, out),
     }
+    if p5.get("decision") is not None:
+        tables["gpu"] = table_gpu(p5)
     if p5.get("gate") is not None:
         tables["gate"] = table_gate(p5)
         figures["fig7_gate.png"] = lambda out: figure_gate(p5, out)

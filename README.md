@@ -21,8 +21,9 @@ pre-registered zero-latency gate (45.5% against 49.0%) but did not stretch the c
 (+2.6 pp [−1.7, +5.6] pp). Under an assumed service time of 220 ms per plan, one consumer GPU serves 3 robots
 without RTC and 4 robots with short guidance within a 3-pp tolerance, and 2 robots by a conservative estimate; a
 fleet validation ran below its prediction (−9.7 pp pooled) after we fixed a rendering fault that had invalidated
-two earlier validations. The GPU service time remains an assumption until the browser measurement below has been
-run. All five phases were pre-registered; the negative results are reported in full in
+two earlier validations. A browser measurement on a free Tesla T4 (91 ms per request, fp16 compiled) kept the
+p99 end-to-end latency within 150 ms for 1 robot only, so by the pre-registered rule the business idea is rejected
+for good. All five phases were pre-registered; the negative results are reported in full in
 **[`paper/report.md`](paper/report.md)**.
 
 ## Quickstart
