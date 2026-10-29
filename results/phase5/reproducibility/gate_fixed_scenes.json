@@ -1,0 +1,268 @@
+{
+ "pre_registration": "reports/phase5_preregistration.md, sections 3.3-3.4",
+ "runs": {
+  "sync25": "results/phase5/libero_fixed/smolvla_libero_rtc/sync25 (task 8) + results/phase5/libero/smolvla_libero_rtc/sync25 (task 0)",
+  "async_0ms": "results/phase5/libero_fixed/smolvla_libero_rtc/async_0ms (task 8) + results/phase5/libero/smolvla_libero_rtc/async_0ms (task 0)",
+  "rtc_kurz_0ms": "results/phase5/libero_fixed/smolvla_libero_rtc/rtc_kurz_0ms (task 8) + results/phase5/libero/smolvla_libero_rtc/rtc_kurz_0ms (task 0)"
+ },
+ "rates": {
+  "sync25": {
+   "rate": 0.55,
+   "episodes": 200,
+   "tasks": {
+    "0": 0.53,
+    "8": 0.57
+   }
+  },
+  "async_0ms": {
+   "rate": 0.485,
+   "episodes": 200,
+   "tasks": {
+    "0": 0.45,
+    "8": 0.52
+   }
+  },
+  "rtc_kurz_0ms": {
+   "rate": 0.515,
+   "episodes": 200,
+   "tasks": {
+    "0": 0.44,
+    "8": 0.59
+   }
+  }
+ },
+ "gate": {
+  "reference": "sync25",
+  "test": "rtc_kurz_0ms",
+  "pairs": 200,
+  "clusters": 100,
+  "reference_rate": 0.55,
+  "test_rate": 0.515,
+  "difference": -0.035,
+  "interval": [
+   -0.1,
+   0.03
+  ],
+  "only_reference": 29,
+  "only_test": 22,
+  "p_value": 0.4010619910279374,
+  "margin": 0.15,
+  "passed": true,
+  "verdict": "bestanden"
+ },
+ "controls": {
+  "K1_async_vs_sync25": {
+   "reference": "sync25",
+   "test": "async_0ms",
+   "pairs": 200,
+   "clusters": 100,
+   "reference_rate": 0.55,
+   "test_rate": 0.485,
+   "difference": -0.065,
+   "interval": [
+    -0.125,
+    -0.005
+   ],
+   "only_reference": 30,
+   "only_test": 17,
+   "p_value": 0.07894069368148848,
+   "margin": 0.15,
+   "passed": true,
+   "verdict": "bestanden"
+  },
+  "K2_rtc_vs_async": {
+   "reference": "async_0ms",
+   "test": "rtc_kurz_0ms",
+   "pairs": 200,
+   "clusters": 100,
+   "reference_rate": 0.485,
+   "test_rate": 0.515,
+   "difference": 0.03,
+   "interval": [
+    -0.04,
+    0.105
+   ],
+   "only_reference": 24,
+   "only_test": 30,
+   "p_value": 0.4966174353179338,
+   "margin": 0.15,
+   "passed": true,
+   "verdict": "bestanden"
+  }
+ },
+ "per_task": {
+  "0": {
+   "gate": {
+    "reference": "sync25",
+    "test": "rtc_kurz_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.53,
+    "test_rate": 0.44,
+    "difference": -0.09,
+    "interval": [
+     -0.17,
+     -0.01
+    ],
+    "only_reference": 15,
+    "only_test": 6,
+    "p_value": 0.0783538818359375,
+    "margin": 0.15,
+    "passed": false,
+    "verdict": "nicht bestanden"
+   },
+   "K1": {
+    "reference": "sync25",
+    "test": "async_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.53,
+    "test_rate": 0.45,
+    "difference": -0.08,
+    "interval": [
+     -0.17,
+     0.0
+    ],
+    "only_reference": 14,
+    "only_test": 6,
+    "p_value": 0.11531829833984375,
+    "margin": 0.15,
+    "passed": false,
+    "verdict": "nicht bestanden"
+   },
+   "K2": {
+    "reference": "async_0ms",
+    "test": "rtc_kurz_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.45,
+    "test_rate": 0.44,
+    "difference": -0.01,
+    "interval": [
+     -0.1,
+     0.08
+    ],
+    "only_reference": 10,
+    "only_test": 9,
+    "p_value": 1.0,
+    "margin": 0.15,
+    "passed": true,
+    "verdict": "bestanden"
+   }
+  },
+  "8": {
+   "gate": {
+    "reference": "sync25",
+    "test": "rtc_kurz_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.57,
+    "test_rate": 0.59,
+    "difference": 0.02,
+    "interval": [
+     -0.08,
+     0.12
+    ],
+    "only_reference": 14,
+    "only_test": 16,
+    "p_value": 0.855535551905632,
+    "margin": 0.15,
+    "passed": true,
+    "verdict": "bestanden"
+   },
+   "K1": {
+    "reference": "sync25",
+    "test": "async_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.57,
+    "test_rate": 0.52,
+    "difference": -0.05,
+    "interval": [
+     -0.13,
+     0.04
+    ],
+    "only_reference": 16,
+    "only_test": 11,
+    "p_value": 0.44206833839416504,
+    "margin": 0.15,
+    "passed": true,
+    "verdict": "bestanden"
+   },
+   "K2": {
+    "reference": "async_0ms",
+    "test": "rtc_kurz_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.52,
+    "test_rate": 0.59,
+    "difference": 0.07,
+    "interval": [
+     -0.03,
+     0.18
+    ],
+    "only_reference": 14,
+    "only_test": 21,
+    "p_value": 0.31050465907901525,
+    "margin": 0.15,
+    "passed": true,
+    "verdict": "bestanden"
+   }
+  }
+ },
+ "reproduction": {
+  "async_0ms_vs_phase4_block_a": {
+   "pairs": 100,
+   "rate_a": 0.47,
+   "rate_b": 0.45,
+   "only_a": 12,
+   "only_b": 10,
+   "difference": -0.019999999999999962,
+   "interval": [
+    -0.11,
+    0.07
+   ],
+   "p_value": 0.8318119049072266
+  },
+  "sync25_vs_phase3": {
+   "pairs": 100,
+   "rate_a": 0.53,
+   "rate_b": 0.53,
+   "only_a": 11,
+   "only_b": 11,
+   "difference": 0.0,
+   "interval": [
+    -0.09,
+    0.09
+   ],
+   "p_value": 1.0
+  },
+  "rtc_kurz_vs_phase4_rtc_long_at_0ms": {
+   "pairs": 100,
+   "rate_a": 0.42,
+   "rate_b": 0.51,
+   "only_a": 12,
+   "only_b": 21,
+   "difference": 0.09000000000000002,
+   "interval": [
+    -0.02,
+    0.2
+   ],
+   "p_value": 0.16275565745308995
+  }
+ },
+ "decision": "D runs (dose block 200 / 500 / 1000 ms)",
+ "pairing_task8": {
+  "original": {
+   "seeds": 100,
+   "discordant_rtc_vs_sync25": 0.38,
+   "discordant_async_vs_sync25": 0.52
+  },
+  "fixed": {
+   "seeds": 100,
+   "discordant_rtc_vs_sync25": 0.3,
+   "discordant_async_vs_sync25": 0.27
+  }
+ },
+ "note": "Not pre-registered. Task 8 of block G re-run with the scene fix (kortyn.libero_env._reset_property_samplers); task 0 reused, it is unaffected (identical episodes across runs)."
+}

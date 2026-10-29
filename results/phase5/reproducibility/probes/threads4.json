@@ -1,0 +1,682 @@
+{
+ "settings": {
+  "seeds": [
+   1000
+  ],
+  "threads": 4,
+  "deterministic": false,
+  "scene_fix": true,
+  "config": "kortyn/experiments/phase5/libero_rtc_kurz.yaml",
+  "profile": "smolvla_libero_rtc",
+  "run": "sync25"
+ },
+ "episodes": [
+  {
+   "seed": 1000,
+   "requests": [
+    {
+     "obs_timestep": 0,
+     "observation": {
+      "observation.images.camera1": "bfecb1b6a8a2fd92",
+      "observation.images.camera2": "4087a7a08e806dfb",
+      "observation.state": "c13d944ff569a8b7"
+     },
+     "plan": "4dcb49df939e46dd",
+     "first_action": [
+      0.13822445273399353,
+      0.038287147879600525,
+      0.03365052491426468,
+      -0.0018706615082919598,
+      -0.0005242354236543179,
+      -0.04034227877855301,
+      -0.9924544095993042
+     ]
+    },
+    {
+     "obs_timestep": 25,
+     "observation": {
+      "observation.images.camera1": "9a5e4595183f6090",
+      "observation.images.camera2": "a90e8df6e398bce0",
+      "observation.state": "0160f33aefa11444"
+     },
+     "plan": "7bdad58a351e2885",
+     "first_action": [
+      0.515031099319458,
+      -0.04893864691257477,
+      0.014277085661888123,
+      0.030692096799612045,
+      0.017635902389883995,
+      -0.21229161322116852,
+      -1.007103443145752
+     ]
+    },
+    {
+     "obs_timestep": 50,
+     "observation": {
+      "observation.images.camera1": "98f649fe727e27ee",
+      "observation.images.camera2": "a7c32bd2f104f7cf",
+      "observation.state": "a1837901a3052d55"
+     },
+     "plan": "1cb0ca66bb511ca0",
+     "first_action": [
+      0.22865614295005798,
+      -0.059296637773513794,
+      -0.07303395867347717,
+      0.042226843535900116,
+      0.022493280470371246,
+      -0.27142533659935,
+      -0.9997544288635254
+     ]
+    },
+    {
+     "obs_timestep": 75,
+     "observation": {
+      "observation.images.camera1": "fb8cf86d824de809",
+      "observation.images.camera2": "d1db5ee528c1a7e0",
+      "observation.state": "b12d852d6ded2197"
+     },
+     "plan": "8a2d7fdddcafeb22",
+     "first_action": [
+      -0.06165649741888046,
+      0.006914980709552765,
+      -0.26591387391090393,
+      0.01285508181899786,
+      -0.017552733421325684,
+      -0.03722991794347763,
+      -1.0053009986877441
+     ]
+    },
+    {
+     "obs_timestep": 100,
+     "observation": {
+      "observation.images.camera1": "e080261a82f67978",
+      "observation.images.camera2": "4a431575de613fea",
+      "observation.state": "967c47afb3937df5"
+     },
+     "plan": "08aaf7f5776b948d",
+     "first_action": [
+      -0.10350888222455978,
+      0.03524744138121605,
+      -0.28192487359046936,
+      0.004060824401676655,
+      -0.007750184275209904,
+      -0.012568099424242973,
+      -1.003661870956421
+     ]
+    },
+    {
+     "obs_timestep": 125,
+     "observation": {
+      "observation.images.camera1": "fc0c857fe08d8c39",
+      "observation.images.camera2": "485fc336c39e5bb7",
+      "observation.state": "219d40ab9a4e02f9"
+     },
+     "plan": "3ec076287a762f31",
+     "first_action": [
+      -0.004457838833332062,
+      -0.3755566477775574,
+      0.3163571059703827,
+      0.0020644457545131445,
+      0.08325250446796417,
+      -0.017842061817646027,
+      0.9966995120048523
+     ]
+    },
+    {
+     "obs_timestep": 150,
+     "observation": {
+      "observation.images.camera1": "b8904ee4ace4c5d9",
+      "observation.images.camera2": "53f5995ac27446e6",
+      "observation.state": "d757cb00a39d5b38"
+     },
+     "plan": "77792ecb64cfb9c8",
+     "first_action": [
+      -0.13087931275367737,
+      -0.3790481686592102,
+      0.039295293390750885,
+      0.01653129793703556,
+      0.015485779382288456,
+      -0.002310887910425663,
+      0.9387097954750061
+     ]
+    },
+    {
+     "obs_timestep": 175,
+     "observation": {
+      "observation.images.camera1": "b67ab9f2269f402a",
+      "observation.images.camera2": "10929d52b9bd00a7",
+      "observation.state": "e50266efa1f7d904"
+     },
+     "plan": "b4fa86911eb19633",
+     "first_action": [
+      0.10442420840263367,
+      0.029829878360033035,
+      0.2884288430213928,
+      0.0031613281462341547,
+      -0.010492748580873013,
+      -0.04536190629005432,
+      -1.0186758041381836
+     ]
+    },
+    {
+     "obs_timestep": 200,
+     "observation": {
+      "observation.images.camera1": "5719ee678357f960",
+      "observation.images.camera2": "ad86bce4a6ba7d05",
+      "observation.state": "276a7fe4640e509d"
+     },
+     "plan": "955e9f41712cdd0c",
+     "first_action": [
+      0.07903529703617096,
+      0.2817542254924774,
+      -0.15507465600967407,
+      0.002210431732237339,
+      -0.006225991062819958,
+      -0.06646110862493515,
+      -1.0051579475402832
+     ]
+    },
+    {
+     "obs_timestep": 225,
+     "observation": {
+      "observation.images.camera1": "18cafc72ea1a076e",
+      "observation.images.camera2": "44428508f9769984",
+      "observation.state": "3a9432622313e9fb"
+     },
+     "plan": "2fdbdd23da36f9b8",
+     "first_action": [
+      -0.036025747656822205,
+      0.1333092451095581,
+      -0.20796839892864227,
+      0.0012180674821138382,
+      -0.005833576433360577,
+      -0.021923374384641647,
+      -0.9974997639656067
+     ]
+    },
+    {
+     "obs_timestep": 250,
+     "observation": {
+      "observation.images.camera1": "76362b955bf72680",
+      "observation.images.camera2": "19ff8e4fa6bccd06",
+      "observation.state": "40aa1ffd6e85e1ed"
+     },
+     "plan": "edbe025b7cb6d284",
+     "first_action": [
+      0.006281949579715729,
+      -0.09886838495731354,
+      0.03621264547109604,
+      0.00015030501526780427,
+      -0.0010724538005888462,
+      -0.025522073730826378,
+      1.0142298936843872
+     ]
+    },
+    {
+     "obs_timestep": 275,
+     "observation": {
+      "observation.images.camera1": "64701efba1f2aa49",
+      "observation.images.camera2": "afd9112daec6fbde",
+      "observation.state": "792c42fedc3a2d79"
+     },
+     "plan": "08521b926c98bb7d",
+     "first_action": [
+      -0.10130288451910019,
+      0.11142821609973907,
+      -0.1997513771057129,
+      0.0016298957634717226,
+      -0.010493033565580845,
+      -0.007101862225681543,
+      -1.021366834640503
+     ]
+    },
+    {
+     "obs_timestep": 300,
+     "observation": {
+      "observation.images.camera1": "49d2811c1c5fc67d",
+      "observation.images.camera2": "820098fc3e77b87d",
+      "observation.state": "0d9127944dcb335c"
+     },
+     "plan": "8c7ff571d8684d24",
+     "first_action": [
+      0.03679857403039932,
+      -0.050100356340408325,
+      -0.023464888334274292,
+      0.0017204736359417439,
+      0.0010917792096734047,
+      -0.016411539167165756,
+      0.9965317845344543
+     ]
+    },
+    {
+     "obs_timestep": 325,
+     "observation": {
+      "observation.images.camera1": "93a72c4736ea17e5",
+      "observation.images.camera2": "2991b55b8256d954",
+      "observation.state": "232878990bbb205f"
+     },
+     "plan": "9b0d5c5fa264ae24",
+     "first_action": [
+      -0.038500718772411346,
+      0.05497101694345474,
+      -0.03023747354745865,
+      -0.0003518585581332445,
+      -0.008166531100869179,
+      -0.03493897616863251,
+      -1.0244486331939697
+     ]
+    },
+    {
+     "obs_timestep": 350,
+     "observation": {
+      "observation.images.camera1": "ae18e7c1f4114dbc",
+      "observation.images.camera2": "5a7a1f4988828ca7",
+      "observation.state": "d67035841f736745"
+     },
+     "plan": "1e9bcf992e2f48e4",
+     "first_action": [
+      0.0023533031344413757,
+      0.10881782323122025,
+      -0.021426714956760406,
+      0.00020890642190352082,
+      -0.002751048654317856,
+      -0.016430135816335678,
+      -1.0011179447174072
+     ]
+    },
+    {
+     "obs_timestep": 375,
+     "observation": {
+      "observation.images.camera1": "e7dbef1293d5f752",
+      "observation.images.camera2": "90464d385e091c90",
+      "observation.state": "815336ec54022bc4"
+     },
+     "plan": "af1c8de478d4f765",
+     "first_action": [
+      -0.04270736873149872,
+      0.05300119146704674,
+      -0.07507304102182388,
+      0.012671144679188728,
+      -0.000984008889645338,
+      -0.006980320438742638,
+      0.9681320786476135
+     ]
+    },
+    {
+     "obs_timestep": 400,
+     "observation": {
+      "observation.images.camera1": "5fa24b85be31db14",
+      "observation.images.camera2": "b251b3294d7750c0",
+      "observation.state": "d18a7bc1a9087099"
+     },
+     "plan": "1206d5242b27381b",
+     "first_action": [
+      -0.024209223687648773,
+      0.02591065689921379,
+      -0.05941393971443176,
+      0.000667172484099865,
+      -0.01148859690874815,
+      -0.02792353183031082,
+      -1.019785761833191
+     ]
+    },
+    {
+     "obs_timestep": 425,
+     "observation": {
+      "observation.images.camera1": "5279f97f9190977b",
+      "observation.images.camera2": "30166816bf74e619",
+      "observation.state": "c28cad436592253a"
+     },
+     "plan": "b0660833c0525333",
+     "first_action": [
+      -0.00863153487443924,
+      0.13920077681541443,
+      -0.04253426194190979,
+      0.0029843105003237724,
+      -0.007789451628923416,
+      -0.01635589636862278,
+      -1.018950343132019
+     ]
+    },
+    {
+     "obs_timestep": 450,
+     "observation": {
+      "observation.images.camera1": "4c8d1e10b7dc544b",
+      "observation.images.camera2": "9ecf8a4eb0eaf5c8",
+      "observation.state": "c31a81a97efe8c13"
+     },
+     "plan": "a8d661ed367a8759",
+     "first_action": [
+      0.011785831302404404,
+      0.07328641414642334,
+      -0.026266321539878845,
+      0.0002823216200340539,
+      -0.0018005971796810627,
+      -0.011343460530042648,
+      0.961654007434845
+     ]
+    },
+    {
+     "obs_timestep": 475,
+     "observation": {
+      "observation.images.camera1": "9e60add0a51e8c40",
+      "observation.images.camera2": "26f17461b3dbfb25",
+      "observation.state": "9271bb8248714672"
+     },
+     "plan": "76579a3411fc2c9e",
+     "first_action": [
+      0.0024287663400173187,
+      0.025880888104438782,
+      -0.01806752383708954,
+      0.000761842995416373,
+      -0.010341905988752842,
+      -0.0315186008810997,
+      -1.0241018533706665
+     ]
+    },
+    {
+     "obs_timestep": 500,
+     "observation": {
+      "observation.images.camera1": "9bc21d3299f01ad0",
+      "observation.images.camera2": "266396350e799f9f",
+      "observation.state": "312aa5a33485d756"
+     },
+     "plan": "e35fc3abe429bb08",
+     "first_action": [
+      -0.015609286725521088,
+      0.07817891985177994,
+      -0.06079808622598648,
+      0.010238615795969963,
+      -0.004449143074452877,
+      -0.027920875698328018,
+      -1.0260180234909058
+     ]
+    }
+   ],
+   "model": {
+    "B_colind": "6447580182d7fb9d",
+    "B_rowadr": "e087a2a57b1d4a63",
+    "B_rownnz": "6d3bd88c36d97d68",
+    "D_colind": "feebcb96b23aacb2",
+    "D_diag": "c2989e5783700556",
+    "D_rowadr": "32e2aa3126083973",
+    "D_rownnz": "4abac4b5fd5daf4f",
+    "M_colind": "1ae705defa9148ff",
+    "M_rowadr": "6342d4fdb7ba89cb",
+    "M_rownnz": "1add149e248e9ac2",
+    "actuator_acc0": "a1ed6b0600ce1c75",
+    "actuator_actadr": "7d831dc8636d123a",
+    "actuator_actearly": "b2549e1870ad9d1c",
+    "actuator_actlimited": "b2549e1870ad9d1c",
+    "actuator_actnum": "30edf465a431eac1",
+    "actuator_actrange": "77a7370b28c14a66",
+    "actuator_armature": "b95ee9850fbe15bc",
+    "actuator_biasprm": "6b62e8efe2ebc878",
+    "actuator_biastype": "889447c63a18df59",
+    "actuator_cranklength": "b95ee9850fbe15bc",
+    "actuator_ctrllimited": "bcfeabd205d3a533",
+    "actuator_ctrlrange": "d9af15d046598963",
+    "actuator_damping": "b95ee9850fbe15bc",
+    "actuator_dampingpoly": "77a7370b28c14a66",
+    "actuator_delay": "b95ee9850fbe15bc",
+    "actuator_dynprm": "2ed5e73fd73e89c8",
+    "actuator_dyntype": "30edf465a431eac1",
+    "actuator_forcelimited": "680d657d4b9e7d29",
+    "actuator_forcerange": "422e0fa48edc20bb",
+    "actuator_gainprm": "4cb18f9be536a27e",
+    "actuator_gaintype": "30edf465a431eac1",
+    "actuator_gear": "740329f51284dc2a",
+    "actuator_group": "30edf465a431eac1",
+    "actuator_history": "485eaddbafee766e",
+    "actuator_historyadr": "7d831dc8636d123a",
+    "actuator_length0": "b95ee9850fbe15bc",
+    "actuator_lengthrange": "77a7370b28c14a66",
+    "actuator_plugin": "7d831dc8636d123a",
+    "actuator_trnid": "c6a7bab1fbdc943c",
+    "actuator_trntype": "30edf465a431eac1",
+    "body_bvhadr": "c432d224155f1b15",
+    "body_bvhnum": "78aa0956e29154d3",
+    "body_conaffinity": "e43a1dbf8e13b9c1",
+    "body_contype": "81b815ec76a1ad13",
+    "body_dofadr": "5adb0caf09dd2bf8",
+    "body_dofnum": "0291980fb4ecbd87",
+    "body_geomadr": "feb8c25d9556b82d",
+    "body_geomnum": "2381c80081ddf3fd",
+    "body_gravcomp": "3329979214cddaf5",
+    "body_inertia": "898843e52da5882e",
+    "body_invweight0": "e9b4da52742c9f29",
+    "body_ipos": "fc9baeaa13f5cc98",
+    "body_iquat": "aa177272e9eb412a",
+    "body_jntadr": "10b4ebcef8db5ec8",
+    "body_jntnum": "90831a5af9a976fe",
+    "body_margin": "3329979214cddaf5",
+    "body_mass": "887e6ca551033a4a",
+    "body_mocapid": "292b29d4225e150d",
+    "body_parentid": "481f53a46387b0ab",
+    "body_plugin": "292b29d4225e150d",
+    "body_pos": "fb18b8ebdb1152a5",
+    "body_quat": "8c969b0247d190d1",
+    "body_rootid": "865384874ff5f651",
+    "body_sameframe": "f848dcf7e8d055b7",
+    "body_simple": "b128a662597693ea",
+    "body_subtreemass": "b70b08e95f45ec13",
+    "body_treeid": "e6d7fee7b6fd4054",
+    "body_weldid": "bf122cd582524a6b",
+    "bvh_aabb": "059ce01806cb8101",
+    "bvh_child": "a9a10cb66c5c1a28",
+    "bvh_depth": "72859509a5395fce",
+    "bvh_nodeid": "73f8fd6b60d2ea5e",
+    "cam_bodyid": "c10dfeae63182f86",
+    "cam_fovy": "963682265a9c2ce1",
+    "cam_intrinsic": "cb41a092c5cdbe04",
+    "cam_ipd": "e63df0c476372e08",
+    "cam_mat0": "97c056f88058bee1",
+    "cam_mode": "84f319b82c73b2de",
+    "cam_output": "d4599e0432e7848a",
+    "cam_pos": "84e53563f98cd209",
+    "cam_pos0": "096b03bd7316253b",
+    "cam_poscom0": "71885fd936586232",
+    "cam_projection": "84f319b82c73b2de",
+    "cam_quat": "e4d09466140dfe3c",
+    "cam_resolution": "4785517172b23a60",
+    "cam_sensorsize": "2c9e21914bf5f7b7",
+    "cam_targetbodyid": "23821d242a735120",
+    "dof_M0": "5de3360bd67d5128",
+    "dof_Madr": "6342d4fdb7ba89cb",
+    "dof_armature": "de884c3b3fa93ab0",
+    "dof_bodyid": "757d407431f3f341",
+    "dof_damping": "2eedd7d54b75a7cf",
+    "dof_dampingpoly": "cf5dd8adff197928",
+    "dof_frictionloss": "b652d6ee44a6e3cf",
+    "dof_invweight0": "a4ebb0dbdb058bcd",
+    "dof_jntid": "f32d944d9628ae69",
+    "dof_length": "8d37a0fb4c710e1e",
+    "dof_parentid": "be7766ece800664b",
+    "dof_simplenum": "445c8d381d7c43bb",
+    "dof_solimp": "e6da90f2914ebd0e",
+    "dof_solref": "d599f183071695df",
+    "dof_treeid": "bc1702a9ae194ad2",
+    "geom_aabb": "0f844f631bdeefae",
+    "geom_bodyid": "6b94a1dc51c086fd",
+    "geom_conaffinity": "b45ef1e20c8aa349",
+    "geom_condim": "817b02708985f977",
+    "geom_contype": "ec549b2fe500c10c",
+    "geom_dataid": "f38d7b890ee5423c",
+    "geom_fluid": "441be928a41cb8f4",
+    "geom_friction": "af3d2e946d7f35f4",
+    "geom_gap": "3e688d63da914b4d",
+    "geom_group": "ed8488f9cd2709e6",
+    "geom_margin": "3e688d63da914b4d",
+    "geom_matid": "785f6eadf7e5ff97",
+    "geom_plugin": "41e6742abc831886",
+    "geom_pos": "e8ede844e4aee36d",
+    "geom_priority": "1db7ee4160d56ebb",
+    "geom_quat": "ab3663d664204fbb",
+    "geom_rbound": "d3b42d7f9ae66079",
+    "geom_rgba": "1f1f346b28d5d3c3",
+    "geom_sameframe": "39d0fe2346a8ef81",
+    "geom_size": "9d85f806e4170c80",
+    "geom_solimp": "55f5d9c211d545b3",
+    "geom_solmix": "a629939ef938a8e8",
+    "geom_solref": "bccca4806374f1e5",
+    "geom_type": "a25f23a1c92d539f",
+    "jnt_actfrclimited": "916254a3c8f5d417",
+    "jnt_actfrcrange": "1e34aa2ae1d8f406",
+    "jnt_actgravcomp": "916254a3c8f5d417",
+    "jnt_actuatorid": "9b1a08e9b9f969ce",
+    "jnt_axis": "8a9aa2aae4114caf",
+    "jnt_bodyid": "a8c722272b479c8d",
+    "jnt_dofadr": "2b28d9ae1243c2ad",
+    "jnt_group": "1e1cb2d8e5027428",
+    "jnt_limited": "0d29c4bb17e975ce",
+    "jnt_margin": "ee43b28f5e61e714",
+    "jnt_pos": "56796ac8e3f87f69",
+    "jnt_qposadr": "d775b36160e7c594",
+    "jnt_range": "9ad9ada85a65d751",
+    "jnt_solimp": "91ebb02db53305a5",
+    "jnt_solref": "e8a65194e899301d",
+    "jnt_stiffness": "ee43b28f5e61e714",
+    "jnt_stiffnesspoly": "1e34aa2ae1d8f406",
+    "jnt_type": "bd8b44946a6e78ea",
+    "light_active": "d82e10da4a3d980d",
+    "light_ambient": "bef01b04eb416f94",
+    "light_attenuation": "810459a03843598c",
+    "light_bodyid": "bbd9fc71c6870841",
+    "light_bulbradius": "5cd87286a4360a23",
+    "light_castshadow": "ec61eee2026e1acb",
+    "light_cutoff": "b96c6244e0bb766a",
+    "light_diffuse": "560fa60071194ef3",
+    "light_dir": "2d88198f13f4a339",
+    "light_dir0": "2d88198f13f4a339",
+    "light_exponent": "2683ffed64234edb",
+    "light_intensity": "951cd8cbb637d643",
+    "light_mode": "bbd9fc71c6870841",
+    "light_pos": "56587dace70c1b01",
+    "light_pos0": "56587dace70c1b01",
+    "light_poscom0": "9465c9fd80dd44c7",
+    "light_range": "2683ffed64234edb",
+    "light_specular": "6e5f4f51f0b879c9",
+    "light_targetbodyid": "1291050978d2cc5f",
+    "light_texid": "1291050978d2cc5f",
+    "light_type": "64d0353688400178",
+    "mapD2M": "8e584a59289fe2a6",
+    "mapM2D": "3a030005f159d43c",
+    "mapM2M": "59b44bd04bfa49e5",
+    "mat_emission": "e7ffde1469f3461e",
+    "mat_metallic": "2f26b907122b9a26",
+    "mat_reflectance": "6030c15f471f5ce5",
+    "mat_rgba": "b767f6622dc717eb",
+    "mat_roughness": "2f26b907122b9a26",
+    "mat_shininess": "632baaf8db5ec980",
+    "mat_specular": "ab9dddcc3fd13ee2",
+    "mat_texid": "4f9bc2810354d219",
+    "mat_texrepeat": "3044dca8f0f552b8",
+    "mat_texuniform": "725c2dceb30e3d21",
+    "mesh_bvhadr": "56e3366ee7f2958e",
+    "mesh_bvhnum": "bbbf3ffbbca67488",
+    "mesh_face": "3e302edaf31fb01d",
+    "mesh_faceadr": "42ccf146e654d64c",
+    "mesh_facenormal": "3e302edaf31fb01d",
+    "mesh_facenum": "0cda872feeea9830",
+    "mesh_facetexcoord": "62e997499c9deb72",
+    "mesh_graph": "232217b1190e1765",
+    "mesh_graphadr": "18aa99f7bf5b931c",
+    "mesh_normal": "0c45182db5c65c0f",
+    "mesh_normaladr": "ed9a5f0e58793787",
+    "mesh_normalnum": "24937171aa3dd6c9",
+    "mesh_octadr": "a3cfc38c2e5b1e84",
+    "mesh_octnum": "cfbf0f8a1728691f",
+    "mesh_pathadr": "3cc131567f27e82d",
+    "mesh_polyadr": "af6d84e4f15d8ea8",
+    "mesh_polymap": "22fe2f5ebbe3e778",
+    "mesh_polymapadr": "d3e12056b2693f53",
+    "mesh_polymapnum": "432bb71b102f1a47",
+    "mesh_polynormal": "bed9cd20dabed17a",
+    "mesh_polynum": "83b7c0175dad7830",
+    "mesh_polyvert": "697d7daf6eca3662",
+    "mesh_polyvertadr": "9d0cd8bf8caffbab",
+    "mesh_polyvertnum": "d4fc8d6a90276148",
+    "mesh_pos": "708f34c1184eef6a",
+    "mesh_quat": "a25bf05622121be6",
+    "mesh_scale": "be61ba08d63d695d",
+    "mesh_texcoord": "639655309d731e7e",
+    "mesh_texcoordadr": "f348509ac834dcfb",
+    "mesh_texcoordnum": "aaa2478e8ad5ff27",
+    "mesh_vert": "3cefa78b2bfe22b2",
+    "mesh_vertadr": "ed9a5f0e58793787",
+    "mesh_vertnum": "24937171aa3dd6c9",
+    "name_actuatoradr": "eb807496b6108bb7",
+    "name_bodyadr": "9502baa706b4da57",
+    "name_camadr": "171a1fa55eafb27c",
+    "name_geomadr": "d8d86680725e4bf6",
+    "name_jntadr": "815ef344b5d86b00",
+    "name_lightadr": "3087d9fe77634d6b",
+    "name_matadr": "872d0486bb265032",
+    "name_meshadr": "d40aaef70eda3eb3",
+    "name_sensoradr": "d86e4558dd813243",
+    "name_siteadr": "4aad8b1755155117",
+    "name_texadr": "1a989a2ccc6fdb1a",
+    "names_map": "b64c986c43e2bd85",
+    "qpos0": "2f5ffbb35a83dfc0",
+    "qpos_spring": "2f5ffbb35a83dfc0",
+    "sensor_adr": "48d17d852775b269",
+    "sensor_cutoff": "57b9c6ee60ee00ed",
+    "sensor_datatype": "d79ed2610afc323c",
+    "sensor_delay": "57b9c6ee60ee00ed",
+    "sensor_dim": "426e1d05745c93a6",
+    "sensor_history": "040c74fb47dbfddb",
+    "sensor_historyadr": "9284efbb3ad11445",
+    "sensor_interval": "a5e03ab28fff5ab3",
+    "sensor_intprm": "7011a8b4d64e0d99",
+    "sensor_needstage": "426e1d05745c93a6",
+    "sensor_noise": "57b9c6ee60ee00ed",
+    "sensor_objid": "86787d2cdf864cda",
+    "sensor_objtype": "4b2871a304b4d129",
+    "sensor_plugin": "9284efbb3ad11445",
+    "sensor_refid": "9284efbb3ad11445",
+    "sensor_reftype": "d79ed2610afc323c",
+    "sensor_type": "d67e600ee18e50a8",
+    "site_bodyid": "cca948e48ce134c9",
+    "site_group": "db3ace9a1925c911",
+    "site_matid": "eaf662abae8192ce",
+    "site_pos": "4df5edca1d0ce9b9",
+    "site_quat": "20da1705d375d97f",
+    "site_rgba": "014ee25460036ab6",
+    "site_sameframe": "c6bb82b4c1f09b11",
+    "site_size": "80d96b93e848aafc",
+    "site_type": "60015028a65f5178",
+    "tex_adr": "09b8543e4d6afdb2",
+    "tex_colorspace": "e138db2ca933b96f",
+    "tex_data": "caa9c90876b50726",
+    "tex_height": "fa68be4c255a43f8",
+    "tex_nchannel": "e1b2dd580d90d8b8",
+    "tex_pathadr": "6f35a2045cf48556",
+    "tex_type": "80a8531335363a65",
+    "tex_width": "fbe69586a0274b3a",
+    "tree_bodyadr": "053f6fcd36b0854e",
+    "tree_bodynum": "20b6f556323eea68",
+    "tree_dofadr": "fa8f51fb4555db13",
+    "tree_dofnum": "c0ad756c99b94cc1",
+    "tree_sleep_policy": "bb70cbc3d2555ba3"
+   },
+   "state": {
+    "time": "cd667bc94b2a59c9",
+    "qpos": "3d7276d5a3389a95",
+    "qvel": "a3a0a19b7b95f348",
+    "act": "38e8cefffb0bde4c",
+    "ctrl": "03da0cf20f3d91f1",
+    "qacc_warmstart": "e3f1ed095373d64f",
+    "qacc": "e3f1ed095373d64f",
+    "mocap_pos": "e6e09ef728a8c1dc",
+    "mocap_quat": "a88de541bdbaa65d",
+    "xpos": "4cbf9396c7ee7708",
+    "qfrc_applied": "ed61543b419bab58",
+    "xfrc_applied": "98c63a32266cb689"
+   },
+   "task_id": 8,
+   "init_state": 0,
+   "success": false,
+   "steps": 520
+  }
+ ]
+}

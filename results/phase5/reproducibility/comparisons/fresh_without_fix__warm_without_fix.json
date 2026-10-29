@@ -1,0 +1,76 @@
+{
+ "a": {
+  "name": "fresh_without_fix",
+  "seeds": [
+   1000
+  ],
+  "threads": 1,
+  "deterministic": false,
+  "scene_fix": false,
+  "config": "kortyn/experiments/phase5/libero_rtc_kurz.yaml",
+  "profile": "smolvla_libero_rtc",
+  "run": "sync25"
+ },
+ "b": {
+  "name": "warm_without_fix",
+  "seeds": [
+   1001,
+   1000
+  ],
+  "threads": 1,
+  "deterministic": false,
+  "scene_fix": false,
+  "config": "kortyn/experiments/phase5/libero_rtc_kurz.yaml",
+  "profile": "smolvla_libero_rtc",
+  "run": "sync25"
+ },
+ "seeds": [
+  {
+   "seed": 1000,
+   "outcome_a": [
+    true,
+    424
+   ],
+   "outcome_b": [
+    true,
+    383
+   ],
+   "model_fields_differing": [
+    "body_pos"
+   ],
+   "model_fields": 264,
+   "state_fields_differing": [
+    "xpos"
+   ],
+   "requests_compared": 16,
+   "first_difference": {
+    "request": 0,
+    "obs_timestep": 0,
+    "observations_differing": [
+     "observation.images.camera1",
+     "observation.images.camera2"
+    ],
+    "plan_identical": false,
+    "first_action_a": [
+     0.13228023052215576,
+     0.04890429601073265,
+     0.04572034627199173,
+     -0.0025701511185616255,
+     -0.0018743155524134636,
+     -0.03109547309577465,
+     -0.9841650724411011
+    ],
+    "first_action_b": [
+     0.1189606636762619,
+     0.01771828532218933,
+     0.03994271904230118,
+     -0.0018747306894510984,
+     -0.006049145013093948,
+     -0.03605135157704353,
+     -0.9945734739303589
+    ]
+   },
+   "identical": false
+  }
+ ]
+}

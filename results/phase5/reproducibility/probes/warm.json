@@ -1,0 +1,1350 @@
+{
+ "settings": {
+  "seeds": [
+   1001,
+   1000
+  ],
+  "threads": 1,
+  "deterministic": false,
+  "scene_fix": true,
+  "config": "kortyn/experiments/phase5/libero_rtc_kurz.yaml",
+  "profile": "smolvla_libero_rtc",
+  "run": "sync25"
+ },
+ "episodes": [
+  {
+   "seed": 1001,
+   "requests": [
+    {
+     "obs_timestep": 0,
+     "observation": {
+      "observation.images.camera1": "7509b89a35a370cf",
+      "observation.images.camera2": "b4cba44d27ca65c9",
+      "observation.state": "ad36209a306d1ad6"
+     },
+     "plan": "ff7e8b74745da2f3",
+     "first_action": [
+      0.20011940598487854,
+      0.030279677361249924,
+      0.020029164850711823,
+      -0.002928599715232849,
+      0.00845431163907051,
+      -0.025111280381679535,
+      -0.9785518050193787
+     ]
+    },
+    {
+     "obs_timestep": 25,
+     "observation": {
+      "observation.images.camera1": "0c301b0cff56ad36",
+      "observation.images.camera2": "ba1248d8429b9a17",
+      "observation.state": "5905f5f2fc8f9800"
+     },
+     "plan": "7dca75042a729b3f",
+     "first_action": [
+      0.5683068633079529,
+      -0.10065941512584686,
+      0.02064225822687149,
+      0.03321830555796623,
+      0.05493759363889694,
+      -0.20525053143501282,
+      -1.0007513761520386
+     ]
+    },
+    {
+     "obs_timestep": 50,
+     "observation": {
+      "observation.images.camera1": "410c61bbc75c3084",
+      "observation.images.camera2": "9e52bb0d92dadbec",
+      "observation.state": "9ee1969396df41ca"
+     },
+     "plan": "d186574cf37fbd5a",
+     "first_action": [
+      0.2130514681339264,
+      -0.012454435229301453,
+      -0.1199759989976883,
+      0.04742654785513878,
+      0.023654356598854065,
+      -0.25889259576797485,
+      -1.004178524017334
+     ]
+    },
+    {
+     "obs_timestep": 75,
+     "observation": {
+      "observation.images.camera1": "0f639f796735e5c5",
+      "observation.images.camera2": "c12cc6ef7d0712e5",
+      "observation.state": "dd85edc339c56a43"
+     },
+     "plan": "8db683af3e4be9e9",
+     "first_action": [
+      -0.063413105905056,
+      0.10445122420787811,
+      -0.24824923276901245,
+      0.005453185644000769,
+      -0.0026986384764313698,
+      -0.024991771206259727,
+      -1.0041630268096924
+     ]
+    },
+    {
+     "obs_timestep": 100,
+     "observation": {
+      "observation.images.camera1": "dd6f76831bb58baf",
+      "observation.images.camera2": "d3e0a6436131985e",
+      "observation.state": "331f1aec0d70fdba"
+     },
+     "plan": "8f35f5ca0954324a",
+     "first_action": [
+      -0.2569044530391693,
+      0.030670564621686935,
+      -0.3439609408378601,
+      -0.002557559637352824,
+      -0.02547205612063408,
+      0.002374247182160616,
+      -1.0047142505645752
+     ]
+    },
+    {
+     "obs_timestep": 125,
+     "observation": {
+      "observation.images.camera1": "ae781b81ae64367c",
+      "observation.images.camera2": "03222b7e02f0f13b",
+      "observation.state": "bbb1e8a1902c4787"
+     },
+     "plan": "a9720b80fcd22716",
+     "first_action": [
+      -0.03941725939512253,
+      -0.21737945079803467,
+      0.1602577269077301,
+      -0.0030663490761071444,
+      0.011046860367059708,
+      0.01142730750143528,
+      0.9937995076179504
+     ]
+    },
+    {
+     "obs_timestep": 150,
+     "observation": {
+      "observation.images.camera1": "29f525216c92482d",
+      "observation.images.camera2": "57d50f4295c5e516",
+      "observation.state": "66c419aba9cd9328"
+     },
+     "plan": "a50b14437924baa9",
+     "first_action": [
+      -0.006209231913089752,
+      0.06223838031291962,
+      -0.04991145804524422,
+      0.0005601249868050218,
+      -0.0057975491508841515,
+      -0.01605987176299095,
+      -1.022329330444336
+     ]
+    },
+    {
+     "obs_timestep": 175,
+     "observation": {
+      "observation.images.camera1": "cf353fda899132be",
+      "observation.images.camera2": "d2f0e0907d3c4f7c",
+      "observation.state": "b992b65fbe3e8090"
+     },
+     "plan": "436e11253ba4d9df",
+     "first_action": [
+      -0.008245572447776794,
+      0.06312597543001175,
+      0.13421404361724854,
+      0.0004573068581521511,
+      0.004891736898571253,
+      -0.010086186230182648,
+      -1.0105736255645752
+     ]
+    },
+    {
+     "obs_timestep": 200,
+     "observation": {
+      "observation.images.camera1": "35b5c62517920b5a",
+      "observation.images.camera2": "6c4fb1a9f51fc87d",
+      "observation.state": "f7454703f4661400"
+     },
+     "plan": "b6909e0c0e09db55",
+     "first_action": [
+      -0.01319105178117752,
+      0.11425416171550751,
+      -0.12473517656326294,
+      0.0012150474358350039,
+      -0.007211535237729549,
+      -0.018157217651605606,
+      -1.0110169649124146
+     ]
+    },
+    {
+     "obs_timestep": 225,
+     "observation": {
+      "observation.images.camera1": "977450767aa31917",
+      "observation.images.camera2": "65a1069007930af5",
+      "observation.state": "fe8ff0b5bd39e29f"
+     },
+     "plan": "15a19f31a98450c0",
+     "first_action": [
+      0.03435765206813812,
+      0.015171520411968231,
+      0.045344047248363495,
+      0.00042785939876921475,
+      0.003570753149688244,
+      -0.015496324747800827,
+      0.9983047842979431
+     ]
+    },
+    {
+     "obs_timestep": 250,
+     "observation": {
+      "observation.images.camera1": "eb57d273f05762f8",
+      "observation.images.camera2": "c84e1dcfb0d4c994",
+      "observation.state": "ed68609c309c1a8e"
+     },
+     "plan": "4b399af69a53544f",
+     "first_action": [
+      -0.027805164456367493,
+      0.10068054497241974,
+      -0.11411385238170624,
+      0.002361743478104472,
+      -0.006192514672875404,
+      -0.004817063454538584,
+      -1.009300708770752
+     ]
+    },
+    {
+     "obs_timestep": 275,
+     "observation": {
+      "observation.images.camera1": "fca57424d06725d7",
+      "observation.images.camera2": "2ab92f4f80a6f33d",
+      "observation.state": "44a3cdfabcc6caf7"
+     },
+     "plan": "6a4e74f7c479092e",
+     "first_action": [
+      0.05070890858769417,
+      0.028505872935056686,
+      -0.00438525527715683,
+      0.0010416812729090452,
+      0.0029167223256081343,
+      -0.016987387090921402,
+      1.007619023323059
+     ]
+    },
+    {
+     "obs_timestep": 300,
+     "observation": {
+      "observation.images.camera1": "71413d483d46c468",
+      "observation.images.camera2": "467b57079499a20e",
+      "observation.state": "35d17397829501f6"
+     },
+     "plan": "1693c084d75dd558",
+     "first_action": [
+      -0.10320108383893967,
+      0.051041129976511,
+      -0.15458044409751892,
+      0.0007151778554543853,
+      -0.009313225746154785,
+      0.0016640136018395424,
+      0.9591323733329773
+     ]
+    },
+    {
+     "obs_timestep": 325,
+     "observation": {
+      "observation.images.camera1": "f912e1573fa8921b",
+      "observation.images.camera2": "0b320923c3a39f6f",
+      "observation.state": "68e77eea20f91931"
+     },
+     "plan": "ebe8da3faf558636",
+     "first_action": [
+      0.05031704530119896,
+      0.02709975838661194,
+      -0.0833398699760437,
+      0.0012168295215815306,
+      0.0007667201571166515,
+      -0.009162195026874542,
+      0.9955053925514221
+     ]
+    },
+    {
+     "obs_timestep": 350,
+     "observation": {
+      "observation.images.camera1": "efeded3b25e56675",
+      "observation.images.camera2": "30108b0534d0f74a",
+      "observation.state": "35580ee47e1af84f"
+     },
+     "plan": "4a7708f8d4cdd395",
+     "first_action": [
+      -0.03830774873495102,
+      0.07020007073879242,
+      -0.11479659378528595,
+      0.002658996731042862,
+      -0.0016038860194385052,
+      -0.0019621571991592646,
+      -1.0215532779693604
+     ]
+    },
+    {
+     "obs_timestep": 375,
+     "observation": {
+      "observation.images.camera1": "0561b187b8dd5bd3",
+      "observation.images.camera2": "61ef799d4ea6ac3e",
+      "observation.state": "2e044c6595d1c245"
+     },
+     "plan": "a99757fdef606cc7",
+     "first_action": [
+      -0.0059149861335754395,
+      0.05289603769779205,
+      -0.03937822952866554,
+      0.0007441199850291014,
+      0.0026823764201253653,
+      -0.01116023026406765,
+      1.0288583040237427
+     ]
+    },
+    {
+     "obs_timestep": 400,
+     "observation": {
+      "observation.images.camera1": "ea6f3f329bf47da2",
+      "observation.images.camera2": "c25cc468d673f5e5",
+      "observation.state": "5c824d1562af27ed"
+     },
+     "plan": "662c31151a24c37c",
+     "first_action": [
+      -0.05477268248796463,
+      0.09313274919986725,
+      -0.1723375916481018,
+      -0.0007550700684078038,
+      -0.010550125502049923,
+      0.0009001088328659534,
+      -1.0316516160964966
+     ]
+    },
+    {
+     "obs_timestep": 425,
+     "observation": {
+      "observation.images.camera1": "b7b3817c148ccffc",
+      "observation.images.camera2": "353e09d05b900f16",
+      "observation.state": "455305229c2a30bd"
+     },
+     "plan": "0ffa6d9ddad12e89",
+     "first_action": [
+      0.015317559242248535,
+      0.036990463733673096,
+      -0.031478557735681534,
+      -0.0030966848134994507,
+      0.0004124566912651062,
+      -0.004175292328000069,
+      1.0181092023849487
+     ]
+    },
+    {
+     "obs_timestep": 450,
+     "observation": {
+      "observation.images.camera1": "886af1af2d3e93b9",
+      "observation.images.camera2": "b31800549a9fc29c",
+      "observation.state": "da7b385ce728c5c3"
+     },
+     "plan": "094acd859b372fd1",
+     "first_action": [
+      -0.07302696257829666,
+      0.07410427182912827,
+      -0.1539582908153534,
+      0.0008210256928578019,
+      -0.00821095984429121,
+      -0.0007249945774674416,
+      -1.0341484546661377
+     ]
+    },
+    {
+     "obs_timestep": 475,
+     "observation": {
+      "observation.images.camera1": "87367e9ddea062bb",
+      "observation.images.camera2": "254d2f37ec3d61be",
+      "observation.state": "43cb8a79aab4ac5e"
+     },
+     "plan": "88fb65428a631568",
+     "first_action": [
+      0.027386173605918884,
+      0.07002796977758408,
+      -0.010136350989341736,
+      -0.00016715418314561248,
+      -0.001565591897815466,
+      -0.01374175027012825,
+      1.005831241607666
+     ]
+    },
+    {
+     "obs_timestep": 500,
+     "observation": {
+      "observation.images.camera1": "4d75628db03f0892",
+      "observation.images.camera2": "fff5eca169958cde",
+      "observation.state": "99f2ff351a90a432"
+     },
+     "plan": "ae0babfbfe96d1ab",
+     "first_action": [
+      -0.07574094086885452,
+      0.1463577151298523,
+      -0.21313250064849854,
+      0.00035353837301954627,
+      -0.004889083094894886,
+      0.012470601126551628,
+      -1.0595669746398926
+     ]
+    }
+   ],
+   "model": {
+    "B_colind": "6447580182d7fb9d",
+    "B_rowadr": "e087a2a57b1d4a63",
+    "B_rownnz": "6d3bd88c36d97d68",
+    "D_colind": "feebcb96b23aacb2",
+    "D_diag": "c2989e5783700556",
+    "D_rowadr": "32e2aa3126083973",
+    "D_rownnz": "4abac4b5fd5daf4f",
+    "M_colind": "1ae705defa9148ff",
+    "M_rowadr": "6342d4fdb7ba89cb",
+    "M_rownnz": "1add149e248e9ac2",
+    "actuator_acc0": "a1ed6b0600ce1c75",
+    "actuator_actadr": "7d831dc8636d123a",
+    "actuator_actearly": "b2549e1870ad9d1c",
+    "actuator_actlimited": "b2549e1870ad9d1c",
+    "actuator_actnum": "30edf465a431eac1",
+    "actuator_actrange": "77a7370b28c14a66",
+    "actuator_armature": "b95ee9850fbe15bc",
+    "actuator_biasprm": "6b62e8efe2ebc878",
+    "actuator_biastype": "889447c63a18df59",
+    "actuator_cranklength": "b95ee9850fbe15bc",
+    "actuator_ctrllimited": "bcfeabd205d3a533",
+    "actuator_ctrlrange": "d9af15d046598963",
+    "actuator_damping": "b95ee9850fbe15bc",
+    "actuator_dampingpoly": "77a7370b28c14a66",
+    "actuator_delay": "b95ee9850fbe15bc",
+    "actuator_dynprm": "2ed5e73fd73e89c8",
+    "actuator_dyntype": "30edf465a431eac1",
+    "actuator_forcelimited": "680d657d4b9e7d29",
+    "actuator_forcerange": "422e0fa48edc20bb",
+    "actuator_gainprm": "4cb18f9be536a27e",
+    "actuator_gaintype": "30edf465a431eac1",
+    "actuator_gear": "740329f51284dc2a",
+    "actuator_group": "30edf465a431eac1",
+    "actuator_history": "485eaddbafee766e",
+    "actuator_historyadr": "7d831dc8636d123a",
+    "actuator_length0": "b95ee9850fbe15bc",
+    "actuator_lengthrange": "77a7370b28c14a66",
+    "actuator_plugin": "7d831dc8636d123a",
+    "actuator_trnid": "c6a7bab1fbdc943c",
+    "actuator_trntype": "30edf465a431eac1",
+    "body_bvhadr": "c432d224155f1b15",
+    "body_bvhnum": "78aa0956e29154d3",
+    "body_conaffinity": "e43a1dbf8e13b9c1",
+    "body_contype": "81b815ec76a1ad13",
+    "body_dofadr": "5adb0caf09dd2bf8",
+    "body_dofnum": "0291980fb4ecbd87",
+    "body_geomadr": "feb8c25d9556b82d",
+    "body_geomnum": "2381c80081ddf3fd",
+    "body_gravcomp": "3329979214cddaf5",
+    "body_inertia": "898843e52da5882e",
+    "body_invweight0": "e9b4da52742c9f29",
+    "body_ipos": "fc9baeaa13f5cc98",
+    "body_iquat": "aa177272e9eb412a",
+    "body_jntadr": "10b4ebcef8db5ec8",
+    "body_jntnum": "90831a5af9a976fe",
+    "body_margin": "3329979214cddaf5",
+    "body_mass": "887e6ca551033a4a",
+    "body_mocapid": "292b29d4225e150d",
+    "body_parentid": "481f53a46387b0ab",
+    "body_plugin": "292b29d4225e150d",
+    "body_pos": "2ef234c9076248a9",
+    "body_quat": "8c969b0247d190d1",
+    "body_rootid": "865384874ff5f651",
+    "body_sameframe": "f848dcf7e8d055b7",
+    "body_simple": "b128a662597693ea",
+    "body_subtreemass": "b70b08e95f45ec13",
+    "body_treeid": "e6d7fee7b6fd4054",
+    "body_weldid": "bf122cd582524a6b",
+    "bvh_aabb": "059ce01806cb8101",
+    "bvh_child": "a9a10cb66c5c1a28",
+    "bvh_depth": "72859509a5395fce",
+    "bvh_nodeid": "73f8fd6b60d2ea5e",
+    "cam_bodyid": "c10dfeae63182f86",
+    "cam_fovy": "963682265a9c2ce1",
+    "cam_intrinsic": "cb41a092c5cdbe04",
+    "cam_ipd": "e63df0c476372e08",
+    "cam_mat0": "97c056f88058bee1",
+    "cam_mode": "84f319b82c73b2de",
+    "cam_output": "d4599e0432e7848a",
+    "cam_pos": "84e53563f98cd209",
+    "cam_pos0": "096b03bd7316253b",
+    "cam_poscom0": "71885fd936586232",
+    "cam_projection": "84f319b82c73b2de",
+    "cam_quat": "e4d09466140dfe3c",
+    "cam_resolution": "4785517172b23a60",
+    "cam_sensorsize": "2c9e21914bf5f7b7",
+    "cam_targetbodyid": "23821d242a735120",
+    "dof_M0": "5de3360bd67d5128",
+    "dof_Madr": "6342d4fdb7ba89cb",
+    "dof_armature": "de884c3b3fa93ab0",
+    "dof_bodyid": "757d407431f3f341",
+    "dof_damping": "2eedd7d54b75a7cf",
+    "dof_dampingpoly": "cf5dd8adff197928",
+    "dof_frictionloss": "b652d6ee44a6e3cf",
+    "dof_invweight0": "a4ebb0dbdb058bcd",
+    "dof_jntid": "f32d944d9628ae69",
+    "dof_length": "8d37a0fb4c710e1e",
+    "dof_parentid": "be7766ece800664b",
+    "dof_simplenum": "445c8d381d7c43bb",
+    "dof_solimp": "e6da90f2914ebd0e",
+    "dof_solref": "d599f183071695df",
+    "dof_treeid": "bc1702a9ae194ad2",
+    "geom_aabb": "0f844f631bdeefae",
+    "geom_bodyid": "6b94a1dc51c086fd",
+    "geom_conaffinity": "b45ef1e20c8aa349",
+    "geom_condim": "817b02708985f977",
+    "geom_contype": "ec549b2fe500c10c",
+    "geom_dataid": "f38d7b890ee5423c",
+    "geom_fluid": "441be928a41cb8f4",
+    "geom_friction": "af3d2e946d7f35f4",
+    "geom_gap": "3e688d63da914b4d",
+    "geom_group": "ed8488f9cd2709e6",
+    "geom_margin": "3e688d63da914b4d",
+    "geom_matid": "785f6eadf7e5ff97",
+    "geom_plugin": "41e6742abc831886",
+    "geom_pos": "e8ede844e4aee36d",
+    "geom_priority": "1db7ee4160d56ebb",
+    "geom_quat": "ab3663d664204fbb",
+    "geom_rbound": "d3b42d7f9ae66079",
+    "geom_rgba": "1f1f346b28d5d3c3",
+    "geom_sameframe": "39d0fe2346a8ef81",
+    "geom_size": "9d85f806e4170c80",
+    "geom_solimp": "55f5d9c211d545b3",
+    "geom_solmix": "a629939ef938a8e8",
+    "geom_solref": "bccca4806374f1e5",
+    "geom_type": "a25f23a1c92d539f",
+    "jnt_actfrclimited": "916254a3c8f5d417",
+    "jnt_actfrcrange": "1e34aa2ae1d8f406",
+    "jnt_actgravcomp": "916254a3c8f5d417",
+    "jnt_actuatorid": "9b1a08e9b9f969ce",
+    "jnt_axis": "8a9aa2aae4114caf",
+    "jnt_bodyid": "a8c722272b479c8d",
+    "jnt_dofadr": "2b28d9ae1243c2ad",
+    "jnt_group": "1e1cb2d8e5027428",
+    "jnt_limited": "0d29c4bb17e975ce",
+    "jnt_margin": "ee43b28f5e61e714",
+    "jnt_pos": "56796ac8e3f87f69",
+    "jnt_qposadr": "d775b36160e7c594",
+    "jnt_range": "9ad9ada85a65d751",
+    "jnt_solimp": "91ebb02db53305a5",
+    "jnt_solref": "e8a65194e899301d",
+    "jnt_stiffness": "ee43b28f5e61e714",
+    "jnt_stiffnesspoly": "1e34aa2ae1d8f406",
+    "jnt_type": "bd8b44946a6e78ea",
+    "light_active": "d82e10da4a3d980d",
+    "light_ambient": "bef01b04eb416f94",
+    "light_attenuation": "810459a03843598c",
+    "light_bodyid": "bbd9fc71c6870841",
+    "light_bulbradius": "5cd87286a4360a23",
+    "light_castshadow": "ec61eee2026e1acb",
+    "light_cutoff": "b96c6244e0bb766a",
+    "light_diffuse": "560fa60071194ef3",
+    "light_dir": "2d88198f13f4a339",
+    "light_dir0": "2d88198f13f4a339",
+    "light_exponent": "2683ffed64234edb",
+    "light_intensity": "951cd8cbb637d643",
+    "light_mode": "bbd9fc71c6870841",
+    "light_pos": "56587dace70c1b01",
+    "light_pos0": "56587dace70c1b01",
+    "light_poscom0": "9465c9fd80dd44c7",
+    "light_range": "2683ffed64234edb",
+    "light_specular": "6e5f4f51f0b879c9",
+    "light_targetbodyid": "1291050978d2cc5f",
+    "light_texid": "1291050978d2cc5f",
+    "light_type": "64d0353688400178",
+    "mapD2M": "8e584a59289fe2a6",
+    "mapM2D": "3a030005f159d43c",
+    "mapM2M": "59b44bd04bfa49e5",
+    "mat_emission": "e7ffde1469f3461e",
+    "mat_metallic": "2f26b907122b9a26",
+    "mat_reflectance": "6030c15f471f5ce5",
+    "mat_rgba": "b767f6622dc717eb",
+    "mat_roughness": "2f26b907122b9a26",
+    "mat_shininess": "632baaf8db5ec980",
+    "mat_specular": "ab9dddcc3fd13ee2",
+    "mat_texid": "4f9bc2810354d219",
+    "mat_texrepeat": "3044dca8f0f552b8",
+    "mat_texuniform": "725c2dceb30e3d21",
+    "mesh_bvhadr": "56e3366ee7f2958e",
+    "mesh_bvhnum": "bbbf3ffbbca67488",
+    "mesh_face": "3e302edaf31fb01d",
+    "mesh_faceadr": "42ccf146e654d64c",
+    "mesh_facenormal": "3e302edaf31fb01d",
+    "mesh_facenum": "0cda872feeea9830",
+    "mesh_facetexcoord": "62e997499c9deb72",
+    "mesh_graph": "232217b1190e1765",
+    "mesh_graphadr": "18aa99f7bf5b931c",
+    "mesh_normal": "0c45182db5c65c0f",
+    "mesh_normaladr": "ed9a5f0e58793787",
+    "mesh_normalnum": "24937171aa3dd6c9",
+    "mesh_octadr": "a3cfc38c2e5b1e84",
+    "mesh_octnum": "cfbf0f8a1728691f",
+    "mesh_pathadr": "3cc131567f27e82d",
+    "mesh_polyadr": "af6d84e4f15d8ea8",
+    "mesh_polymap": "22fe2f5ebbe3e778",
+    "mesh_polymapadr": "d3e12056b2693f53",
+    "mesh_polymapnum": "432bb71b102f1a47",
+    "mesh_polynormal": "bed9cd20dabed17a",
+    "mesh_polynum": "83b7c0175dad7830",
+    "mesh_polyvert": "697d7daf6eca3662",
+    "mesh_polyvertadr": "9d0cd8bf8caffbab",
+    "mesh_polyvertnum": "d4fc8d6a90276148",
+    "mesh_pos": "708f34c1184eef6a",
+    "mesh_quat": "a25bf05622121be6",
+    "mesh_scale": "be61ba08d63d695d",
+    "mesh_texcoord": "639655309d731e7e",
+    "mesh_texcoordadr": "f348509ac834dcfb",
+    "mesh_texcoordnum": "aaa2478e8ad5ff27",
+    "mesh_vert": "3cefa78b2bfe22b2",
+    "mesh_vertadr": "ed9a5f0e58793787",
+    "mesh_vertnum": "24937171aa3dd6c9",
+    "name_actuatoradr": "eb807496b6108bb7",
+    "name_bodyadr": "9502baa706b4da57",
+    "name_camadr": "171a1fa55eafb27c",
+    "name_geomadr": "d8d86680725e4bf6",
+    "name_jntadr": "815ef344b5d86b00",
+    "name_lightadr": "3087d9fe77634d6b",
+    "name_matadr": "872d0486bb265032",
+    "name_meshadr": "d40aaef70eda3eb3",
+    "name_sensoradr": "d86e4558dd813243",
+    "name_siteadr": "4aad8b1755155117",
+    "name_texadr": "1a989a2ccc6fdb1a",
+    "names_map": "b64c986c43e2bd85",
+    "qpos0": "2f5ffbb35a83dfc0",
+    "qpos_spring": "2f5ffbb35a83dfc0",
+    "sensor_adr": "48d17d852775b269",
+    "sensor_cutoff": "57b9c6ee60ee00ed",
+    "sensor_datatype": "d79ed2610afc323c",
+    "sensor_delay": "57b9c6ee60ee00ed",
+    "sensor_dim": "426e1d05745c93a6",
+    "sensor_history": "040c74fb47dbfddb",
+    "sensor_historyadr": "9284efbb3ad11445",
+    "sensor_interval": "a5e03ab28fff5ab3",
+    "sensor_intprm": "7011a8b4d64e0d99",
+    "sensor_needstage": "426e1d05745c93a6",
+    "sensor_noise": "57b9c6ee60ee00ed",
+    "sensor_objid": "86787d2cdf864cda",
+    "sensor_objtype": "4b2871a304b4d129",
+    "sensor_plugin": "9284efbb3ad11445",
+    "sensor_refid": "9284efbb3ad11445",
+    "sensor_reftype": "d79ed2610afc323c",
+    "sensor_type": "d67e600ee18e50a8",
+    "site_bodyid": "cca948e48ce134c9",
+    "site_group": "db3ace9a1925c911",
+    "site_matid": "eaf662abae8192ce",
+    "site_pos": "4df5edca1d0ce9b9",
+    "site_quat": "20da1705d375d97f",
+    "site_rgba": "014ee25460036ab6",
+    "site_sameframe": "c6bb82b4c1f09b11",
+    "site_size": "80d96b93e848aafc",
+    "site_type": "60015028a65f5178",
+    "tex_adr": "09b8543e4d6afdb2",
+    "tex_colorspace": "e138db2ca933b96f",
+    "tex_data": "caa9c90876b50726",
+    "tex_height": "fa68be4c255a43f8",
+    "tex_nchannel": "e1b2dd580d90d8b8",
+    "tex_pathadr": "6f35a2045cf48556",
+    "tex_type": "80a8531335363a65",
+    "tex_width": "fbe69586a0274b3a",
+    "tree_bodyadr": "053f6fcd36b0854e",
+    "tree_bodynum": "20b6f556323eea68",
+    "tree_dofadr": "fa8f51fb4555db13",
+    "tree_dofnum": "c0ad756c99b94cc1",
+    "tree_sleep_policy": "bb70cbc3d2555ba3"
+   },
+   "state": {
+    "time": "cd667bc94b2a59c9",
+    "qpos": "108c58d25d6449f6",
+    "qvel": "ce57a5b521953ac8",
+    "act": "38e8cefffb0bde4c",
+    "ctrl": "d34516857d8f8bef",
+    "qacc_warmstart": "7e1caa3473a62470",
+    "qacc": "7e1caa3473a62470",
+    "mocap_pos": "e6e09ef728a8c1dc",
+    "mocap_quat": "a88de541bdbaa65d",
+    "xpos": "4884517839b82742",
+    "qfrc_applied": "ed61543b419bab58",
+    "xfrc_applied": "98c63a32266cb689"
+   },
+   "task_id": 8,
+   "init_state": 1,
+   "success": false,
+   "steps": 520
+  },
+  {
+   "seed": 1000,
+   "requests": [
+    {
+     "obs_timestep": 0,
+     "observation": {
+      "observation.images.camera1": "bfecb1b6a8a2fd92",
+      "observation.images.camera2": "4087a7a08e806dfb",
+      "observation.state": "c13d944ff569a8b7"
+     },
+     "plan": "f944b05a7a3c9185",
+     "first_action": [
+      0.13837146759033203,
+      0.038354966789484024,
+      0.03434765338897705,
+      -0.0017882504034787416,
+      -0.0009934017434716225,
+      -0.04027574509382248,
+      -0.9932425618171692
+     ]
+    },
+    {
+     "obs_timestep": 25,
+     "observation": {
+      "observation.images.camera1": "99d6c28d3cfa4da4",
+      "observation.images.camera2": "0755f054f039e21a",
+      "observation.state": "00c36a61144042c1"
+     },
+     "plan": "38672c64382544f2",
+     "first_action": [
+      0.5156468152999878,
+      -0.049781158566474915,
+      0.01462138444185257,
+      0.030224915593862534,
+      0.017690619453787804,
+      -0.21154876053333282,
+      -1.010964274406433
+     ]
+    },
+    {
+     "obs_timestep": 50,
+     "observation": {
+      "observation.images.camera1": "f57afb60232cbc0b",
+      "observation.images.camera2": "e0e01faa8e827a64",
+      "observation.state": "2d5170a5f93b1f4f"
+     },
+     "plan": "de5f6af77c744646",
+     "first_action": [
+      0.23108282685279846,
+      -0.05991929769515991,
+      -0.0745425596833229,
+      0.041662633419036865,
+      0.022299043834209442,
+      -0.2711649239063263,
+      -0.9972567558288574
+     ]
+    },
+    {
+     "obs_timestep": 75,
+     "observation": {
+      "observation.images.camera1": "912b45964359a7d1",
+      "observation.images.camera2": "f00889d69b12d9a2",
+      "observation.state": "53af632978125d8d"
+     },
+     "plan": "c6b3eea354e8c9fb",
+     "first_action": [
+      -0.05885906517505646,
+      0.0027271881699562073,
+      -0.2604921758174896,
+      0.013735329732298851,
+      -0.01539152953773737,
+      -0.03913280367851257,
+      -1.007178544998169
+     ]
+    },
+    {
+     "obs_timestep": 100,
+     "observation": {
+      "observation.images.camera1": "6184be13f56f7790",
+      "observation.images.camera2": "13a94dab6d7c8ada",
+      "observation.state": "2098c209703a7c9a"
+     },
+     "plan": "eb5fe382d8154d89",
+     "first_action": [
+      -0.11072558909654617,
+      0.03752169385552406,
+      -0.2885182201862335,
+      0.0035936785861849785,
+      -0.008576876483857632,
+      -0.010564779862761497,
+      -1.0015795230865479
+     ]
+    },
+    {
+     "obs_timestep": 125,
+     "observation": {
+      "observation.images.camera1": "2a74e2fcb15cce9d",
+      "observation.images.camera2": "d38f4bbdc468c6af",
+      "observation.state": "abb70914d3547def"
+     },
+     "plan": "3aaa1ef9c11cb06c",
+     "first_action": [
+      0.013890326023101807,
+      -0.35736411809921265,
+      0.2987842559814453,
+      0.0028458915185183287,
+      0.0801808089017868,
+      -0.022129757329821587,
+      1.001137137413025
+     ]
+    },
+    {
+     "obs_timestep": 150,
+     "observation": {
+      "observation.images.camera1": "d0a81f839873a97a",
+      "observation.images.camera2": "51c234d1bc876a52",
+      "observation.state": "1d4a0db00a3b989b"
+     },
+     "plan": "ef570e6d248f29ba",
+     "first_action": [
+      -0.11497620493173599,
+      -0.3593693673610687,
+      0.012114487588405609,
+      0.016272271052002907,
+      0.015301353298127651,
+      -0.006826454773545265,
+      0.9348437190055847
+     ]
+    },
+    {
+     "obs_timestep": 175,
+     "observation": {
+      "observation.images.camera1": "10677fcee2a8bfdd",
+      "observation.images.camera2": "6ec042def9639d0c",
+      "observation.state": "04a9f772c348451e"
+     },
+     "plan": "5acf34afb8c0f085",
+     "first_action": [
+      0.10082060843706131,
+      0.03371952474117279,
+      0.2680160701274872,
+      0.0031436695717275143,
+      -0.010356607846915722,
+      -0.04628102481365204,
+      -1.0162394046783447
+     ]
+    },
+    {
+     "obs_timestep": 200,
+     "observation": {
+      "observation.images.camera1": "bd325babe77427cb",
+      "observation.images.camera2": "6b0c809e1e0b695a",
+      "observation.state": "cf81aeb263163eff"
+     },
+     "plan": "f572512d624ec99d",
+     "first_action": [
+      0.07609926164150238,
+      0.2747277021408081,
+      -0.14409779012203217,
+      0.0014095376245677471,
+      -0.006490335799753666,
+      -0.06220950186252594,
+      -1.0107964277267456
+     ]
+    },
+    {
+     "obs_timestep": 225,
+     "observation": {
+      "observation.images.camera1": "59b5355a168a0783",
+      "observation.images.camera2": "6a9d040177e9cb4e",
+      "observation.state": "b1b97826130ce41d"
+     },
+     "plan": "5be464c1d4d0b743",
+     "first_action": [
+      -0.04746770113706589,
+      0.13474103808403015,
+      -0.23883414268493652,
+      0.00017519653192721307,
+      -0.005279432982206345,
+      -0.02322080358862877,
+      -0.9911007285118103
+     ]
+    },
+    {
+     "obs_timestep": 250,
+     "observation": {
+      "observation.images.camera1": "cdf439ee2809cbcb",
+      "observation.images.camera2": "5539c5ac7317fa95",
+      "observation.state": "77cb5a3e479d5ff9"
+     },
+     "plan": "e4eb842cf0a0f245",
+     "first_action": [
+      -0.003712087869644165,
+      -0.1493161916732788,
+      0.06032966822385788,
+      -0.000773178820963949,
+      0.00021251710131764412,
+      -0.024387214332818985,
+      1.0159653425216675
+     ]
+    },
+    {
+     "obs_timestep": 275,
+     "observation": {
+      "observation.images.camera1": "273828e2caf34808",
+      "observation.images.camera2": "e0b81f2ccf8afe24",
+      "observation.state": "5db5c420862b9d18"
+     },
+     "plan": "4747267119bbc0fc",
+     "first_action": [
+      -0.05349083989858627,
+      0.15028521418571472,
+      -0.196743443608284,
+      0.0010154398623853922,
+      -0.008978139609098434,
+      -0.018505018204450607,
+      -1.02351975440979
+     ]
+    },
+    {
+     "obs_timestep": 300,
+     "observation": {
+      "observation.images.camera1": "2f18a0867708dc38",
+      "observation.images.camera2": "f5164f32eaaf4828",
+      "observation.state": "561ccc3ffa085e94"
+     },
+     "plan": "84528079db7491b3",
+     "first_action": [
+      0.06095655634999275,
+      0.05977500602602959,
+      0.017243102192878723,
+      -0.0008212433313019574,
+      -0.008464260958135128,
+      -0.03184428811073303,
+      0.9933393597602844
+     ]
+    },
+    {
+     "obs_timestep": 325,
+     "observation": {
+      "observation.images.camera1": "6f69651761927d10",
+      "observation.images.camera2": "c3dfcf183b3b5911",
+      "observation.state": "fb36cfc988cc03b8"
+     },
+     "plan": "c621ab292de801a5",
+     "first_action": [
+      -0.023373708128929138,
+      0.13393613696098328,
+      -0.020168453454971313,
+      0.0022689257748425007,
+      -0.007837170735001564,
+      -0.021357810124754906,
+      -1.0158642530441284
+     ]
+    },
+    {
+     "obs_timestep": 350,
+     "observation": {
+      "observation.images.camera1": "8ddf39a231d512fe",
+      "observation.images.camera2": "cc4cc84216d1f29d",
+      "observation.state": "ff4209454f41bd15"
+     },
+     "plan": "5202fd8955bbf981",
+     "first_action": [
+      0.12800519168376923,
+      -0.1162770688533783,
+      0.13278627395629883,
+      0.0009583728387951851,
+      0.010055705904960632,
+      -0.01627582311630249,
+      0.9880381226539612
+     ]
+    },
+    {
+     "obs_timestep": 375,
+     "observation": {
+      "observation.images.camera1": "0b15754ea806e5d8",
+      "observation.images.camera2": "ff8ee4211363172e",
+      "observation.state": "52d8b5ad21897875"
+     },
+     "plan": "4fbac06700475dbe",
+     "first_action": [
+      0.08957498520612717,
+      -0.35842183232307434,
+      0.0367758646607399,
+      0.01390810590237379,
+      0.006987087894231081,
+      -0.01379570085555315,
+      0.9846357703208923
+     ]
+    },
+    {
+     "obs_timestep": 400,
+     "observation": {
+      "observation.images.camera1": "d0929ec519f72099",
+      "observation.images.camera2": "ee21bfef8debd745",
+      "observation.state": "06a8b7d6b9b8f5d3"
+     },
+     "plan": "cc74ad20cbe792d4",
+     "first_action": [
+      0.12417836487293243,
+      0.06208989396691322,
+      0.21367889642715454,
+      0.0025346451438963413,
+      0.003855997696518898,
+      -0.03399880602955818,
+      -1.002296805381775
+     ]
+    },
+    {
+     "obs_timestep": 425,
+     "observation": {
+      "observation.images.camera1": "184f58132567aa03",
+      "observation.images.camera2": "2d9594dbf33064c2",
+      "observation.state": "72f21d485a3792ab"
+     },
+     "plan": "33f95705b5680fae",
+     "first_action": [
+      -0.03143306076526642,
+      0.18133127689361572,
+      -0.1352061927318573,
+      0.002101718680933118,
+      -0.004746728576719761,
+      -0.015274333767592907,
+      -1.017127513885498
+     ]
+    },
+    {
+     "obs_timestep": 450,
+     "observation": {
+      "observation.images.camera1": "a8de2d2d742a69f8",
+      "observation.images.camera2": "e07d05ee2c3c9a3f",
+      "observation.state": "e1ad78b914e44655"
+     },
+     "plan": "5aeb7be16c0893f5",
+     "first_action": [
+      -0.022087179124355316,
+      0.19310951232910156,
+      -0.06497035175561905,
+      -0.0003204241511411965,
+      -0.0012738658115267754,
+      -0.008446593768894672,
+      -1.0133548974990845
+     ]
+    },
+    {
+     "obs_timestep": 475,
+     "observation": {
+      "observation.images.camera1": "5b1d0b7adf4057dc",
+      "observation.images.camera2": "96673e49402dc33b",
+      "observation.state": "99214a68cae8fdfa"
+     },
+     "plan": "bae8e5375d4e5c82",
+     "first_action": [
+      -0.009039871394634247,
+      0.03510643169283867,
+      -0.02491719275712967,
+      -0.0015694503672420979,
+      -0.010097415186464787,
+      -0.01895938068628311,
+      -1.0418485403060913
+     ]
+    },
+    {
+     "obs_timestep": 500,
+     "observation": {
+      "observation.images.camera1": "dd90fe7680d09098",
+      "observation.images.camera2": "55e7688e9f8abaec",
+      "observation.state": "d4d1edc1e348cb34"
+     },
+     "plan": "b8825bf2b8aafd88",
+     "first_action": [
+      -0.08087483793497086,
+      0.0629236251115799,
+      -0.0823180302977562,
+      0.018271854147315025,
+      -0.0024183588102459908,
+      -0.02055974304676056,
+      -1.0036897659301758
+     ]
+    }
+   ],
+   "model": {
+    "B_colind": "6447580182d7fb9d",
+    "B_rowadr": "e087a2a57b1d4a63",
+    "B_rownnz": "6d3bd88c36d97d68",
+    "D_colind": "feebcb96b23aacb2",
+    "D_diag": "c2989e5783700556",
+    "D_rowadr": "32e2aa3126083973",
+    "D_rownnz": "4abac4b5fd5daf4f",
+    "M_colind": "1ae705defa9148ff",
+    "M_rowadr": "6342d4fdb7ba89cb",
+    "M_rownnz": "1add149e248e9ac2",
+    "actuator_acc0": "a1ed6b0600ce1c75",
+    "actuator_actadr": "7d831dc8636d123a",
+    "actuator_actearly": "b2549e1870ad9d1c",
+    "actuator_actlimited": "b2549e1870ad9d1c",
+    "actuator_actnum": "30edf465a431eac1",
+    "actuator_actrange": "77a7370b28c14a66",
+    "actuator_armature": "b95ee9850fbe15bc",
+    "actuator_biasprm": "6b62e8efe2ebc878",
+    "actuator_biastype": "889447c63a18df59",
+    "actuator_cranklength": "b95ee9850fbe15bc",
+    "actuator_ctrllimited": "bcfeabd205d3a533",
+    "actuator_ctrlrange": "d9af15d046598963",
+    "actuator_damping": "b95ee9850fbe15bc",
+    "actuator_dampingpoly": "77a7370b28c14a66",
+    "actuator_delay": "b95ee9850fbe15bc",
+    "actuator_dynprm": "2ed5e73fd73e89c8",
+    "actuator_dyntype": "30edf465a431eac1",
+    "actuator_forcelimited": "680d657d4b9e7d29",
+    "actuator_forcerange": "422e0fa48edc20bb",
+    "actuator_gainprm": "4cb18f9be536a27e",
+    "actuator_gaintype": "30edf465a431eac1",
+    "actuator_gear": "740329f51284dc2a",
+    "actuator_group": "30edf465a431eac1",
+    "actuator_history": "485eaddbafee766e",
+    "actuator_historyadr": "7d831dc8636d123a",
+    "actuator_length0": "b95ee9850fbe15bc",
+    "actuator_lengthrange": "77a7370b28c14a66",
+    "actuator_plugin": "7d831dc8636d123a",
+    "actuator_trnid": "c6a7bab1fbdc943c",
+    "actuator_trntype": "30edf465a431eac1",
+    "body_bvhadr": "c432d224155f1b15",
+    "body_bvhnum": "78aa0956e29154d3",
+    "body_conaffinity": "e43a1dbf8e13b9c1",
+    "body_contype": "81b815ec76a1ad13",
+    "body_dofadr": "5adb0caf09dd2bf8",
+    "body_dofnum": "0291980fb4ecbd87",
+    "body_geomadr": "feb8c25d9556b82d",
+    "body_geomnum": "2381c80081ddf3fd",
+    "body_gravcomp": "3329979214cddaf5",
+    "body_inertia": "898843e52da5882e",
+    "body_invweight0": "e9b4da52742c9f29",
+    "body_ipos": "fc9baeaa13f5cc98",
+    "body_iquat": "aa177272e9eb412a",
+    "body_jntadr": "10b4ebcef8db5ec8",
+    "body_jntnum": "90831a5af9a976fe",
+    "body_margin": "3329979214cddaf5",
+    "body_mass": "887e6ca551033a4a",
+    "body_mocapid": "292b29d4225e150d",
+    "body_parentid": "481f53a46387b0ab",
+    "body_plugin": "292b29d4225e150d",
+    "body_pos": "fb18b8ebdb1152a5",
+    "body_quat": "8c969b0247d190d1",
+    "body_rootid": "865384874ff5f651",
+    "body_sameframe": "f848dcf7e8d055b7",
+    "body_simple": "b128a662597693ea",
+    "body_subtreemass": "b70b08e95f45ec13",
+    "body_treeid": "e6d7fee7b6fd4054",
+    "body_weldid": "bf122cd582524a6b",
+    "bvh_aabb": "059ce01806cb8101",
+    "bvh_child": "a9a10cb66c5c1a28",
+    "bvh_depth": "72859509a5395fce",
+    "bvh_nodeid": "73f8fd6b60d2ea5e",
+    "cam_bodyid": "c10dfeae63182f86",
+    "cam_fovy": "963682265a9c2ce1",
+    "cam_intrinsic": "cb41a092c5cdbe04",
+    "cam_ipd": "e63df0c476372e08",
+    "cam_mat0": "97c056f88058bee1",
+    "cam_mode": "84f319b82c73b2de",
+    "cam_output": "d4599e0432e7848a",
+    "cam_pos": "84e53563f98cd209",
+    "cam_pos0": "096b03bd7316253b",
+    "cam_poscom0": "71885fd936586232",
+    "cam_projection": "84f319b82c73b2de",
+    "cam_quat": "e4d09466140dfe3c",
+    "cam_resolution": "4785517172b23a60",
+    "cam_sensorsize": "2c9e21914bf5f7b7",
+    "cam_targetbodyid": "23821d242a735120",
+    "dof_M0": "5de3360bd67d5128",
+    "dof_Madr": "6342d4fdb7ba89cb",
+    "dof_armature": "de884c3b3fa93ab0",
+    "dof_bodyid": "757d407431f3f341",
+    "dof_damping": "2eedd7d54b75a7cf",
+    "dof_dampingpoly": "cf5dd8adff197928",
+    "dof_frictionloss": "b652d6ee44a6e3cf",
+    "dof_invweight0": "a4ebb0dbdb058bcd",
+    "dof_jntid": "f32d944d9628ae69",
+    "dof_length": "8d37a0fb4c710e1e",
+    "dof_parentid": "be7766ece800664b",
+    "dof_simplenum": "445c8d381d7c43bb",
+    "dof_solimp": "e6da90f2914ebd0e",
+    "dof_solref": "d599f183071695df",
+    "dof_treeid": "bc1702a9ae194ad2",
+    "geom_aabb": "0f844f631bdeefae",
+    "geom_bodyid": "6b94a1dc51c086fd",
+    "geom_conaffinity": "b45ef1e20c8aa349",
+    "geom_condim": "817b02708985f977",
+    "geom_contype": "ec549b2fe500c10c",
+    "geom_dataid": "f38d7b890ee5423c",
+    "geom_fluid": "441be928a41cb8f4",
+    "geom_friction": "af3d2e946d7f35f4",
+    "geom_gap": "3e688d63da914b4d",
+    "geom_group": "ed8488f9cd2709e6",
+    "geom_margin": "3e688d63da914b4d",
+    "geom_matid": "785f6eadf7e5ff97",
+    "geom_plugin": "41e6742abc831886",
+    "geom_pos": "e8ede844e4aee36d",
+    "geom_priority": "1db7ee4160d56ebb",
+    "geom_quat": "ab3663d664204fbb",
+    "geom_rbound": "d3b42d7f9ae66079",
+    "geom_rgba": "1f1f346b28d5d3c3",
+    "geom_sameframe": "39d0fe2346a8ef81",
+    "geom_size": "9d85f806e4170c80",
+    "geom_solimp": "55f5d9c211d545b3",
+    "geom_solmix": "a629939ef938a8e8",
+    "geom_solref": "bccca4806374f1e5",
+    "geom_type": "a25f23a1c92d539f",
+    "jnt_actfrclimited": "916254a3c8f5d417",
+    "jnt_actfrcrange": "1e34aa2ae1d8f406",
+    "jnt_actgravcomp": "916254a3c8f5d417",
+    "jnt_actuatorid": "9b1a08e9b9f969ce",
+    "jnt_axis": "8a9aa2aae4114caf",
+    "jnt_bodyid": "a8c722272b479c8d",
+    "jnt_dofadr": "2b28d9ae1243c2ad",
+    "jnt_group": "1e1cb2d8e5027428",
+    "jnt_limited": "0d29c4bb17e975ce",
+    "jnt_margin": "ee43b28f5e61e714",
+    "jnt_pos": "56796ac8e3f87f69",
+    "jnt_qposadr": "d775b36160e7c594",
+    "jnt_range": "9ad9ada85a65d751",
+    "jnt_solimp": "91ebb02db53305a5",
+    "jnt_solref": "e8a65194e899301d",
+    "jnt_stiffness": "ee43b28f5e61e714",
+    "jnt_stiffnesspoly": "1e34aa2ae1d8f406",
+    "jnt_type": "bd8b44946a6e78ea",
+    "light_active": "d82e10da4a3d980d",
+    "light_ambient": "bef01b04eb416f94",
+    "light_attenuation": "810459a03843598c",
+    "light_bodyid": "bbd9fc71c6870841",
+    "light_bulbradius": "5cd87286a4360a23",
+    "light_castshadow": "ec61eee2026e1acb",
+    "light_cutoff": "b96c6244e0bb766a",
+    "light_diffuse": "560fa60071194ef3",
+    "light_dir": "2d88198f13f4a339",
+    "light_dir0": "2d88198f13f4a339",
+    "light_exponent": "2683ffed64234edb",
+    "light_intensity": "951cd8cbb637d643",
+    "light_mode": "bbd9fc71c6870841",
+    "light_pos": "56587dace70c1b01",
+    "light_pos0": "56587dace70c1b01",
+    "light_poscom0": "9465c9fd80dd44c7",
+    "light_range": "2683ffed64234edb",
+    "light_specular": "6e5f4f51f0b879c9",
+    "light_targetbodyid": "1291050978d2cc5f",
+    "light_texid": "1291050978d2cc5f",
+    "light_type": "64d0353688400178",
+    "mapD2M": "8e584a59289fe2a6",
+    "mapM2D": "3a030005f159d43c",
+    "mapM2M": "59b44bd04bfa49e5",
+    "mat_emission": "e7ffde1469f3461e",
+    "mat_metallic": "2f26b907122b9a26",
+    "mat_reflectance": "6030c15f471f5ce5",
+    "mat_rgba": "b767f6622dc717eb",
+    "mat_roughness": "2f26b907122b9a26",
+    "mat_shininess": "632baaf8db5ec980",
+    "mat_specular": "ab9dddcc3fd13ee2",
+    "mat_texid": "4f9bc2810354d219",
+    "mat_texrepeat": "3044dca8f0f552b8",
+    "mat_texuniform": "725c2dceb30e3d21",
+    "mesh_bvhadr": "56e3366ee7f2958e",
+    "mesh_bvhnum": "bbbf3ffbbca67488",
+    "mesh_face": "3e302edaf31fb01d",
+    "mesh_faceadr": "42ccf146e654d64c",
+    "mesh_facenormal": "3e302edaf31fb01d",
+    "mesh_facenum": "0cda872feeea9830",
+    "mesh_facetexcoord": "62e997499c9deb72",
+    "mesh_graph": "232217b1190e1765",
+    "mesh_graphadr": "18aa99f7bf5b931c",
+    "mesh_normal": "0c45182db5c65c0f",
+    "mesh_normaladr": "ed9a5f0e58793787",
+    "mesh_normalnum": "24937171aa3dd6c9",
+    "mesh_octadr": "a3cfc38c2e5b1e84",
+    "mesh_octnum": "cfbf0f8a1728691f",
+    "mesh_pathadr": "3cc131567f27e82d",
+    "mesh_polyadr": "af6d84e4f15d8ea8",
+    "mesh_polymap": "22fe2f5ebbe3e778",
+    "mesh_polymapadr": "d3e12056b2693f53",
+    "mesh_polymapnum": "432bb71b102f1a47",
+    "mesh_polynormal": "bed9cd20dabed17a",
+    "mesh_polynum": "83b7c0175dad7830",
+    "mesh_polyvert": "697d7daf6eca3662",
+    "mesh_polyvertadr": "9d0cd8bf8caffbab",
+    "mesh_polyvertnum": "d4fc8d6a90276148",
+    "mesh_pos": "708f34c1184eef6a",
+    "mesh_quat": "a25bf05622121be6",
+    "mesh_scale": "be61ba08d63d695d",
+    "mesh_texcoord": "639655309d731e7e",
+    "mesh_texcoordadr": "f348509ac834dcfb",
+    "mesh_texcoordnum": "aaa2478e8ad5ff27",
+    "mesh_vert": "3cefa78b2bfe22b2",
+    "mesh_vertadr": "ed9a5f0e58793787",
+    "mesh_vertnum": "24937171aa3dd6c9",
+    "name_actuatoradr": "eb807496b6108bb7",
+    "name_bodyadr": "9502baa706b4da57",
+    "name_camadr": "171a1fa55eafb27c",
+    "name_geomadr": "d8d86680725e4bf6",
+    "name_jntadr": "815ef344b5d86b00",
+    "name_lightadr": "3087d9fe77634d6b",
+    "name_matadr": "872d0486bb265032",
+    "name_meshadr": "d40aaef70eda3eb3",
+    "name_sensoradr": "d86e4558dd813243",
+    "name_siteadr": "4aad8b1755155117",
+    "name_texadr": "1a989a2ccc6fdb1a",
+    "names_map": "b64c986c43e2bd85",
+    "qpos0": "2f5ffbb35a83dfc0",
+    "qpos_spring": "2f5ffbb35a83dfc0",
+    "sensor_adr": "48d17d852775b269",
+    "sensor_cutoff": "57b9c6ee60ee00ed",
+    "sensor_datatype": "d79ed2610afc323c",
+    "sensor_delay": "57b9c6ee60ee00ed",
+    "sensor_dim": "426e1d05745c93a6",
+    "sensor_history": "040c74fb47dbfddb",
+    "sensor_historyadr": "9284efbb3ad11445",
+    "sensor_interval": "a5e03ab28fff5ab3",
+    "sensor_intprm": "7011a8b4d64e0d99",
+    "sensor_needstage": "426e1d05745c93a6",
+    "sensor_noise": "57b9c6ee60ee00ed",
+    "sensor_objid": "86787d2cdf864cda",
+    "sensor_objtype": "4b2871a304b4d129",
+    "sensor_plugin": "9284efbb3ad11445",
+    "sensor_refid": "9284efbb3ad11445",
+    "sensor_reftype": "d79ed2610afc323c",
+    "sensor_type": "d67e600ee18e50a8",
+    "site_bodyid": "cca948e48ce134c9",
+    "site_group": "db3ace9a1925c911",
+    "site_matid": "eaf662abae8192ce",
+    "site_pos": "4df5edca1d0ce9b9",
+    "site_quat": "20da1705d375d97f",
+    "site_rgba": "014ee25460036ab6",
+    "site_sameframe": "c6bb82b4c1f09b11",
+    "site_size": "80d96b93e848aafc",
+    "site_type": "60015028a65f5178",
+    "tex_adr": "09b8543e4d6afdb2",
+    "tex_colorspace": "e138db2ca933b96f",
+    "tex_data": "caa9c90876b50726",
+    "tex_height": "fa68be4c255a43f8",
+    "tex_nchannel": "e1b2dd580d90d8b8",
+    "tex_pathadr": "6f35a2045cf48556",
+    "tex_type": "80a8531335363a65",
+    "tex_width": "fbe69586a0274b3a",
+    "tree_bodyadr": "053f6fcd36b0854e",
+    "tree_bodynum": "20b6f556323eea68",
+    "tree_dofadr": "fa8f51fb4555db13",
+    "tree_dofnum": "c0ad756c99b94cc1",
+    "tree_sleep_policy": "bb70cbc3d2555ba3"
+   },
+   "state": {
+    "time": "cd667bc94b2a59c9",
+    "qpos": "3d7276d5a3389a95",
+    "qvel": "a3a0a19b7b95f348",
+    "act": "38e8cefffb0bde4c",
+    "ctrl": "03da0cf20f3d91f1",
+    "qacc_warmstart": "e3f1ed095373d64f",
+    "qacc": "e3f1ed095373d64f",
+    "mocap_pos": "e6e09ef728a8c1dc",
+    "mocap_quat": "a88de541bdbaa65d",
+    "xpos": "4cbf9396c7ee7708",
+    "qfrc_applied": "ed61543b419bab58",
+    "xfrc_applied": "98c63a32266cb689"
+   },
+   "task_id": 8,
+   "init_state": 0,
+   "success": false,
+   "steps": 520
+  }
+ ]
+}

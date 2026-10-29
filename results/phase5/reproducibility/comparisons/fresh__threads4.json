@@ -1,0 +1,68 @@
+{
+ "a": {
+  "name": "fresh",
+  "seeds": [
+   1000
+  ],
+  "threads": 1,
+  "deterministic": false,
+  "scene_fix": true,
+  "config": "kortyn/experiments/phase5/libero_rtc_kurz.yaml",
+  "profile": "smolvla_libero_rtc",
+  "run": "sync25"
+ },
+ "b": {
+  "name": "threads4",
+  "seeds": [
+   1000
+  ],
+  "threads": 4,
+  "deterministic": false,
+  "scene_fix": true,
+  "config": "kortyn/experiments/phase5/libero_rtc_kurz.yaml",
+  "profile": "smolvla_libero_rtc",
+  "run": "sync25"
+ },
+ "seeds": [
+  {
+   "seed": 1000,
+   "outcome_a": [
+    false,
+    520
+   ],
+   "outcome_b": [
+    false,
+    520
+   ],
+   "model_fields_differing": [],
+   "model_fields": 264,
+   "state_fields_differing": [],
+   "requests_compared": 21,
+   "first_difference": {
+    "request": 0,
+    "obs_timestep": 0,
+    "observations_differing": [],
+    "plan_identical": false,
+    "first_action_a": [
+     0.13837146759033203,
+     0.038354966789484024,
+     0.03434765338897705,
+     -0.0017882504034787416,
+     -0.0009934017434716225,
+     -0.04027574509382248,
+     -0.9932425618171692
+    ],
+    "first_action_b": [
+     0.13822445273399353,
+     0.038287147879600525,
+     0.03365052491426468,
+     -0.0018706615082919598,
+     -0.0005242354236543179,
+     -0.04034227877855301,
+     -0.9924544095993042
+    ]
+   },
+   "identical": false
+  }
+ ]
+}
