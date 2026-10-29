@@ -60,6 +60,10 @@ STATE_FIELDS = (
 )
 
 
+# Environment variables that change the software renderer or the thread pools; recorded with every probe.
+RECORDED_ENVIRONMENT = ("LP_NATIVE_VECTOR_WIDTH", "MUJOCO_GL", "PYOPENGL_PLATFORM", "OMP_NUM_THREADS")
+
+
 class ReproducibilityError(RuntimeError):
     """Missing or inconsistent inputs."""
 
@@ -499,6 +503,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "config": CONFIG,
                 "profile": PROFILE,
                 "run": RUN,
+                "environment": {name: os.environ.get(name) for name in RECORDED_ENVIRONMENT},
             }
             _write(_probe_path(args.name), {"settings": settings, "episodes": records})
         elif args.command == "compare":

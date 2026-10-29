@@ -10,6 +10,7 @@ from kortyn import paper
 
 ROOT = Path(__file__).resolve().parent.parent
 README = ROOT / "README.md"
+SUMMARY = ROOT / "paper" / "summary.md"
 
 
 @pytest.fixture(scope="module")
@@ -128,3 +129,14 @@ def test_readme_links_exist() -> None:
         if target.startswith("http"):
             continue
         assert (ROOT / target).exists(), target
+
+
+def test_summary_is_short_and_its_numbers_have_a_source(build: paper.Build) -> None:
+    """paper/summary.md is shared next to the link: at most 200 words, every number a fact of the report."""
+    import re
+
+    text = SUMMARY.read_text(encoding="utf-8")
+    body = text.split("\n", 1)[1]  # without the title
+    words = re.findall(r"[^\s<>]+", re.sub(r"<https?://[^>]+>", "", body))
+    assert len([w for w in words if w != "-"]) <= 200
+    assert paper.unbacked(text, build.facts) == []

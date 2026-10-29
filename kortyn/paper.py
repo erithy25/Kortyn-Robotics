@@ -1099,14 +1099,23 @@ def reproducibility(facts: Facts) -> dict[str, Any]:
             control = gate["controls"][name]
             short = name.split("_")[0]
             facts.add(f"r.{short}.diff", pp(control["difference"]), gate_path, f"controls.{name}.difference")
+            facts.add(
+                f"r.{short}.interval",
+                pp_interval(*control["interval"]),
+                gate_path,
+                f"controls.{name}.interval",
+            )
+            facts.add(f"r.{short}.p", p_value(control["p_value"]), gate_path, f"controls.{name}.p_value")
         pairing = gate["pairing_task8"]
         for label in ("original", "fixed"):
-            facts.add(
-                f"r.pairing.{label}",
-                pct(pairing[label]["discordant_rtc_vs_sync25"]),
-                gate_path,
-                f"pairing_task8.{label}.discordant_rtc_vs_sync25",
-            )
+            for pair in ("rtc", "async"):
+                key = f"discordant_{pair}_vs_sync25"
+                facts.add(
+                    f"r.pairing.{pair}.{label}",
+                    pct(pairing[label][key]),
+                    gate_path,
+                    f"pairing_task8.{label}.{key}",
+                )
     return data
 
 

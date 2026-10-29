@@ -23,7 +23,8 @@ without RTC and 4 robots with short guidance within a 3-pp tolerance, and 2 robo
 fleet validation ran below its prediction (−9.7 pp pooled) after we fixed a rendering fault that had invalidated
 two earlier validations. A browser measurement on a free Tesla T4 (91 ms per request, fp16 compiled) kept the
 p99 end-to-end latency within 150 ms for 1 robot only, so by the pre-registered rule the business idea is rejected
-for good. All five phases were pre-registered; the negative results are reported in full in
+for good. A reference that did not reproduce led us to a LIBERO bug that moved one task's stove with the
+simulator's history; we fixed it and re-checked the affected result. All five phases were pre-registered; the negative results are reported in full in
 **[`paper/report.md`](paper/report.md)**.
 
 ## Quickstart

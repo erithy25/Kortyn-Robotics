@@ -17,7 +17,9 @@ chunking (RTC) as implemented in LeRobot did not stretch this curve. With guidan
 gain over the latency budget was −1.6 pp [−6.1, +3.4] pp, and RTC failed the check that it matches the synchronous
 reference at zero latency. With guidance limited to the frozen actions plus 4, RTC passed a pre-registered
 zero-latency gate (45.5% against 49.0%), but its mean gain was again not demonstrable (+2.6 pp [−1.7, +5.6] pp);
-the reference behind the phase-4 check did not reproduce. Under an assumed service time of 220 ms per plan, one
+the reference behind the phase-4 check had not reproduced because a LIBERO bug moved the stove of one task with
+the simulator's history; we fixed it, and with fixed scenes the gate passed again. Under an assumed service time
+of 220 ms per plan, one
 consumer GPU serves 3 robots without RTC and 4 robots with short guidance within a 3-pp tolerance, and 2 robots by
 a conservative estimate. A real fleet validation fell short of the predictions by −9.7 pp on average, and an
 earlier validation was invalidated by a rendering fault we found and fixed. A browser measurement on a free
@@ -116,7 +118,8 @@ and are not exactly repeatable.
 The simulation-time mode replaces the clock with a discrete-event simulation. The policy still computes every
 plan, on the CPU, but simulation time does not advance while it computes; instead the plan becomes available
 after a modeled end-to-end latency: a fixed value, a distribution, a model of network plus service time, or a
-replay of latencies logged in real time. Every episode is deterministic given its seed. GPU scenarios can thus be
+replay of latencies logged in real time. Every episode is deterministic given its seed, provided the scene
+depends on the seed alone; for LIBERO task 8 this took a fix in phase 5 (section 4.8). GPU scenarios can thus be
 measured on a CPU: the GPU enters only through its service time.
 
 We validated the mode against all 550 episodes of phase 1. Replaying the logged latencies reproduced every
@@ -368,9 +371,9 @@ interval (97.5% for phase 4, Bonferroni over two cases). Sources: `results/phase
 
 **Run order.** Phase 4 also found that one phase-3 level did not reproduce: task 8 at 500 ms reached 26% in
 phase 3, 44% in phase 4 and 46% when each of its 50 episodes ran in a fresh process (p = 0.03 against phase 3).
-LIBERO carries state between episodes of a process, so the order of episodes changes single outcomes; in our
-checks it did not change rates except for this phase-3 level, whose cause remains open. All curves in this
-report use phase-4 levels.
+The cause, found in phase 5, is not the policy: LIBERO moved the stove of task 8 with the simulator's history,
+so the order of episodes in a process changed the scene (section 4.8). All curves in this report use phase-4
+levels.
 
 ### 4.7 Phase 5: RTC with short guidance and the GPU measurement
 
@@ -398,7 +401,7 @@ the same block, a difference of −3.5 pp [−11.5, +4.0] pp (McNemar p = 0.43; 
 of the criterion held, so the dose block ran. The controls agree: asynchronous execution without RTC also reached
 49.0% (K1: ±0.0 pp [−8.5, +8.5] pp, p = 1.00), and RTC changed success against it by −3.5 pp [−11.0, +4.5] pp
 (K2, p = 0.44). The loss of 6 pp from asynchronous execution that the power analysis treated as a risk did not
-appear. The tasks differ: in task 0 both asynchronous conditions lost against the reference (−8.0 pp without and
+appear in this block; with the scenes of task 8 fixed, it did (section 4.8). The tasks differ: in task 0 both asynchronous conditions lost against the reference (−8.0 pp without and
 −9.0 pp with RTC; RTC against asynchronous −1.0 pp), in task 8 neither did (+8.0 pp and +2.0 pp; RTC against
 asynchronous −6.0 pp). With 100 pairs per task these differences are descriptive.
 
@@ -427,8 +430,8 @@ reached 42% in phase 5 against 53% in phase 3 (−11.0 pp [−20.0, −2.0] pp, 
 noise replicate of the same init states. Asynchronous execution without RTC reproduced phase 4 (48% against 47%,
 p = 1.00). On these seeds RTC with short guidance (46%) did not differ significantly from RTC with long guidance
 in phase 4 (42%, p = 0.61). The failed zero-latency check of phase 4 had therefore compared RTC with a reference
-that was high, by chance or through its run context; we cannot tell which. A reference from 100 episodes was too
-noisy for a margin of −15 pp, which the design with 200 pairs addressed.
+from another run context. Section 4.8 shows that the whole difference lies in task 8, whose scene depended on that
+context, and that task 0 reproduced episode for episode.
 
 **Dose block: no demonstrable stretch.** With short guidance, RTC reached 46% at 0 ms, 41% at 200 ms, 31% at 500 ms
 and 6% at 1,000 ms (Table 2, Figure 3). At no level did it differ significantly from the phase-4 curve without RTC
@@ -515,18 +518,62 @@ compared, across phases and within one session, splits the same way (Table 7).
 tick. Seeds 1000–1049 are task 8, seeds 1050–1099 task 0. Source:
 `results/phase5/reproducibility/fingerprints.json`.*
 
-**Cause.** In LIBERO's environments, every hard reset appends an on/off sampler for the stove to a list that is
-never cleared. Each sampler draws one number from numpy's global random generator before the fixtures are
-placed, so after k resets the stove's placement uses the random numbers shifted by k. The stove is a fixture: its
-position is written into the model, which the init state does not restore. The scene of task 8 therefore
-depended on how many episodes the simulator had run. Task 0 has no articulated object in its initial state and
-is unaffected. Kortyn's LIBERO wrapper now empties the list before each seeded reset (`kortyn/libero_env.py`;
-LIBERO and LeRobot are unchanged), so the scene is a function of the episode seed alone.
+**Cause.** A probe (`kortyn/reproducibility.py`) runs Kortyn's own rollout path and records SHA-256 digests of
+every array of the MuJoCo model, of the simulator state after the reset, of every observation and of every plan.
+It compared seed 1000 in a fresh process with seed 1000 run after another episode in the same process. They
+differed in 1 of 264 model arrays: `body_pos`, at the stove `flat_stove_1_main`, which moved by 8–13 mm from one
+reset to the next. Both camera images and with them the first plan differed, and the episode ended after 383 steps
+instead of 424 steps; the phase-3 episode of this seed, also a later episode of its process, had ended after
+383 steps as well. The cause lies in LIBERO. Its environments append an on/off sampler for the stove to a list at
+every hard reset and never clear the list. Each sampler draws one number from numpy's global random generator
+before the fixtures are placed, so after k resets the stove's placement uses the random numbers shifted by k. The
+stove is a fixture: its position is written into the model, which the init state does not restore. Task 0 has no
+articulated object in its initial state and is unaffected; LIBERO scenes with a stove, a microwave or a drawer in
+their initial state are exposed to the same mechanism.
+
+**What we excluded.** The probe also tested the suspects named at the outset. All runs used one PyTorch thread
+per worker, and the thread count matters: with four threads the first plan differed for an identical
+observation, so it has to stay fixed. `torch.use_deterministic_algorithms(True)` changed no bit, nor did the
+vector width of the software renderer (128 instead of 256 bits). The order of seeds mattered only through the
+scene.
+
+**Fix.** Kortyn's LIBERO wrapper now empties the sampler list before each seeded reset (`kortyn/libero_env.py`;
+LIBERO and LeRobot are unchanged), so the scene is a function of the episode seed alone. With the fix, the fresh
+and the warm process produced identical models, states and 21 of 21 requests, and a regression test resets the
+same seed after other episodes and in a fresh simulator. LeRobot's own evaluation inherits the bug.
+
+**Gate with fixed scenes (not pre-registered).** We re-ran task 8 of the gate block with the fix, both noise
+replicates and all three conditions; task 0 is unaffected and was reused. With the stove now identical across the
+conditions of a seed, the pairs in task 8 agreed more often: the share of discordant pairs fell from 38% to 30%
+for RTC against the reference and from 52% to 27% for asynchronous execution against the reference. With the
+gate's own code, RTC with short guidance reached 51.5% against 55.0% for the reference, a difference of −3.5 pp
+[−10.0, +3.0] pp (p = 0.40): the gate passes as before, with a narrower interval. The controls moved. Asynchronous
+execution without RTC changed success by −6.5 pp [−12.5, −0.5] pp against the reference (K1, p = 0.08), close to
+the loss the power analysis had treated as a risk, and RTC changed success against asynchronous execution by
++3.0 pp [−4.0, +10.5] pp (K2, p = 0.50).
+
+**Which statements change.** Table 8 lists the statements of this report and of the phase reports that the
+stove of task 8 touches. The RTC verdict stands; the claim that asynchronous execution costs nothing at zero
+latency does not.
+
+| Statement | After the fix |
+|---|---|
+| Every episode is deterministic given its seed (section 3.3) | Holds for PushT, Meta-World and LIBERO task 0; for task 8 only since the fix |
+| The phase-3 reference did not reproduce (section 4.7) | Explained: the whole difference lies in task 8; task 0 reproduced episode for episode |
+| A phase-3 level of task 8 did not reproduce ("run order", section 4.6) | Explained by the same mechanism |
+| RTC with short guidance passes the zero-latency gate (section 4.7) | Unchanged: passed again with fixed scenes |
+| Asynchronous execution matches the reference at 0 ms (K1, section 4.7) | Not robust: ±0.0 pp with moving scenes, −6.5 pp with fixed scenes |
+| Curves, H1 and capacities (sections 4.4, 4.5, 4.7) | Not re-measured. Task-8 conditions saw different stove positions drawn from the same range: no expected bias, weaker pairing |
+| Fleet validations (section 4.6) | As for the curves |
+| Results on task 0, PushT and Meta-World | Unchanged |
+
+*Table 8. Statements affected by the stove of task 8.*
 
 ## 5. Limitations
 
 - **Simulation only.** All success rates come from simulated rollouts; no physical robot was used. LIBERO's
-  rendering and physics are deterministic per seed, real sensors and actuators are not.
+  rendering and physics are deterministic per seed (for task 8 since the fix of section 4.8), real sensors and
+  actuators are not.
 - **One policy, few tasks.** The LIBERO results rest on one checkpoint and two tasks with 100 paired episodes per
   level. The curve shape, in particular the drop between 200 and 300 ms, may differ for other tasks and
   policies. Pairing across conditions is weak, so intervals of differences are wide (about ±12 pp for 100 pairs).
@@ -539,9 +586,10 @@ LIBERO and LeRobot are unchanged), so the scene is a function of the episode see
 - **RTC settings.** We tested LeRobot's RTC with two guidance lengths and one weight schedule, without the
   vector-Jacobian correction of the RTC paper [3]; other settings or implementations may behave differently. The
   phase-5 curve rests on four latency levels.
-- **References and run order.** In phase 5 the compared conditions ran one after another for each seed, always in
-  the same order. Earlier phases compared against references from other runs; the phase-3 synchronous reference
-  did not reproduce (−11.0 pp on the same seeds).
+- **Scenes of task 8.** Until the fix of section 4.8, the stove of task 8 moved with the simulator's history.
+  Comparisons across runs in task 8 are therefore not episode-by-episode pairs, and the conditions of one seed
+  saw different stove positions; only the gate block was re-run with fixed scenes. In phase 5 the compared
+  conditions ran one after another for each seed, always in the same order.
 - **Thresholds.** The 3-pp tolerance, the 1% late-plan limit and the 150 ms target are choices, not derived
   quantities. The capacity depends on them.
 - **Hidden coupling.** The rendering fault shows that multi-simulator rollouts can be wrong without failing
@@ -563,10 +611,11 @@ pre-registered 150 ms for 1 robot only; by our own rule the business idea is rej
 criterion alone would have admitted 12 robots.
 
 Three methodological lessons carry beyond this case. The simulation-time mode makes such measurements cheap and
-exactly repeatable. Multi-robot rollouts need their own checks: a rendering fault in one shared process silently
-corrupted two validations. And a single reference of 100 episodes can be far off, as the phase-3 reference was
-(−11.0 pp on the same seeds), so a comparison against a margin needs a larger reference measured in the same
-block. Pre-registration made these negative results visible instead of tuning them away.
+repeatable, but the same seed is not the same episode until that is checked bit by bit: a LIBERO bug moved the
+stove of one task with the simulator's history and shifted a reference by −11.0 pp on the same seeds; comparing
+episodes, not rates, found it. Multi-robot rollouts need their own checks: a rendering fault in one shared
+process silently corrupted two validations. And a comparison against a margin needs a reference measured in the
+same block. Pre-registration made these negative results visible instead of tuning them away.
 
 ## 7. Reproduction
 
