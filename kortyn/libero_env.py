@@ -254,6 +254,24 @@ def _activate_render_context(task_env: Any) -> None:
         context.gl_ctx.make_current()
 
 
+def _reset_property_samplers(task_env: Any) -> None:
+    """Undo LIBERO's accumulation of object-property samplers across hard resets.
+
+    LIBERO's BDDL environments create ``object_property_initializers`` once (``__init__``) but append an
+    open/close or turn-on/off sampler per articulated initial state in ``_load_model``, i.e. on every hard
+    reset. Each sampler draws one number from numpy's global RNG in ``_reset_internal``, before the fixtures
+    are placed. After k hard resets the fixture placement therefore uses draws shifted by k, and a fixture
+    such as the stove of LIBERO-10 task 8 (placed by writing ``model.body_pos``, which the init state does
+    not restore) stands where the simulator's history puts it: the scene depended on how many episodes
+    the process had run. Emptying the list before the seeded reset leaves exactly the samplers of that
+    reset's model load, so the scene is a function of the episode seed alone. Scenes without articulated
+    initial states (e.g. task 0) are unchanged.
+    """
+    domain = getattr(getattr(task_env, "_env", None), "env", None)
+    if domain is not None and hasattr(domain, "object_property_initializers"):
+        domain.object_property_initializers = []
+
+
 def _lerobot_env_class() -> type[Any]:
     """LeRobot's ``LiberoEnv`` with a simulator that skips camera observables (rendered on demand)."""
     from lerobot.envs.libero import LiberoEnv as LeRobotLiberoEnv
@@ -467,6 +485,8 @@ class LiberoEnv:
         if n_states is not None and init_state_id >= n_states:
             raise EnvError(f"task {task_id} has {n_states} init states, episode needs state {init_state_id}")
         env.init_state_id = init_state_id  # LeRobot: episode j of a task starts from init state j
+        env._ensure_env()  # build the simulator on first use, so that its samplers can be reset
+        _reset_property_samplers(env)  # the scene must not depend on earlier episodes of this simulator
         _activate_render_context(env)  # the hard reset frees the old simulator's render resources
         raw, _info = env.reset(seed=env_seed)
         # A hard reset rebuilds the simulator: camera sensors bound to the old one are invalid.
