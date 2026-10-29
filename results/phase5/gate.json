@@ -1,0 +1,255 @@
+{
+ "pre_registration": "reports/phase5_preregistration.md, sections 3.3-3.4",
+ "runs": {
+  "sync25": "results/phase5/libero/smolvla_libero_rtc/sync25",
+  "async_0ms": "results/phase5/libero/smolvla_libero_rtc/async_0ms",
+  "rtc_kurz_0ms": "results/phase5/libero/smolvla_libero_rtc/rtc_kurz_0ms"
+ },
+ "rates": {
+  "sync25": {
+   "rate": 0.49,
+   "episodes": 200,
+   "tasks": {
+    "0": 0.53,
+    "8": 0.45
+   }
+  },
+  "async_0ms": {
+   "rate": 0.49,
+   "episodes": 200,
+   "tasks": {
+    "0": 0.45,
+    "8": 0.53
+   }
+  },
+  "rtc_kurz_0ms": {
+   "rate": 0.455,
+   "episodes": 200,
+   "tasks": {
+    "0": 0.44,
+    "8": 0.47
+   }
+  }
+ },
+ "gate": {
+  "reference": "sync25",
+  "test": "rtc_kurz_0ms",
+  "pairs": 200,
+  "clusters": 100,
+  "reference_rate": 0.49,
+  "test_rate": 0.455,
+  "difference": -0.035,
+  "interval": [
+   -0.115,
+   0.04
+  ],
+  "only_reference": 33,
+  "only_test": 26,
+  "p_value": 0.4349928051221534,
+  "margin": 0.15,
+  "passed": true,
+  "verdict": "bestanden"
+ },
+ "controls": {
+  "K1_async_vs_sync25": {
+   "reference": "sync25",
+   "test": "async_0ms",
+   "pairs": 200,
+   "clusters": 100,
+   "reference_rate": 0.49,
+   "test_rate": 0.49,
+   "difference": 0.0,
+   "interval": [
+    -0.085,
+    0.085
+   ],
+   "only_reference": 36,
+   "only_test": 36,
+   "p_value": 1.0,
+   "margin": 0.15,
+   "passed": true,
+   "verdict": "bestanden"
+  },
+  "K2_rtc_vs_async": {
+   "reference": "async_0ms",
+   "test": "rtc_kurz_0ms",
+   "pairs": 200,
+   "clusters": 100,
+   "reference_rate": 0.49,
+   "test_rate": 0.455,
+   "difference": -0.035,
+   "interval": [
+    -0.11,
+    0.045
+   ],
+   "only_reference": 34,
+   "only_test": 27,
+   "p_value": 0.4426260049464714,
+   "margin": 0.15,
+   "passed": true,
+   "verdict": "bestanden"
+  }
+ },
+ "per_task": {
+  "0": {
+   "gate": {
+    "reference": "sync25",
+    "test": "rtc_kurz_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.53,
+    "test_rate": 0.44,
+    "difference": -0.09,
+    "interval": [
+     -0.17,
+     -0.01
+    ],
+    "only_reference": 15,
+    "only_test": 6,
+    "p_value": 0.0783538818359375,
+    "margin": 0.15,
+    "passed": false,
+    "verdict": "nicht bestanden"
+   },
+   "K1": {
+    "reference": "sync25",
+    "test": "async_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.53,
+    "test_rate": 0.45,
+    "difference": -0.08,
+    "interval": [
+     -0.17,
+     0.0
+    ],
+    "only_reference": 14,
+    "only_test": 6,
+    "p_value": 0.11531829833984375,
+    "margin": 0.15,
+    "passed": false,
+    "verdict": "nicht bestanden"
+   },
+   "K2": {
+    "reference": "async_0ms",
+    "test": "rtc_kurz_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.45,
+    "test_rate": 0.44,
+    "difference": -0.01,
+    "interval": [
+     -0.1,
+     0.08
+    ],
+    "only_reference": 10,
+    "only_test": 9,
+    "p_value": 1.0,
+    "margin": 0.15,
+    "passed": true,
+    "verdict": "bestanden"
+   }
+  },
+  "8": {
+   "gate": {
+    "reference": "sync25",
+    "test": "rtc_kurz_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.45,
+    "test_rate": 0.47,
+    "difference": 0.02,
+    "interval": [
+     -0.11,
+     0.15
+    ],
+    "only_reference": 18,
+    "only_test": 20,
+    "p_value": 0.8714146793645341,
+    "margin": 0.15,
+    "passed": true,
+    "verdict": "bestanden"
+   },
+   "K1": {
+    "reference": "sync25",
+    "test": "async_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.45,
+    "test_rate": 0.53,
+    "difference": 0.08,
+    "interval": [
+     -0.060249999999997784,
+     0.22
+    ],
+    "only_reference": 22,
+    "only_test": 30,
+    "p_value": 0.3317497633694906,
+    "margin": 0.15,
+    "passed": true,
+    "verdict": "bestanden"
+   },
+   "K2": {
+    "reference": "async_0ms",
+    "test": "rtc_kurz_0ms",
+    "pairs": 100,
+    "clusters": 50,
+    "reference_rate": 0.53,
+    "test_rate": 0.47,
+    "difference": -0.06,
+    "interval": [
+     -0.18,
+     0.06
+    ],
+    "only_reference": 24,
+    "only_test": 18,
+    "p_value": 0.44079906734259566,
+    "margin": 0.15,
+    "passed": false,
+    "verdict": "nicht bestanden"
+   }
+  }
+ },
+ "reproduction": {
+  "async_0ms_vs_phase4_block_a": {
+   "pairs": 100,
+   "rate_a": 0.47,
+   "rate_b": 0.48,
+   "only_a": 8,
+   "only_b": 9,
+   "difference": 0.010000000000000009,
+   "interval": [
+    -0.07,
+    0.09
+   ],
+   "p_value": 1.0
+  },
+  "sync25_vs_phase3": {
+   "pairs": 100,
+   "rate_a": 0.53,
+   "rate_b": 0.42,
+   "only_a": 16,
+   "only_b": 5,
+   "difference": -0.11000000000000004,
+   "interval": [
+    -0.2,
+    -0.02
+   ],
+   "p_value": 0.02660369873046875
+  },
+  "rtc_kurz_vs_phase4_rtc_long_at_0ms": {
+   "pairs": 100,
+   "rate_a": 0.42,
+   "rate_b": 0.46,
+   "only_a": 15,
+   "only_b": 19,
+   "difference": 0.040000000000000036,
+   "interval": [
+    -0.07,
+    0.15
+   ],
+   "p_value": 0.6075913612730801
+  }
+ },
+ "decision": "D runs (dose block 200 / 500 / 1000 ms)"
+}

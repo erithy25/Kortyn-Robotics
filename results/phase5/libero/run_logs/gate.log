@@ -1,0 +1,139 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+2026-10-27 20:52:04,351 INFO kortyn.run_virtual: [smolvla_libero_rtc] 600 episodes pending (200 seeds x up to 3 runs), 4 workers x 1 torch threads
+2026-10-27 20:52:10,729 WARNING root: No accelerated backend detected. Using default cpu, this will be slow.
+2026-10-27 20:52:10,730 WARNING lerobot.configs.policies: Device 'cuda' is not available. Switching to 'cpu'.
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+2026-10-27 20:52:11,274 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-10-27 20:52:11,275 WARNING huggingface_hub.utils._http: Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-10-27 20:52:11,329 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fconfig.json=&etag=%222463e842695989a207176fdb249327a494b05cfb%22 "HTTP/1.1 200 OK"
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  31%|███       | 151/489 [00:00<00:00, 1499.95it/s]Loading weights:  65%|██████▌   | 319/489 [00:00<00:00, 1589.18it/s]Loading weights:  98%|█████████▊| 478/489 [00:00<00:00, 1032.19it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 1138.94it/s]
+2026-10-27 20:52:12,337 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/generation_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:12,388 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/generation_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fgeneration_config.json=&etag=%22eace9aa6d392fd94dbe0c90825074c53fd7ecd4a%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:12,467 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:12,521 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:12,601 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-10-27 20:52:12,676 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:12,725 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:12,810 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/chat_template.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:12,859 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/chat_template.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fchat_template.json=&etag=%221d342e4f070c962a14ba4ece4e06212bc70d8e36%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:12,939 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/chat_template.jinja "HTTP/1.1 404 Not Found"
+2026-10-27 20:52:13,034 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/audio_tokenizer_config.json "HTTP/1.1 404 Not Found"
+2026-10-27 20:52:13,139 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-10-27 20:52:13,222 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:13,270 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:13,347 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/chat_template.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:13,395 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/chat_template.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fchat_template.json=&etag=%221d342e4f070c962a14ba4ece4e06212bc70d8e36%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:13,473 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/chat_template.jinja "HTTP/1.1 404 Not Found"
+2026-10-27 20:52:13,550 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/audio_tokenizer_config.json "HTTP/1.1 404 Not Found"
+2026-10-27 20:52:13,628 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:13,678 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:13,750 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:13,797 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/preprocessor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fpreprocessor_config.json=&etag=%22bf7669a38692ad141d333db3be18bd55cb6e2c59%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:13,875 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:13,925 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:14,002 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:14,049 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/preprocessor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fpreprocessor_config.json=&etag=%22bf7669a38692ad141d333db3be18bd55cb6e2c59%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:14,124 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:14,173 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fconfig.json=&etag=%222463e842695989a207176fdb249327a494b05cfb%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:14,307 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:14,358 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/tokenizer_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Ftokenizer_config.json=&etag=%22e4042a1126290fdb96ece2a4ad8dd7108c5de484%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:14,439 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-10-27 20:52:14,527 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-10-27 20:52:14,790 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:14,837 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:14,918 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-10-27 20:52:14,998 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:15,046 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/preprocessor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fpreprocessor_config.json=&etag=%22bf7669a38692ad141d333db3be18bd55cb6e2c59%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:15,127 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:15,178 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/processor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fprocessor_config.json=&etag=%2283df8c48da1f41e1a9129a4bc2aba000eb2b529f%22 "HTTP/1.1 200 OK"
+2026-10-27 20:52:15,257 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-10-27 20:52:15,339 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:52:15,387 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/preprocessor_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fpreprocessor_config.json=&etag=%22bf7669a38692ad141d333db3be18bd55cb6e2c59%22 "HTTP/1.1 200 OK"
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+2026-10-27 20:53:56,379 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:53:56,431 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Fconfig.json=&etag=%222463e842695989a207176fdb249327a494b05cfb%22 "HTTP/1.1 200 OK"
+2026-10-27 20:53:56,527 INFO httpx: HTTP Request: HEAD https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-27 20:53:56,577 INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/7b375e1b73b11138ff12fe22c8f2822d8fe03467/tokenizer_config.json?%2FHuggingFaceTB%2FSmolVLM2-500M-Video-Instruct%2Fresolve%2Fmain%2Ftokenizer_config.json=&etag=%22e4042a1126290fdb96ece2a4ad8dd7108c5de484%22 "HTTP/1.1 200 OK"
+2026-10-27 20:53:56,660 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-10-27 20:53:56,747 INFO httpx: HTTP Request: GET https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-10-27 20:53:57,038 INFO kortyn.policy: loaded smolvla from checkpoints/smolvla_libero on cpu (n_obs_steps=1, chunk=50, sampler=flow-10)
+[robosuite WARNING] No private macro file found! (__init__.py:7)
+2026-10-27 20:53:57,190 WARNING robosuite_logs: No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (__init__.py:8)
+2026-10-27 20:53:57,190 WARNING robosuite_logs: It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (__init__.py:9)
+2026-10-27 20:53:57,190 WARNING robosuite_logs: To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+[robosuite WARNING] No private macro file found! (__init__.py:7)
+2026-10-27 20:53:57,201 WARNING robosuite_logs: No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (__init__.py:8)
+2026-10-27 20:53:57,201 WARNING robosuite_logs: It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (__init__.py:9)
+2026-10-27 20:53:57,201 WARNING robosuite_logs: To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+[robosuite WARNING] No private macro file found! (__init__.py:7)
+2026-10-27 20:53:57,208 WARNING robosuite_logs: No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (__init__.py:8)
+2026-10-27 20:53:57,209 WARNING robosuite_logs: It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (__init__.py:9)
+2026-10-27 20:53:57,209 WARNING robosuite_logs: To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+[robosuite WARNING] No private macro file found! (__init__.py:7)
+2026-10-27 20:53:57,217 WARNING robosuite_logs: No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (__init__.py:8)
+2026-10-27 20:53:57,217 WARNING robosuite_logs: It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (__init__.py:9)
+2026-10-27 20:53:57,217 WARNING robosuite_logs: To setup, run: python /home/user/Kortyn-Robotics/.venv-libero/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+2026-10-27 20:53:57,264 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 20:53:57,266 INFO OpenGL.acceleratesupport: No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-27 20:53:57,284 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 20:53:57,304 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 20:53:57,307 INFO OpenGL.acceleratesupport: No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-27 20:53:57,319 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 20:53:57,323 INFO OpenGL.acceleratesupport: No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-27 20:53:57,332 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 20:53:57,335 INFO OpenGL.acceleratesupport: No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-27 20:53:57,343 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 20:53:57,354 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+2026-10-27 20:53:57,368 INFO OpenGL.platform.ctypesloader: Failed to load library ( 'libOpenGL.so.0' ): libOpenGL.so.0: cannot open shared object file: No such file or directory
+[info] using task orders [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+Local assets not found. Downloading from HuggingFace Hub...
+Assets already downloaded at /root/.cache/libero/assets
+[info] using task orders [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+[info] using task orders [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+Local assets not found. Downloading from HuggingFace Hub...
+Assets already downloaded at /root/.cache/libero/assets
+Local assets not found. Downloading from HuggingFace Hub...
+Assets already downloaded at /root/.cache/libero/assets
+[info] using task orders [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+Local assets not found. Downloading from HuggingFace Hub...
+Assets already downloaded at /root/.cache/libero/assets
+2026-10-27 20:57:58,023 INFO kortyn.run_virtual: [smolvla_libero_rtc 3/600, ETA 799 min] seed 1001 (221 s) sync25:f0 async_0ms:S1 rtc_kurz_0ms:S1
+2026-10-27 20:57:58,130 INFO kortyn.run_virtual: [smolvla_libero_rtc 6/600, ETA 398 min] seed 1000 (222 s) sync25:f0 async_0ms:f1 rtc_kurz_0ms:S1
+2026-10-27 20:58:00,010 INFO kortyn.run_virtual: [smolvla_libero_rtc 9/600, ETA 266 min] seed 1002 (223 s) sync25:S0 async_0ms:S1 rtc_kurz_0ms:S1
+2026-10-27 20:58:11,787 INFO kortyn.run_virtual: [smolvla_libero_rtc 12/600, ETA 208 min] seed 1003 (235 s) sync25:S0 async_0ms:f1 rtc_kurz_0ms:f1
+2026-10-27 21:00:53,328 INFO kortyn.run_virtual: [smolvla_libero_rtc 15/600, ETA 271 min] seed 1005 (175 s) sync25:f0 async_0ms:S1 rtc_kurz_0ms:S1
+2026-10-27 21:00:56,895 INFO kortyn.run_virtual: [smolvla_libero_rtc 18/600, ETA 226 min] seed 1006 (177 s) sync25:f0 async_0ms:S1 rtc_kurz_0ms:S1
+2026-10-27 21:01:05,400 INFO kortyn.run_virtual: [smolvla_libero_rtc 21/600, ETA 197 min] seed 1004 (187 s) sync25:f0 async_0ms:S1 rtc_kurz_0ms:f1
+2026-10-27 21:01:34,526 INFO kortyn.run_virtual: [smolvla_libero_rtc 24/600, ETA 183 min] seed 1007 (203 s) sync25:f0 async_0ms:f1 rtc_kurz_0ms:f1
+2026-10-27 21:04:01,939 INFO kortyn.run_virtual: [smolvla_libero_rtc 27/600, ETA 214 min] seed 1011 (147 s) sync25:S0 async_0ms:S1 rtc_kurz_0ms:S1
+2026-10-27 21:04:02,135 INFO kortyn.run_virtual: [smolvla_libero_rtc 30/600, ETA 192 min] seed 1010 (177 s) sync25:S0 async_0ms:S1 rtc_kurz_0ms:f1
+2026-10-27 21:04:04,817 INFO kortyn.run_virtual: [smolvla_libero_rtc 33/600, ETA 174 min] seed 1008 (191 s) sync25:S0 async_0ms:f1 rtc_kurz_0ms:S1
+2026-10-27 21:04:09,104 INFO kortyn.run_virtual: [smolvla_libero_rtc 36/600, ETA 160 min] seed 1009 (192 s) sync25:f0 async_0ms:f1 rtc_kurz_0ms:f1
+2026-10-27 21:07:59,106 INFO kortyn.run_virtual: [smolvla_libero_rtc 39/600, ETA 202 min] seed 1012 (237 s) sync25:f0 async_0ms:S1 rtc_kurz_0ms:S1
+2026-10-27 21:07:59,610 INFO kortyn.run_virtual: [smolvla_libero_rtc 42/600, ETA 187 min] seed 1013 (237 s) sync25:S0 async_0ms:f1 rtc_kurz_0ms:S1
+2026-10-27 21:08:22,341 INFO kortyn.run_virtual: [smolvla_libero_rtc 45/600, ETA 178 min] seed 1014 (258 s) sync25:f0 async_0ms:f1 rtc_kurz_0ms:f1
+2026-10-27 21:08:29,113 INFO kortyn.run_virtual: [smolvla_libero_rtc 48/600, ETA 167 min] seed 1015 (260 s) sync25:f0 async_0ms:f1 rtc_kurz_0ms:f1
+2026-10-27 21:11:08,938 INFO kortyn.run_virtual: [smolvla_libero_rtc 51/600, ETA 185 min] seed 1019 (160 s) sync25:S0 async_0ms:S1 rtc_kurz_0ms:S1
+2026-10-27 21:11:19,461 INFO kortyn.run_virtual: [smolvla_libero_rtc 54/600, ETA 176 min] seed 1017 (200 s) sync25:S0 async_0ms:f1 rtc_kurz_0ms:S1
+2026-10-27 21:11:20,532 INFO kortyn.run_virtual: [smolvla_libero_rtc 57/600, ETA 166 min] seed 1016 (201 s) sync25:f0 async_0ms:S1 rtc_kurz_0ms:f1
+2026-10-27 21:11:48,880 INFO kortyn.run_virtual: [smolvla_libero_rtc 60/600, ETA 161 min] seed 1018 (207 s) sync25:f0 async_0ms:f1 rtc_kurz_0ms:f1
+2026-10-27 21:13:50,619 INFO kortyn.run_virtual: [smolvla_libero_rtc 63/600, ETA 170 min] seed 1022 (150 s) sync25:S0 async_0ms:S1 rtc_kurz_0ms:f1
+2026-10-27 21:14:03,185 INFO kortyn.run_virtual: [smolvla_libero_rtc 66/600, ETA 163 min] seed 1020 (174 s) sync25:f0 async_0ms:f1 rtc_kurz_0ms:S1
+2026-10-27 21:14:17,614 INFO kortyn.run_virtual: [smolvla_libero_rtc 69/600, ETA 157 min] seed 1021 (178 s) sync25:f0 async_0ms:S1 rtc_kurz_0ms:f1
+2026-10-27 21:14:39,488 INFO kortyn.run_virtual: [smolvla_libero_rtc 72/600, ETA 152 min] seed 1023 (171 s) sync25:f0 async_0ms:S1 rtc_kurz_0ms:f1
+2026-10-27 21:16:16,283 INFO kortyn.run_virtual: [smolvla_libero_rtc 75/600, ETA 156 min] seed 1024 (146 s) sync25:S0 async_0ms:S1 rtc_kurz_0ms:S1
+2026-10-27 21:16:47,212 INFO kortyn.run_virtual: [smolvla_libero_rtc 78/600, ETA 153 min] seed 1025 (164 s) sync25:f0 async_0ms:f1 rtc_kurz_0ms:S1
+2026-10-27 21:17:04,765 INFO kortyn.run_virtual: [smolvla_libero_rtc 81/600, ETA 148 min] seed 1026 (167 s) sync25:f0 async_0ms:S1 rtc_kurz_0ms:f1
+2026-10-27 21:17:26,707 INFO kortyn.run_virtual: [smolvla_libero_rtc 84/600, ETA 144 min] seed 1027 (167 s) sync25:f0 async_0ms:S1 rtc_kurz_0ms:f1
+2026-10-27 21:18:35,273 INFO kortyn.run_virtual: [smolvla_libero_rtc 87/600, ETA 145 min] seed 1028 (139 s) sync25:S0 async_0ms:S1 rtc_kurz_0ms:S1

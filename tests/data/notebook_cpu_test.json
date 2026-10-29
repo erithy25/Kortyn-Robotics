@@ -1,0 +1,308 @@
+{
+ "format": "kortyn-gpu-benchmark-v2",
+ "created_utc": "2026-10-27T21:05:59+00:00",
+ "script_version": "2026-10-27",
+ "platform": "other",
+ "device": {
+  "device": "cpu",
+  "python": "3.12.13",
+  "platform": "Linux-6.18.44-fc-v165-x86_64-with-glibc2.39",
+  "torch": "2.11.0+cpu",
+  "cuda": "None",
+  "lerobot": "0.6.1",
+  "transformers": "5.5.4",
+  "numpy": "2.2.6",
+  "gpu": "CPU (x86_64, 2 threads)"
+ },
+ "model": {
+  "checkpoint": "lerobot/smolvla_libero",
+  "revision": "a24f1f380461b665158d52acd140152c79e8b36d",
+  "num_steps": 10,
+  "chunk_size": 50,
+  "cameras": [
+   "observation.images.camera1",
+   "observation.images.camera2"
+  ],
+  "state_key": "observation.state",
+  "inputs": "8 LIBERO-Long observations (JPEG q90), taken in turn; instructions: ['put both moka pots on the stove', 'put both the alphabet soup and the tomato sauce in the basket']",
+  "observation_source": {
+   "suite": "libero_10",
+   "episode_seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1050,
+    1051,
+    1052,
+    1053
+   ],
+   "tasks": [
+    8,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0
+   ],
+   "init_states": [
+    0,
+    1,
+    2,
+    3,
+    0,
+    1,
+    2,
+    3
+   ],
+   "created_with": "kortyn.libero_env (Kortyn phase 5), lerobot 0.6.1",
+   "image_codec": "JPEG q90 (Pillow)"
+  }
+ },
+ "settings": {
+  "sizes": [
+   1,
+   2
+  ],
+  "repeats": 3,
+  "warmup": 1,
+  "time_limit_s": 300.0,
+  "numeric_threshold": 0.25,
+  "numeric_batch": 8,
+  "noise_seed": 1,
+  "spread_seed": 2
+ },
+ "measures": "LeRobot preprocessing + predict_action_chunk + postprocessing, actions copied to the CPU (synchronized)",
+ "numeric_reference": {
+  "configuration": "fp32",
+  "spread": 0.016593452951107562,
+  "available": true
+ },
+ "duration_s": 222.3,
+ "selected": "standard",
+ "configurations": [
+  {
+   "name": "standard",
+   "precision": "standard",
+   "compiled": false,
+   "compile_mode": null,
+   "float32_matmul_precision": "highest",
+   "parameter_dtypes": {
+    "bfloat16": 446772624,
+    "float32": 3273552
+   },
+   "gpu_state_before": {},
+   "numerics": {
+    "finite": true,
+    "rms_deviation": 0.0011454158232373393,
+    "spread": 0.016593452951107562,
+    "ratio": 0.06902817795743268,
+    "threshold": 0.25,
+    "valid": true
+   },
+   "results": [
+    {
+     "batch_size": 1,
+     "status": "ok",
+     "repeats": 3,
+     "median_ms": 2264.518,
+     "p90_ms": 2291.463,
+     "p95_ms": 2294.831,
+     "p99_ms": 2297.526,
+     "mean_ms": 2037.512,
+     "std_ms": 345.125,
+     "min_ms": 1549.82,
+     "max_ms": 2298.199,
+     "per_request_ms": 2264.518,
+     "samples_ms": [
+      1549.82,
+      2298.199,
+      2264.518
+     ],
+     "warmup": 1,
+     "warmup_ms": [
+      1617.41
+     ],
+     "memory_allocated_peak_mb": 0.0,
+     "memory_reserved_peak_mb": 0.0
+    },
+    {
+     "batch_size": 2,
+     "status": "ok",
+     "repeats": 3,
+     "median_ms": 2692.062,
+     "p90_ms": 2793.759,
+     "p95_ms": 2806.471,
+     "p99_ms": 2816.641,
+     "mean_ms": 2636.396,
+     "std_ms": 176.418,
+     "min_ms": 2397.942,
+     "max_ms": 2819.183,
+     "per_request_ms": 1346.031,
+     "samples_ms": [
+      2397.942,
+      2819.183,
+      2692.062
+     ],
+     "warmup": 1,
+     "warmup_ms": [
+      2559.774
+     ],
+     "memory_allocated_peak_mb": 0.0,
+     "memory_reserved_peak_mb": 0.0
+    }
+   ],
+   "gpu_state_after": {},
+   "status": "ok"
+  },
+  {
+   "name": "fp16",
+   "precision": "fp16",
+   "compiled": false,
+   "compile_mode": null,
+   "float32_matmul_precision": "highest",
+   "parameter_dtypes": {
+    "float16": 446772624,
+    "float32": 3273552
+   },
+   "gpu_state_before": {},
+   "numerics": {
+    "finite": true,
+    "rms_deviation": 0.00013356574877875226,
+    "spread": 0.016593452951107562,
+    "ratio": 0.008049304094349884,
+    "threshold": 0.25,
+    "valid": true
+   },
+   "results": [
+    {
+     "batch_size": 1,
+     "status": "ok",
+     "repeats": 3,
+     "median_ms": 3180.285,
+     "p90_ms": 3470.317,
+     "p95_ms": 3506.571,
+     "p99_ms": 3535.574,
+     "mean_ms": 3194.622,
+     "std_ms": 278.638,
+     "min_ms": 2860.757,
+     "max_ms": 3542.825,
+     "per_request_ms": 3180.285,
+     "samples_ms": [
+      2860.757,
+      3180.285,
+      3542.825
+     ],
+     "warmup": 1,
+     "warmup_ms": [
+      2723.149
+     ],
+     "memory_allocated_peak_mb": 0.0,
+     "memory_reserved_peak_mb": 0.0
+    },
+    {
+     "batch_size": 2,
+     "status": "ok",
+     "repeats": 3,
+     "median_ms": 5403.974,
+     "p90_ms": 5661.667,
+     "p95_ms": 5693.879,
+     "p99_ms": 5719.648,
+     "mean_ms": 5389.726,
+     "std_ms": 280.639,
+     "min_ms": 5039.112,
+     "max_ms": 5726.091,
+     "per_request_ms": 2701.987,
+     "samples_ms": [
+      5039.112,
+      5726.091,
+      5403.974
+     ],
+     "warmup": 1,
+     "warmup_ms": [
+      5144.469
+     ],
+     "memory_allocated_peak_mb": 0.0,
+     "memory_reserved_peak_mb": 0.0
+    }
+   ],
+   "gpu_state_after": {},
+   "status": "ok"
+  },
+  {
+   "name": "fp32",
+   "precision": "fp32",
+   "compiled": false,
+   "compile_mode": null,
+   "float32_matmul_precision": "highest",
+   "parameter_dtypes": {
+    "float32": 450046176
+   },
+   "gpu_state_before": {},
+   "numerics": {
+    "finite": true,
+    "rms_deviation": 0.0,
+    "spread": 0.016593452951107562,
+    "ratio": 0.0,
+    "threshold": 0.25,
+    "valid": true
+   },
+   "results": [
+    {
+     "batch_size": 1,
+     "status": "ok",
+     "repeats": 3,
+     "median_ms": 3048.361,
+     "p90_ms": 3382.947,
+     "p95_ms": 3424.77,
+     "p99_ms": 3458.228,
+     "mean_ms": 3088.664,
+     "std_ms": 293.511,
+     "min_ms": 2751.039,
+     "max_ms": 3466.593,
+     "per_request_ms": 3048.361,
+     "samples_ms": [
+      3466.593,
+      2751.039,
+      3048.361
+     ],
+     "warmup": 1,
+     "warmup_ms": [
+      3119.099
+     ],
+     "memory_allocated_peak_mb": 0.0,
+     "memory_reserved_peak_mb": 0.0
+    },
+    {
+     "batch_size": 2,
+     "status": "ok",
+     "repeats": 3,
+     "median_ms": 6136.719,
+     "p90_ms": 6186.326,
+     "p95_ms": 6192.527,
+     "p99_ms": 6197.488,
+     "mean_ms": 6149.15,
+     "std_ms": 36.48,
+     "min_ms": 6112.002,
+     "max_ms": 6198.728,
+     "per_request_ms": 3068.36,
+     "samples_ms": [
+      6112.002,
+      6198.728,
+      6136.719
+     ],
+     "warmup": 1,
+     "warmup_ms": [
+      6243.376
+     ],
+     "memory_allocated_peak_mb": 0.0,
+     "memory_reserved_peak_mb": 0.0
+    }
+   ],
+   "gpu_state_after": {},
+   "status": "ok"
+  }
+ ]
+}

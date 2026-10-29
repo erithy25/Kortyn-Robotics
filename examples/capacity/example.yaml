@@ -1,0 +1,42 @@
+# Kortyn capacity tool - example: SmolVLA on LIBERO-Long without real-time chunking, one RTX 3060 Ti serving
+# robots over office Wi-Fi (the setting of phase 4). The GPU here is the ASSUMPTION of phases 3-4 (220 ms per
+# single request, every extra request in a batch +15 %), not a measurement. With a measurement file from
+# notebooks/gpu_benchmark.ipynb pass it on the command line:
+#
+#   kortyn-capacity --config examples/capacity/example.yaml
+#   kortyn-capacity --config examples/capacity/example.yaml --gpu results/phase5/gpu/<file>.json
+#
+# Inputs: the dose-response curve (counts per task and latency, exported with kortyn.dose_export from the
+# phase-4 rollouts), the network scenario and the GPU. Output: robots per GPU and expected success per strategy.
+dose_response: examples/capacity/smolvla_libero_long.json
+
+gpu:
+  label: rtx3060ti_schaetzung
+  s1_ms: 220.0                  # assumed service time of one request (phases 3-4)
+  beta: 0.15                    # each extra request in a batch costs 15 % of a single one
+
+network:
+  scenario: buero_wlan          # office Wi-Fi: RTT 20 +/- 10 ms (kortyn/experiments/buero_wlan.yaml)
+  margin_ms: 15.0               # the Brain's estimate of the trip back to the robot
+
+agent:                          # the robots' control loop: 20 Hz, a plan of 50 actions every 25 ticks
+  fps: 20.0
+  actions_per_chunk: 50
+  refill_threshold: 24
+  client_overhead_ms: 1.0
+  transport_overhead_ms: 5.0
+
+episode_lengths:                # episode lengths drawn from the 0-ms rollouts of phase 3
+  paths: [results/phase3/libero/smolvla_libero/fest_0ms/episodes.jsonl]
+
+criteria:
+  tolerance_pp: 3.0             # worst robot at most 3 pp below a single robot
+  latency_slo: {quantile: 0.99, max_ms: 150.0, robots: 10}   # p99 end-to-end latency <= 150 ms for 10 robots?
+
+fleet:
+  max_robots: 32
+  replications: 5
+  seed: 3000
+
+bootstrap: 200                  # parametric bootstrap of the curve for the conservative capacity
+output: results/capacity/example.json

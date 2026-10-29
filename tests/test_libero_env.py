@@ -341,3 +341,38 @@ def test_reset_and_close_of_another_simulator_keep_this_robots_images() -> None:
     for t, (got, want) in enumerate(zip(frames, expected, strict=True)):
         for camera, (image, reference) in enumerate(zip(got, want, strict=True)):
             assert np.array_equal(image, reference), f"step {t}, camera {camera + 1}: differs from A alone"
+
+
+@needs_libero
+@pytest.mark.timeout(900)
+def test_scene_depends_on_the_episode_seed_only() -> None:
+    """LIBERO appends a property sampler per hard reset; the stove of task 8 must not move with history.
+
+    Without the reset of the samplers, every hard reset of the same seed placed the stove (a fixture written
+    into ``model.body_pos``) at a different position, so episodes depended on the simulator's history.
+    """
+    from kortyn.libero_env import LiberoEnv
+
+    def stove_and_scene(env: LiberoEnv, seed: int) -> tuple[np.ndarray, np.ndarray]:
+        env.reset(seed=seed)
+        sim = env._sim_env.sim
+        return np.array(sim.model.body_pos), np.array(sim.data.qpos)
+
+    config = libero_env_config(task_ids=[8, 0])
+    warm = LiberoEnv(config)
+    try:
+        first = stove_and_scene(warm, 1000)  # task 8, init state 0
+        stove_and_scene(warm, 1001)  # another episode of the same simulator
+        again = stove_and_scene(warm, 1000)
+        task0 = stove_and_scene(warm, 1050)
+    finally:
+        warm.close()
+    fresh = LiberoEnv(config)
+    try:
+        alone = stove_and_scene(fresh, 1000)
+        task0_alone = stove_and_scene(fresh, 1050)
+    finally:
+        fresh.close()
+    for expected, actual in ((first, again), (first, alone), (task0, task0_alone)):
+        np.testing.assert_array_equal(expected[0], actual[0])
+        np.testing.assert_array_equal(expected[1], actual[1])

@@ -1,0 +1,46 @@
+{
+ "a": {
+  "name": "fresh",
+  "seeds": [
+   1000
+  ],
+  "threads": 1,
+  "deterministic": false,
+  "scene_fix": true,
+  "config": "kortyn/experiments/phase5/libero_rtc_kurz.yaml",
+  "profile": "smolvla_libero_rtc",
+  "run": "sync25"
+ },
+ "b": {
+  "name": "warm",
+  "seeds": [
+   1001,
+   1000
+  ],
+  "threads": 1,
+  "deterministic": false,
+  "scene_fix": true,
+  "config": "kortyn/experiments/phase5/libero_rtc_kurz.yaml",
+  "profile": "smolvla_libero_rtc",
+  "run": "sync25"
+ },
+ "seeds": [
+  {
+   "seed": 1000,
+   "outcome_a": [
+    false,
+    520
+   ],
+   "outcome_b": [
+    false,
+    520
+   ],
+   "model_fields_differing": [],
+   "model_fields": 264,
+   "state_fields_differing": [],
+   "requests_compared": 21,
+   "first_difference": null,
+   "identical": true
+  }
+ ]
+}

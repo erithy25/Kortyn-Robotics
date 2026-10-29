@@ -1,0 +1,55 @@
+{
+ "seeds": [
+  1000,
+  1000,
+  1000,
+  1050,
+  1050,
+  1050
+ ],
+ "scene_fix": true,
+ "resets": [
+  {
+   "reset": 0,
+   "seed": 1000,
+   "task_id": 8,
+   "body_pos": "fb18b8ebdb1152a5",
+   "moved": []
+  },
+  {
+   "reset": 1,
+   "seed": 1000,
+   "task_id": 8,
+   "body_pos": "fb18b8ebdb1152a5",
+   "moved": []
+  },
+  {
+   "reset": 2,
+   "seed": 1000,
+   "task_id": 8,
+   "body_pos": "fb18b8ebdb1152a5",
+   "moved": []
+  },
+  {
+   "reset": 3,
+   "seed": 1050,
+   "task_id": 0,
+   "body_pos": "51d88a89df598661",
+   "moved": []
+  },
+  {
+   "reset": 4,
+   "seed": 1050,
+   "task_id": 0,
+   "body_pos": "51d88a89df598661",
+   "moved": []
+  },
+  {
+   "reset": 5,
+   "seed": 1050,
+   "task_id": 0,
+   "body_pos": "51d88a89df598661",
+   "moved": []
+  }
+ ]
+}

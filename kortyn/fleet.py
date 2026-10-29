@@ -43,9 +43,9 @@ from kortyn.fleet_brain import (
     BatchingBrain,
     BatchServiceModel,
     SchedulerName,
-    TableBatchProfile,
     make_batch_scheduler,
 )
+from kortyn.gpu_benchmark import load_service_model
 from kortyn.metrics import read_jsonl
 from kortyn.proto import kortyn_brain_pb2 as pb
 from kortyn.virtual_time import (
@@ -130,8 +130,11 @@ class GpuConfig:
 
     description: str = ""
     s1_ms: float = 100.0
-    # Measured table (benchmark script); replaces the affine batching profiles for this GPU when set.
+    # Measured service times (kortyn/bench_batch.py table or the phase-5 GPU notebook's file); replaces the
+    # affine batching profiles for this GPU when set. ``configuration`` picks one of a notebook file's
+    # configurations (default: the fastest numerically valid one).
     table: str | None = None
+    configuration: str | None = None
 
     def __post_init__(self) -> None:
         if self.s1_ms <= 0:
@@ -325,7 +328,7 @@ def service_model(config: FleetSimConfig, gpu: str, batching: str) -> BatchServi
     """Service-time model of one GPU with one batching profile (or the GPU's measured table)."""
     gpu_config = config.gpus[gpu]
     if gpu_config.table is not None:
-        return TableBatchProfile.from_file(gpu_config.table)
+        return load_service_model(gpu_config.table, gpu_config.configuration)
     profile = config.batching[batching]
     return AffineBatchProfile(
         s1_ms=gpu_config.s1_ms, beta=profile.beta, cv=config.service_cv, batch_limit=config.batch_limit
