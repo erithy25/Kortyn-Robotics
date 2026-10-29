@@ -66,6 +66,9 @@ uv sync --no-group metaworld --group libero
 uv run --no-sync python -m kortyn.run_virtual --config kortyn/experiments/phase4/libero_dose.yaml --share-model
 ```
 
+The repository already holds these results, and the runner skips finished episodes. To measure anew, add
+`--results-dir` with an empty directory; `--episodes 1 --run fest_0ms` runs a single episode as a quick check.
+
 **Rebuild the report's tables, figures and number provenance** from `results/`:
 
 ```bash
