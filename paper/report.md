@@ -543,7 +543,10 @@ and the warm process produced identical models, states and 21 of 21 requests, an
 same seed after other episodes and in a fresh simulator. LeRobot's own evaluation inherits the bug.
 
 **Gate with fixed scenes (not pre-registered).** We re-ran task 8 of the gate block with the fix, both noise
-replicates and all three conditions; task 0 is unaffected and was reused. With the stove now identical across the
+replicates and all three conditions; task 0 is unaffected and was reused. The re-run was interrupted twice, once
+by us and once by a container restart, and resumed in the same worktree at the same commit; the runner writes a
+seed only when all its conditions are done, and unfinished seeds ran again (logs in
+`results/phase5/libero_fixed/run_logs/`). With the stove now identical across the
 conditions of a seed, the pairs in task 8 agreed more often: the share of discordant pairs fell from 38% to 30%
 for RTC against the reference and from 52% to 27% for asynchronous execution against the reference. With the
 gate's own code, RTC with short guidance reached 51.5% against 55.0% for the reference, a difference of −3.5 pp
