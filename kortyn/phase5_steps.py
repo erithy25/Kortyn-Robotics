@@ -163,17 +163,27 @@ def _gate_json(result: GateResult, reference: str, test: str) -> dict[str, Any]:
 
 def gate_document(config: Phase5Config) -> dict[str, Any]:
     spec = config.gate
+    runs = {
+        "sync25": _outcomes(spec.reference),
+        "async_0ms": _outcomes(spec.control),
+        "rtc_kurz_0ms": _outcomes(spec.test),
+    }
+    return gate_from_outcomes(config, runs)
+
+
+def gate_from_outcomes(
+    config: Phase5Config,
+    runs: Mapping[str, Mapping[int, bool]],
+    sources: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    """The pre-registered gate, controls and reproduction checks on given outcomes (``gate_document``)."""
+    spec = config.gate
     libero = libero_layout(config.experiment)
 
     def slot(seed: int) -> tuple[int, int]:
         task, init_state, _ = episode_slot(libero, seed)
         return task, init_state
 
-    runs = {
-        "sync25": _outcomes(spec.reference),
-        "async_0ms": _outcomes(spec.control),
-        "rtc_kurz_0ms": _outcomes(spec.test),
-    }
     common = set(runs["sync25"]) & set(runs["async_0ms"]) & set(runs["rtc_kurz_0ms"])
     if not common:
         raise StepError("the gate runs have no seed in common")
@@ -238,7 +248,9 @@ def gate_document(config: Phase5Config) -> dict[str, Any]:
     }
     return {
         "pre_registration": "reports/phase5_preregistration.md, sections 3.3-3.4",
-        "runs": {"sync25": spec.reference, "async_0ms": spec.control, "rtc_kurz_0ms": spec.test},
+        "runs": dict(sources)
+        if sources is not None
+        else {"sync25": spec.reference, "async_0ms": spec.control, "rtc_kurz_0ms": spec.test},
         "rates": rates,
         "gate": _gate_json(main, "sync25", "rtc_kurz_0ms"),
         "controls": {name: _gate_json(result, *name_pair(name)) for name, result in controls.items()},

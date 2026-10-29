@@ -1,0 +1,89 @@
+{
+ "description": "Same seed, same condition, two runs: identical episodes (success flag and step count) per task. Seeds 1000-1049 are LIBERO-10 task 8, 1050-1099 task 0.",
+ "pairs": [
+  {
+   "name": "synchronous reference, phase 3 vs phase 5",
+   "a": "results/phase3/libero/smolvla_libero/sync25",
+   "b": "results/phase5/libero/smolvla_libero_rtc/sync25",
+   "tasks": {
+    "task 8": {
+     "episodes": 50,
+     "successes_a": 28,
+     "successes_b": 17,
+     "identical": 19,
+     "success_in_both": 12,
+     "same_success_tick": 2
+    },
+    "task 0": {
+     "episodes": 50,
+     "successes_a": 25,
+     "successes_b": 25,
+     "identical": 50,
+     "success_in_both": 25,
+     "same_success_tick": 25
+    }
+   }
+  },
+  {
+   "name": "asynchronous at 0 ms, phase 3 vs phase 4",
+   "a": "results/phase3/libero/smolvla_libero/fest_0ms",
+   "b": "results/phase4/libero/smolvla_libero/fest_0ms",
+   "tasks": {
+    "task 8": {
+     "episodes": 50,
+     "successes_a": 25,
+     "successes_b": 26,
+     "identical": 14,
+     "success_in_both": 15,
+     "same_success_tick": 0
+    },
+    "task 0": {
+     "episodes": 50,
+     "successes_a": 21,
+     "successes_b": 21,
+     "identical": 50,
+     "success_in_both": 21,
+     "same_success_tick": 21
+    }
+   }
+  },
+  {
+   "name": "asynchronous at 0 ms, phase 4 vs phase 5",
+   "a": "results/phase4/libero/smolvla_libero/fest_0ms",
+   "b": "results/phase5/libero/smolvla_libero_rtc/async_0ms",
+   "tasks": {
+    "task 8": {
+     "episodes": 50,
+     "successes_a": 26,
+     "successes_b": 27,
+     "identical": 15,
+     "success_in_both": 18,
+     "same_success_tick": 0
+    },
+    "task 0": {
+     "episodes": 50,
+     "successes_a": 21,
+     "successes_b": 21,
+     "identical": 50,
+     "success_in_both": 21,
+     "same_success_tick": 21
+    }
+   }
+  },
+  {
+   "name": "500 ms, phase-4 block A vs a fresh process per episode (same session)",
+   "a": "results/phase4/libero/smolvla_libero/fest_500ms",
+   "b": "results/phase4/fresh/stream*/smolvla_libero/fest_500ms",
+   "tasks": {
+    "task 8": {
+     "episodes": 50,
+     "successes_a": 22,
+     "successes_b": 23,
+     "identical": 19,
+     "success_in_both": 14,
+     "same_success_tick": 0
+    }
+   }
+  }
+ ]
+}
